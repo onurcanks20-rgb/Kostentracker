@@ -1,0 +1,4434 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kostentracker">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Kostentracker">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+    <title>Kostentracker</title>
+
+    <style>
+        :root {
+            --bg: #000;
+            --card: #1c1c1e;
+            --text: #fff;
+            --primary: #3498db;
+            --secondary: #2c2c2e;
+            --danger: #ff453a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            background: var(--bg);
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding-top: env(safe-area-inset-top);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
+        }
+
+        body > div {
+            width: 100%;
+        }
+
+        /* 🔥 CLEAN CONTAINER (zusammengeführt) */
+        .container {
+            width: calc(100% - 24px);
+            max-width: 520px;
+            margin: 12px auto;
+            padding: 20px;
+
+            background: rgba(28, 28, 30, 0.9);
+            backdrop-filter: blur(20px);
+
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+
+            /* Seiteninhalt scrollt auf iOS als Ganzes */
+            max-height: none;
+            overflow: visible;
+        }
+
+        .hidden {
+            display: none
+        }
+
+        /* 🔥 INPUTS */
+        input,
+        select {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            margin: 8px 0;
+            border-radius: 12px;
+            border: none;
+            box-sizing: border-box;
+
+            background: #fff;
+            color: #000;
+        }
+
+        /* iPhone: Datum linksbuendig wie die anderen Eingabefelder */
+        input[type="date"] {
+            text-align: left;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left;
+            margin: 0;
+        }
+
+        /* 🔥 BUTTONS */
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+
+            transition: 0.15s;
+        }
+
+        button:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+
+        .back-btn {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(44, 44, 46, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .back-icon {
+            width: 12px;
+            height: 12px;
+            border-left: 2.5px solid white;
+            border-bottom: 2.5px solid white;
+            transform: rotate(45deg);
+            margin-left: 4px;
+        }
+
+        /* 🔥 GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* 🔥 ROW */
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row select {
+            flex: 1;
+        }
+
+        .row button {
+            width: 70px;
+            height: 48px;
+            font-size: 20px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 🔥 ITEMS */
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            padding: 14px;
+            margin: 8px 0;
+
+            border-radius: 14px;
+            background: #2c2c2e;
+
+            transition: 0.15s;
+        }
+
+        .item:active {
+            transform: scale(0.98);
+        }
+
+        /* 🔥 LAND STYLE */
+        .land-item {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+
+            box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+        }
+
+        /* 🔥 ACTION BUTTONS */
+        .actions button {
+            width: auto;
+            padding: 6px 10px;
+            margin-left: 5px;
+            border-radius: 8px;
+        }
+
+        .edit {
+            background: #3498db;
+        }
+
+        .cut {
+            background: orange;
+        }
+
+        .delete {
+            background: red;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #607d8b;
+            color: white;
+        }
+
+        /* 🔥 TOGGLE */
+        .toggle-btn {
+            width: 40px;
+            padding: 6px;
+            font-size: 16px;
+        }
+
+        /* 🔥 TOTAL */
+        .total {
+            text-align: right;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* 🔥 QUICK ADD */
+        .quick-chip {
+            background: #2c2c2e;
+            color: white;
+
+            border-radius: 20px;
+            padding: 10px;
+            font-size: 14px;
+
+            transition: 0.15s;
+        }
+
+        .quick-chip:active {
+            transform: scale(0.95);
+            background: #3a3a3c;
+        }
+
+        /* 🔥 QUICK BOX */
+        #quickBox {
+            background: #2c2c2e;
+            padding: 15px;
+            border-radius: 16px;
+            margin-top: 10px;
+
+            transform: translateY(20px);
+            opacity: 0;
+            transition: 0.25s;
+        }
+
+        #quickBox.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #quickBox button {
+            background: var(--primary);
+            border-radius: 12px;
+        }
+
+        .info-text {
+            margin-top: 6px;
+            opacity: 0.75;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+
+
+        /* 🔥 HOME MONATSÜBERSICHT */
+        .home-summary {
+            background: #2c2c2e;
+            border-radius: 20px;
+            padding: 16px;
+            margin: 14px 0 18px;
+        }
+
+        .home-summary-title {
+            opacity: 0.75;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .home-summary-total {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 4px 0 12px;
+        }
+
+        .home-summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .home-summary-row span:last-child,
+        .home-mini-item span:last-child {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .home-summary-small {
+            display: block;
+            margin-top: 8px;
+            opacity: 0.65;
+            font-size: 12px;
+        }
+
+        .home-mini-list {
+            margin-top: 4px;
+        }
+
+        .home-mini-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 13px;
+            opacity: 0.82;
+        }
+
+
+        .home-setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .home-setting-row label {
+            opacity: 0.82;
+            font-size: 14px;
+        }
+
+        .home-setting-row input {
+            width: 86px;
+            margin: 0;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .home-details-button {
+            background: #3a3a3c;
+            margin-top: 12px;
+        }
+
+        .home-due-list {
+            margin-top: 10px;
+        }
+
+        .home-due-item {
+            display: grid;
+            grid-template-columns: 72px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            font-size: 13px;
+        }
+
+        .home-due-date {
+            opacity: 0.72;
+            white-space: nowrap;
+        }
+
+        .home-due-name {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .home-due-type {
+            opacity: 0.55;
+            font-size: 11px;
+        }
+
+        .home-due-amount {
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .home-empty {
+            opacity: 0.72;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        /* BUDGET / WOCHENANZEIGE */
+        .budget-input-row { display:flex; gap:10px; align-items:center; margin-top:10px; }
+        .budget-input-row input { margin:0; flex:1; }
+        .budget-input-row button { margin:0; width:auto; min-width:110px; }
+        .week-card { background:#3a3a3c; border-radius:14px; padding:12px; margin-top:10px; }
+        .week-head { display:flex; justify-content:space-between; gap:10px; font-weight:700; }
+        .week-meta { opacity:.7; font-size:12px; margin-top:4px; }
+        .week-amount { font-size:20px; font-weight:800; margin-top:7px; }
+        .week-current { outline:2px solid var(--primary); }
+
+
+        /* ===== KOMPAKTES DASHBOARD ===== */
+        .app-shell { padding-bottom: 92px; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+        .topbar h2 { margin:0; }
+        .icon-btn { width:44px; height:44px; margin:0; padding:0; border-radius:50%; background:#2c2c2e; font-size:20px; display:flex; align-items:center; justify-content:center; line-height:1; flex:0 0 44px; }
+        .hero-card { background:#2c2c2e; border-radius:24px; padding:22px 18px 16px; text-align:center; margin-bottom:12px; }
+        .hero-label { opacity:.72; font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+        .hero-amount { font-size:42px; font-weight:850; margin:6px 0 2px; }
+        .link-button { width:auto; padding:8px 12px; margin:6px auto 0; background:transparent; color:#9ccfff; font-weight:650; }
+        .compact-details { margin-top:12px; text-align:left; background:#202022; border-radius:16px; padding:12px; }
+        .calc-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px solid rgba(255,255,255,.09); }
+        .calc-row:first-child { border-top:0; }
+        .calc-row.total { font-weight:800; font-size:17px; }
+        .detail-note { opacity:.65; font-size:12px; line-height:1.4; margin-top:8px; }
+        .week-summary-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-bottom:12px; }
+        .week-summary-head { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; }
+        .week-summary-title { font-size:13px; opacity:.7; text-transform:uppercase; letter-spacing:.06em; }
+        .week-summary-dates { opacity:.62; font-size:12px; margin-top:3px; }
+        .week-summary-amount { font-size:28px; font-weight:850; white-space:nowrap; }
+        .salary-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 4px 16px; opacity:.82; }
+        .primary-add { font-size:16px; padding:15px; margin:0 0 10px; }
+        .overview-link { background:#2c2c2e; }
+        .bottom-nav { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); width:min(calc(100% - 24px), 520px); display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:8px; border-radius:20px; background:rgba(28,28,30,.94); backdrop-filter:blur(20px); box-shadow:0 10px 30px rgba(0,0,0,.45); z-index:50; }
+        .bottom-nav button { margin:0; padding:9px 6px; background:transparent; font-size:12px; display:flex; flex-direction:column; gap:5px; align-items:center; justify-content:center; color:#aaa; }
+        .bottom-nav button.active { color:var(--primary); }
+        .bottom-nav .nav-plus { background:transparent; font-size:12px; }
+        .nav-icon { font-size:21px; line-height:1; min-height:24px; display:flex; align-items:center; justify-content:center; }
+        .nav-plus .nav-icon { width:30px; height:30px; min-height:30px; border-radius:50%; background:#a9a9ad; color:#1c1c1e; font-size:24px; font-weight:800; }
+        .overview-card { background:#2c2c2e; border-radius:18px; padding:14px; margin:10px 0; cursor:pointer; }
+        .overview-card-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+        .overview-card-title { font-weight:750; }
+        .overview-card-sub { opacity:.65; font-size:12px; margin-top:4px; }
+        .category-topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+        .category-topbar h2 { flex:1; margin:0; }
+        .category-add-btn {
+            width:42px; height:42px; flex:0 0 42px; margin:0; padding:0;
+            border-radius:50%; background:#2c2c2e; color:#fff;
+            display:flex; align-items:center; justify-content:center;
+            font-size:28px; font-weight:400; line-height:1;
+        }
+        .category-add-panel {
+            background:#2c2c2e; border-radius:18px; padding:14px; margin:0 0 14px;
+        }
+        .category-add-panel h3 { margin:0 0 8px; }
+        .section-label { margin:18px 4px 6px; opacity:.58; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .sheet-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.58); z-index:80; display:flex; align-items:flex-end; justify-content:center; padding:12px; }
+        .sheet-backdrop.hidden { display:none; }
+        .add-sheet { width:min(100%,520px); background:#1c1c1e; border-radius:24px 24px 18px 18px; padding:18px; box-shadow:0 -10px 30px rgba(0,0,0,.35); }
+        .add-sheet h3 { margin:2px 0 16px; font-size:26px; line-height:1.2; }
+        .add-choice { background:#2c2c2e; text-align:left; font-size:23px; font-weight:700; min-height:70px; padding:18px 20px; }
+        .add-sheet > button:not(.add-choice) { font-size:18px; font-weight:650; min-height:58px; }
+        /* ===== iPHONE / MOBILE ===== */
+        @media (max-width: 600px) {
+            .container.app-shell {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 16px 16px calc(104px + env(safe-area-inset-bottom));
+                border-radius: 0;
+                background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                box-shadow: none;
+            }
+
+            .topbar {
+                margin-top: 2px;
+                margin-bottom: 14px;
+            }
+
+            .hero-card {
+                padding: 20px 16px 14px;
+                border-radius: 22px;
+            }
+
+            .hero-amount {
+                font-size: clamp(36px, 11vw, 46px);
+            }
+
+            .week-summary-card {
+                padding: 15px;
+                border-radius: 18px;
+            }
+
+            .week-summary-head {
+                align-items: center;
+            }
+
+            .week-summary-amount {
+                font-size: clamp(24px, 8vw, 31px);
+            }
+
+            .salary-row {
+                padding: 10px 4px 14px;
+            }
+
+            .primary-add {
+                min-height: 54px;
+                border-radius: 16px;
+            }
+
+            .bottom-nav {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: none;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                gap: 0;
+                padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+                border-radius: 20px 20px 0 0;
+            }
+
+            .bottom-nav button {
+                min-height: 58px;
+                padding: 7px 4px;
+            }
+
+            .container:not(.app-shell) {
+                width: calc(100% - 24px);
+                margin: 12px auto;
+                padding: 16px;
+            }
+        }
+
+        .settings-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-top:12px; }
+        .settings-card label { display:block; opacity:.72; font-size:13px; margin-top:10px; }
+        .settings-note { opacity:.62; font-size:12px; line-height:1.45; }
+
+
+        /* ===== iPHONE LAYOUT FIX v8 ===== */
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        #home,
+        #uebersichtView,
+        #grafikView,
+        #settingsView,
+        #reisen,
+        #land,
+        #versicherungenView,
+        #haushaltView,
+        #kostenView {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .topbar,
+        .week-summary-head,
+        .salary-row,
+        .overview-card-top {
+            min-width: 0;
+        }
+
+        .topbar h2,
+        .week-summary-head > div,
+        .salary-row > span,
+        .overview-card-top > span {
+            min-width: 0;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .container.app-shell {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-top: 14px;
+                padding-bottom: calc(102px + env(safe-area-inset-bottom));
+                overflow-x: hidden;
+            }
+
+            .topbar {
+                width: 100%;
+            }
+
+            .topbar h2 {
+                font-size: clamp(25px, 7.2vw, 32px);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .icon-btn {
+                width: 44px;
+                height: 44px;
+                flex-basis: 44px;
+                font-size: 21px;
+            }
+
+            .hero-card,
+            .week-summary-card,
+            .salary-row,
+            .primary-add {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .hero-card {
+                padding: 20px 14px 14px;
+            }
+
+            .hero-amount {
+                font-size: clamp(36px, 12vw, 50px);
+                line-height: 1.05;
+                overflow-wrap: anywhere;
+            }
+
+            .week-summary-head {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .week-summary-title {
+                font-size: clamp(12px, 3.8vw, 15px);
+            }
+
+            .week-summary-dates {
+                font-size: clamp(11px, 3.4vw, 13px);
+                white-space: nowrap;
+            }
+
+            .week-summary-amount {
+                font-size: clamp(24px, 8vw, 32px);
+                text-align: right;
+            }
+
+            .salary-row {
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+
+            .salary-row strong {
+                white-space: nowrap;
+                font-size: clamp(16px, 4.8vw, 20px);
+            }
+
+            .primary-add {
+                white-space: nowrap;
+                font-size: clamp(15px, 4.5vw, 18px);
+            }
+
+            .bottom-nav {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: none;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 18px 18px 0 0;
+                padding-left: max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            }
+
+            .bottom-nav button {
+                min-width: 0;
+                font-size: 12px;
+            }
+        }
+
+
+
+        /* ===== iPHONE DASHBOARD POLISH v9 ===== */
+        @media (max-width: 600px) {
+            .container.app-shell {
+                padding-top: 8px;
+                padding-left: max(18px, env(safe-area-inset-left));
+                padding-right: max(18px, env(safe-area-inset-right));
+                padding-bottom: calc(100px + env(safe-area-inset-bottom));
+            }
+
+            .topbar {
+                margin-top: 0;
+                margin-bottom: 12px;
+                min-height: 48px;
+            }
+
+            .topbar h2 {
+                font-size: clamp(27px, 7vw, 31px);
+                line-height: 1.05;
+                letter-spacing: -0.02em;
+            }
+
+            .icon-btn {
+                width: 42px;
+                height: 42px;
+                flex-basis: 42px;
+                font-size: 20px;
+            }
+
+            .hero-card {
+                min-height: 220px;
+                padding: 26px 16px 18px;
+                border-radius: 24px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 12px;
+            }
+
+            .hero-label {
+                font-size: 12px;
+                letter-spacing: .09em;
+            }
+
+            .hero-amount {
+                font-size: clamp(38px, 10.5vw, 46px);
+                margin: 10px 0 5px;
+                letter-spacing: -0.03em;
+            }
+
+            .link-button {
+                font-size: 13px;
+                padding: 7px 10px;
+                margin-top: 8px;
+            }
+
+            .week-summary-card {
+                min-height: 112px;
+                padding: 18px 16px;
+                border-radius: 22px;
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+
+            .week-summary-head {
+                width: 100%;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 12px;
+            }
+
+            .week-summary-title {
+                font-size: 13px;
+                letter-spacing: .05em;
+            }
+
+            .week-summary-dates {
+                font-size: 12px;
+                margin-top: 5px;
+            }
+
+            .week-summary-amount {
+                font-size: clamp(25px, 7vw, 30px);
+                letter-spacing: -0.02em;
+            }
+
+            .salary-row {
+                min-height: 66px;
+                margin-bottom: 12px;
+                padding: 14px 16px;
+                border-radius: 18px;
+                background: #1c1c1e;
+                opacity: 1;
+                font-size: 15px;
+            }
+
+            .salary-row strong {
+                font-size: 16px;
+            }
+
+            .primary-add {
+                min-height: 58px;
+                margin-bottom: 0;
+                border-radius: 18px;
+                font-size: 16px;
+            }
+
+            .bottom-nav {
+                padding-top: 7px;
+                padding-bottom: calc(7px + env(safe-area-inset-bottom));
+                border-radius: 22px 22px 0 0;
+            }
+
+            .bottom-nav button {
+                min-height: 54px;
+                font-size: 11px;
+                gap: 4px;
+            }
+
+            .nav-icon {
+                font-size: 20px;
+                min-height: 22px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- ===================== HOME ===================== -->
+    <div id="home">
+        <div class="container app-shell">
+            <div class="topbar">
+                <h2>💸 Kostentracker</h2>
+                <button class="icon-btn" onclick="openSettings()" aria-label="Einstellungen">⚙️</button>
+            </div>
+
+            <div class="hero-card">
+                <div class="hero-label">Frei verfügbar</div>
+                <div id="homeBudgetVerfuegbar" class="hero-amount">0.00 €</div>
+                <button id="freiDetailsToggle" class="link-button" onclick="toggleFreiDetails()">Details anzeigen ›</button>
+
+                <div id="freiDetails" class="compact-details hidden">
+                    <div class="calc-row"><span>Startgehalt</span><span id="homeBudgetStart">0.00 €</span></div>
+                    <div class="calc-row"><span>Fixkosten</span><span id="homeBudgetLaufend">0.00 €</span></div>
+                    <div class="calc-row"><span>Versicherungen</span><span id="homeBudgetVers">0.00 €</span></div>
+                    <div class="calc-row"><span>Haushalt bisher</span><span id="homeBudgetHaushalt">0.00 €</span></div>
+                    <div class="calc-row total"><span>Frei verfügbar</span><span id="homeBudgetVerfuegbarDetail">0.00 €</span></div>
+                    <div class="calc-row"><span>Noch kommende Abbuchungen</span><span id="homeFaelligGesamt">0.00 €</span></div>
+                    <div class="detail-note">Die kommenden Abbuchungen sind im frei verfügbaren Betrag bereits berücksichtigt.</div>
+                </div>
+            </div>
+
+            <div class="week-summary-card">
+                <div class="week-summary-head">
+                    <div>
+                        <div class="week-summary-title">📅 Diese Woche</div>
+                        <div id="homeWeekDates" class="week-summary-dates">Montag – Sonntag</div>
+                    </div>
+                    <div id="homeWeekAmount" class="week-summary-amount">0.00 €</div>
+                </div>
+            </div>
+
+            <div class="salary-row">
+                <span>Nächstes Gehalt</span>
+                <strong id="homeNextSalary">–</strong>
+            </div>
+
+            <button class="primary-add" onclick="openAddSheet()">＋ Abrechnung hinzufügen</button>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="active" onclick="goHome()"><span class="nav-icon">🏠</span>Start</button>
+            <button onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
+            <button onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
+        </div>
+    </div>
+
+    <!-- ===================== ÜBERSICHT ===================== -->
+    <div id="uebersichtView" class="hidden">
+        <div class="container app-shell">
+            <div class="topbar">
+                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Übersicht</h2>
+                <button class="icon-btn" onclick="openSettings()" aria-label="Einstellungen">⚙️</button>
+            </div>
+
+            <div class="section-label">Mein Budget</div>
+            <div class="overview-card" onclick="openHaushalt()">
+                <div class="overview-card-top"><span class="overview-card-title">🛒 Haushalt</span><strong id="overviewHaushalt">0.00 €</strong></div>
+                <div class="overview-card-sub">Ausgaben im aktuellen Gehaltszeitraum</div>
+            </div>
+            <div class="overview-card" onclick="openKosten()">
+                <div class="overview-card-top"><span class="overview-card-title">📌 Fixkosten</span><strong id="overviewFixkosten">0.00 €</strong></div>
+                <div class="overview-card-sub">Fest eingeplante Kosten im Gehaltszeitraum</div>
+            </div>
+            <div class="overview-card" onclick="openVersicherungen()">
+                <div class="overview-card-top"><span class="overview-card-title">🛡️ Versicherungen</span><strong id="overviewVersicherungen">0.00 €</strong></div>
+                <div class="overview-card-sub">Fällige Versicherungen im Gehaltszeitraum</div>
+            </div>
+
+            <div class="section-label">Separat</div>
+            <div class="overview-card" onclick="openReisen()">
+                <div class="overview-card-top"><span class="overview-card-title">✈️ Reisen</span><strong id="overviewReisen">0.00 €</strong></div>
+                <div class="overview-card-sub">Wird nicht in dein Alltagsbudget eingerechnet</div>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <button onclick="goHome()"><span class="nav-icon">🏠</span>Start</button>
+            <button class="active" onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
+            <button onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
+        </div>
+    </div>
+
+    <!-- ===================== GRAFIK ===================== -->
+    <div id="grafikView" class="hidden">
+        <div class="container app-shell">
+            <div class="topbar">
+                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Grafik</h2>
+                <button class="icon-btn" onclick="openSettings()" aria-label="Einstellungen">⚙️</button>
+            </div>
+
+            <div class="overview-card" style="text-align:center; padding:32px 18px; cursor:default;">
+                <div style="font-size:42px; margin-bottom:12px;">📊</div>
+                <div class="overview-card-title" style="margin-bottom:8px;">Grafikbereich</div>
+                <div class="overview-card-sub">Welche Auswertung hier angezeigt wird, legen wir später fest.</div>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <button onclick="goHome()"><span class="nav-icon">🏠</span>Start</button>
+            <button onclick="openUebersicht()"><span class="nav-icon">📋</span>Übersicht</button>
+            <button class="active" onclick="openGrafik()"><span class="nav-icon">📊</span>Grafik</button>
+        </div>
+    </div>
+
+    <!-- ===================== EINSTELLUNGEN ===================== -->
+    <div id="settingsView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Einstellungen</h2>
+            </div>
+            <div class="settings-card">
+                <label for="startgehaltInput">Startgehalt / Startbudget</label>
+                <input id="startgehaltInput" type="number" min="0" step="0.01" placeholder="z. B. 2500">
+                <button onclick="saveStartgehalt()">Startgehalt speichern</button>
+                <div class="settings-note">Das Startgehalt wird getrennt für jeden Gehaltszeitraum gespeichert.</div>
+
+                <label for="gehaltstagInput">Regulärer Gehaltstag</label>
+                <input id="gehaltstagInput" type="number" min="1" max="31" value="26">
+                <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
+                <div class="settings-note">Fällt der Gehaltstag auf Samstag oder Sonntag, verwendet die App automatisch den folgenden Montag.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== ABRECHNUNG HINZUFÜGEN ===================== -->
+    <div id="addSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeAddSheet()">
+        <div class="add-sheet">
+            <h3>Abrechnung hinzufügen</h3>
+            <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausText')">🛒 Haushalt</button>
+            <button class="add-choice" onclick="closeAddSheet(); openKosten(); toggleCategoryAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
+            <button class="add-choice" onclick="closeAddSheet(); openVersicherungen(); toggleCategoryAdd('versAddPanel','versName')">🛡️ Versicherung</button>
+            <button class="add-choice" onclick="closeAddSheet(); openReisen(); toggleCategoryAdd('reisenAddPanel','landInput')">✈️ Reise</button>
+            <button onclick="closeAddSheet()" style="background:#3a3a3c;">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- ===================== REISEN ===================== -->
+    <div id="reisen" class="hidden">
+
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Reisen</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('reisenAddPanel','landInput')" aria-label="Reise hinzufügen">＋</button>
+            </div>
+
+            <div id="reisenAddPanel" class="category-add-panel hidden">
+                <h3>Reise hinzufügen</h3>
+                <input id="landInput" placeholder="Neues Land">
+                <button onclick="addLand()" class="btn btn-primary">Land hinzufügen</button>
+            </div>
+
+            <div id="laenderListe"></div>
+        </div>
+    </div>
+
+    <!-- ===================== LAND ===================== -->
+    <div id="land" class="hidden">
+
+        <div class="container">
+
+            <button class="back-btn" onclick="backToReisen()" aria-label="Zurück">
+                <span class="back-icon"></span>
+            </button>
+
+            <h2 id="landTitel"></h2>
+
+            <div id="quickAdd" class="grid"></div>
+
+            <div id="quickBox" class="hidden">
+
+                <h3 id="quickTitel"></h3>
+
+                <input id="quickBetrag" type="number" placeholder="Betrag">
+                <input id="quickText" placeholder="Beschreibung">
+
+                <button onclick="saveQuickAdd()" class="btn btn-primary">
+                    Speichern
+                </button>
+
+            </div>
+
+            <button onclick="toggleManual()" class="btn btn-primary">
+                ⚙️ Manuelle Eingabe
+            </button>
+
+            <!-- 🔥 MANUAL (REISEN - sauber getrennt) -->
+            <div id="manualBox" class="hidden">
+
+                <h3>Manuelle Eingabe</h3>
+
+                <div class="row">
+                    <select id="kategorieSelect"></select>
+                    <button onclick="addKategorie()">+</button>
+                </div>
+
+                <input id="betrag" type="number" placeholder="Betrag">
+                <input id="text" placeholder="Beschreibung">
+                <input id="datum" type="date">
+
+                <button onclick="addEintrag()" class="btn btn-primary">
+                    Reisen hinzufügen
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="container">
+            <h3>Kategorien Übersicht</h3>
+            <div id="kategorienUebersicht"></div>
+        </div>
+
+        <div class="container">
+            <div id="liste"></div>
+            <div class="total" id="gesamt"></div>
+        </div>
+
+        <div class="container">
+            <button onclick="clearLand()" style="background:red;">
+                🗑️ Alle Kosten löschen
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ===================== Versicherungen ===================== -->
+    <div id="versicherungenView" class="hidden">
+
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Versicherungen</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('versAddPanel','versName')" aria-label="Versicherung hinzufügen">＋</button>
+            </div>
+
+            <div id="versAddPanel" class="category-add-panel hidden">
+                <h3>Versicherung hinzufügen</h3>
+                <input id="versName" placeholder="Versicherung">
+                <input id="versBetrag" type="number" placeholder="Betrag">
+                <input id="versDatum" type="date">
+                <input id="versAnbieter" placeholder="Anbieter">
+                <input id="versNummer" placeholder="Versicherungsnummer">
+
+                <select id="versIntervall">
+                    <option value="monatlich">Monatlich</option>
+                    <option value="vierteljährlich">Vierteljährlich</option>
+                    <option value="halbjährlich">Halbjährlich</option>
+                    <option value="jährlich">Jährlich</option>
+                </select>
+
+                <select id="versMonat">
+                    <option value="1">Januar</option>
+                    <option value="2">Februar</option>
+                    <option value="3">März</option>
+                    <option value="4">April</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Dezember</option>
+                </select>
+
+                <button onclick="addVersicherung()" class="btn btn-primary">Hinzufügen</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="versicherungenListe"></div>
+            <div class="total" id="versicherungenGesamt"></div>
+            <div id="versicherungenFooter"></div>
+        </div>
+
+    </div>
+
+    <!-- ===================== Haushalt ===================== -->
+    <div id="haushaltView" class="hidden">
+
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Haushalt</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('hausAddPanel','hausText')" aria-label="Haushaltsausgabe hinzufügen">＋</button>
+            </div>
+
+            <div id="hausAddPanel" class="category-add-panel hidden">
+                <h3>Haushaltsausgabe hinzufügen</h3>
+                <input id="hausText" placeholder="Beschreibung">
+                <input id="hausBetrag" type="number" placeholder="Betrag">
+                <input id="hausDatum" type="date">
+                <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="haushaltListe"></div>
+        </div>
+
+        <div class="container">
+            <button onclick="deleteAlleHaushalt()" style="background:red;">🗑️ Alle Haushalt-Einträge löschen</button>
+        </div>
+
+    </div>
+
+    <!-- ===================== Laufende Kosten ===================== -->
+    <div id="kostenView" class="hidden">
+
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Fixkosten</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('kostenAddPanel','costText')" aria-label="Fixkosten hinzufügen">＋</button>
+            </div>
+            <div id="kostenAddPanel" class="category-add-panel hidden">
+                <h3>Fixkosten hinzufügen</h3>
+
+            <input id="costText" placeholder="Beschreibung">
+            <input id="costBetrag" type="number" placeholder="Betrag">
+            <input id="costInfo" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
+
+            <label for="costDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">
+                Abbuchungsdatum
+            </label>
+            <input id="costDatum" type="date">
+
+            <button onclick="addKosten()" class="btn btn-primary">Hinzufügen</button>
+            </div>
+
+            <button onclick="toggleKostenAuswahlModus()" class="btn btn-primary" style="background:#3a3a3c;">
+                Auswahlmodus
+            </button>
+
+            <div id="kostenAuswahlAktionen"></div>
+        </div>
+
+        <div class="container">
+            <div id="kostenListe"></div>
+            <div class="total" id="kostenGesamt"></div>
+        </div>
+
+        <div class="container">
+            <button onclick="deleteAlleLaufendeKosten()" style="background:red;">
+                🗑️ Alle Fixkosten löschen
+            </button>
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // PWA / Offline-Unterstützung
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./service-worker.js")
+                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
+            });
+        }
+
+        /* DATEN */
+        const STANDARD_DATEN = {
+            Reisen: {},
+            Versicherungen: [],
+            Haushalt: {},
+            "Laufende Kosten": {
+                fix: []
+            },
+            Einstellungen: {
+                gehaltstag: 26,
+                startgehaelter: {}
+            },
+            geloeschteKategorien: {}
+        };
+
+        function ladeDaten() {
+            try {
+                return JSON.parse(localStorage.getItem("kostenApp")) || structuredClone(STANDARD_DATEN);
+            } catch (error) {
+                console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
+                return structuredClone(STANDARD_DATEN);
+            }
+        }
+
+        let daten = ladeDaten();
+
+        // 🔥 WICHTIGER MIGRATIONS-FIX:
+        // Falls "Laufende Kosten" früher als Array gespeichert wurde, wird es jetzt sauber
+        // in { fix: [...] } umgewandelt. Sonst würde JSON.stringify die fix-Einträge verlieren.
+        if (!daten || typeof daten !== "object" || Array.isArray(daten)) {
+            daten = structuredClone(STANDARD_DATEN);
+        }
+
+        if (!daten.Reisen || typeof daten.Reisen !== "object" || Array.isArray(daten.Reisen)) {
+            daten.Reisen = {};
+        }
+
+        if (!Array.isArray(daten.Versicherungen)) {
+            daten.Versicherungen = [];
+        }
+
+        if (!daten.Haushalt || typeof daten.Haushalt !== "object" || Array.isArray(daten.Haushalt)) {
+            daten.Haushalt = {};
+        }
+
+        if (!daten.geloeschteKategorien || typeof daten.geloeschteKategorien !== "object" || Array.isArray(daten.geloeschteKategorien)) {
+            daten.geloeschteKategorien = {};
+        }
+
+        if (!daten.Einstellungen || typeof daten.Einstellungen !== "object" || Array.isArray(daten.Einstellungen)) {
+            daten.Einstellungen = {};
+        }
+
+        daten.Einstellungen.gehaltstag = validiereGehaltstag(daten.Einstellungen.gehaltstag);
+        if (!daten.Einstellungen.startgehaelter || typeof daten.Einstellungen.startgehaelter !== "object" || Array.isArray(daten.Einstellungen.startgehaelter)) {
+            daten.Einstellungen.startgehaelter = {};
+        }
+
+        const alteLaufendeKosten = daten["Laufende Kosten"];
+
+        if (Array.isArray(alteLaufendeKosten)) {
+            daten["Laufende Kosten"] = { fix: alteLaufendeKosten };
+        } else if (!alteLaufendeKosten || typeof alteLaufendeKosten !== "object") {
+            daten["Laufende Kosten"] = { fix: [] };
+        } else if (!Array.isArray(alteLaufendeKosten.fix)) {
+            daten["Laufende Kosten"].fix = [];
+        }
+
+        // Alte Einträge hatten nur einen Tag (z. B. 15).
+        // Neue Einträge speichern zusätzlich ein echtes Datum (z. B. 2026-05-15).
+        daten["Laufende Kosten"].fix = daten["Laufende Kosten"].fix.map(k => {
+            const datum = k.datum || datumAusTagAktuellerMonat(k.tag);
+            return {
+                ...k,
+                text: k.text || k.name || "",
+                datum,
+                tag: tagAusDatum(datum)
+            };
+        });
+
+        // Migration direkt speichern, damit alte kaputte Strukturen nicht wiederkommen.
+        try {
+            localStorage.setItem("kostenApp", JSON.stringify(daten));
+        } catch (error) {
+            console.error("Migration konnte nicht gespeichert werden:", error);
+        }
+
+
+        for (let i = 1; i <= 12; i++) {
+            daten.Haushalt[i] ??= [];
+        }
+
+        for (let land in daten.Reisen) {
+            for (let k in daten.Reisen[land]) {
+
+                daten.Reisen[land][k] = daten.Reisen[land][k].map(e => ({
+                    id: e.id ?? generateId(),
+                    betrag: e.betrag ?? 0,
+                    text: e.text ?? "",
+                    datum: e.datum ?? ""
+                }));
+            }
+        }
+
+        const state = {
+            offeneHaushaltJahre: {},
+            offeneHaushaltMonate: {},
+            editHaushaltId: null,
+            editVersicherungId: null,
+            editKategorieName: null,
+            editLandName: null,
+            editReiseId: null,
+            editKostenId: null,
+            homeKostenOffen: false,
+            homeFaelligOffen: false,
+            freiDetailsOffen: false,
+            kostenAuswahlModus: false,
+            ausgewaehlteKosten: [],
+            offeneVersicherungen: {},
+        };
+
+        if (!daten.geloeschteKategorien) {
+            daten.geloeschteKategorien = {};
+        }
+
+        const standardKategorien = [
+            "Flug",
+            "Unterkunft",
+            "Transport",
+            "Aktivitäten",
+            "Verpflegung"
+        ];
+
+        for (let land in daten.Reisen) {
+
+            let geloescht = daten.geloeschteKategorien[land] || [];
+
+            standardKategorien.forEach(k => {
+
+                if (!daten.Reisen[land][k] && !geloescht.includes(k)) {
+                    daten.Reisen[land][k] = [];
+                }
+
+            });
+        }
+
+        daten.Versicherungen = daten.Versicherungen.map(v => ({
+            id: v.id || generateId(),
+            name: v.name || "",
+            betrag: v.betrag ?? 0,
+            anbieter: v.anbieter || "",
+            versicherungsnummer: v.versicherungsnummer || "",
+            intervall: v.intervall || "monatlich",
+            monat: v.monat ?? 1,
+            datum: v.datum || ""
+        }));
+
+
+
+        function speichern() {
+            try {
+                localStorage.setItem("kostenApp", JSON.stringify(daten));
+            } catch (error) {
+                console.error("Speichern fehlgeschlagen:", error);
+                alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
+            }
+
+            renderHomeUebersicht();
+        }
+
+        let offeneKategorie = null;
+        let aktuellesLand = null;
+        let aktuelleSimple = null;
+        let offeneVersicherung = null;
+        let quickKategorie = null;
+
+        function getAktuellerMonat() {
+            return new Date().getMonth() + 1;
+        }
+
+        function heuteISO() {
+            const d = new Date();
+            const jahr = d.getFullYear();
+            const monat = String(d.getMonth() + 1).padStart(2, "0");
+            const tag = String(d.getDate()).padStart(2, "0");
+            return `${jahr}-${monat}-${tag}`;
+        }
+
+        function aktuellerTag() {
+            return new Date().getDate();
+        }
+
+        function tagAusDatum(datum) {
+            const tag = parseInt(String(datum || "").split("-")[2], 10);
+            if (isNaN(tag)) return aktuellerTag();
+            return Math.min(Math.max(tag, 1), 31);
+        }
+
+        function datumAusTagAktuellerMonat(tag) {
+            const heute = new Date();
+            const jahr = heute.getFullYear();
+            const monatIndex = heute.getMonth();
+            const letzterTagImMonat = new Date(jahr, monatIndex + 1, 0).getDate();
+            const sichererTag = Math.min(Math.max(parseInt(tag, 10) || heute.getDate(), 1), letzterTagImMonat);
+            const monat = String(monatIndex + 1).padStart(2, "0");
+            const tagString = String(sichererTag).padStart(2, "0");
+            return `${jahr}-${monat}-${tagString}`;
+        }
+
+
+
+        function validiereGehaltstag(wert) {
+            let tag = parseInt(wert, 10);
+            if (isNaN(tag)) tag = 26;
+            return Math.min(Math.max(tag, 1), 31);
+        }
+
+        function getGehaltstag() {
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.gehaltstag = validiereGehaltstag(daten.Einstellungen.gehaltstag);
+            return daten.Einstellungen.gehaltstag;
+        }
+
+        function saveGehaltstag() {
+            const input = document.getElementById("gehaltstagInput");
+            const tag = validiereGehaltstag(input?.value);
+
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.gehaltstag = tag;
+
+            if (input) input.value = tag;
+
+            speichern();
+        }
+
+        function parseISODate(datum) {
+            if (!datum) return null;
+
+            const parts = String(datum).split("-").map(Number);
+            if (parts.length !== 3) return null;
+
+            const [jahr, monat, tag] = parts;
+            if (!jahr || !monat || !tag) return null;
+
+            const d = new Date(jahr, monat - 1, tag);
+            if (isNaN(d)) return null;
+
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        function startOfToday() {
+            const d = new Date();
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        function addDays(datum, tage) {
+            const d = new Date(datum.getFullYear(), datum.getMonth(), datum.getDate());
+            d.setDate(d.getDate() + tage);
+            return d;
+        }
+
+        function datumMitSicheremTag(jahr, monatIndex, tag) {
+            const letzterTag = new Date(jahr, monatIndex + 1, 0).getDate();
+            const sichererTag = Math.min(Math.max(parseInt(tag, 10) || 1, 1), letzterTag);
+            return new Date(jahr, monatIndex, sichererTag);
+        }
+
+        function isoAusDate(datum) {
+            const jahr = datum.getFullYear();
+            const monat = String(datum.getMonth() + 1).padStart(2, "0");
+            const tag = String(datum.getDate()).padStart(2, "0");
+            return `${jahr}-${monat}-${tag}`;
+        }
+
+        function formatKurzDatum(datum) {
+            return `${String(datum.getDate()).padStart(2, "0")}.${String(datum.getMonth() + 1).padStart(2, "0")}.`;
+        }
+
+        function berechneterGehaltstag(jahr, monatIndex, tag) {
+            let d = datumMitSicheremTag(jahr, monatIndex, tag);
+            if (d.getDay() === 6) d = addDays(d, 2); // Samstag -> Montag
+            if (d.getDay() === 0) d = addDays(d, 1); // Sonntag -> Montag
+            return d;
+        }
+
+        function getGehaltszeitraum() {
+            const heute = startOfToday();
+            const gehaltstag = getGehaltstag();
+            const gehaltDieserMonat = berechneterGehaltstag(heute.getFullYear(), heute.getMonth(), gehaltstag);
+
+            let start;
+            let naechstesGehalt;
+
+            if (heute >= gehaltDieserMonat) {
+                start = gehaltDieserMonat;
+                naechstesGehalt = berechneterGehaltstag(heute.getFullYear(), heute.getMonth() + 1, gehaltstag);
+            } else {
+                start = berechneterGehaltstag(heute.getFullYear(), heute.getMonth() - 1, gehaltstag);
+                naechstesGehalt = gehaltDieserMonat;
+            }
+
+            const ende = addDays(naechstesGehalt, -1);
+            return { heute, start, ende, naechstesGehalt, gehaltstag };
+        }
+
+        function generateId() {
+            return Date.now() + Math.random();
+        }
+
+        function formatText(text) {
+            if (!text) return "";
+            return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+        }
+
+        function monatZuZahl(name) {
+            const monate = [
+                "januar", "februar", "märz", "april", "mai", "juni",
+                "juli", "august", "september", "oktober", "november", "dezember"
+            ];
+
+            let index = monate.indexOf(name.toLowerCase());
+            return index !== -1 ? index + 1 : 1;
+        }
+
+        function safeId(text) {
+            return text.replace(/\s+/g, '_');
+        }
+
+        /* NAV */
+        function show(id) {
+
+            const views = [
+                "home",
+                "reisen",
+                "land",
+                "haushaltView",
+                "kostenView",
+                "versicherungenView",
+                "uebersichtView",
+                "grafikView",
+                "settingsView"
+            ];
+
+            // Alle Views verstecken
+            views.forEach(x => {
+                document.getElementById(x)?.classList.add("hidden");
+            });
+
+            // Gewünschte View anzeigen
+            document.getElementById(id)?.classList.remove("hidden");
+
+            // Kleine Resets, aber nur wenn die Elemente existieren
+            if (id !== "reisen") {
+                document.getElementById("laenderListe")?.replaceChildren();
+            }
+
+            if (id !== "land") {
+                document.getElementById("kategorienUebersicht")?.replaceChildren();
+
+                const datum = document.getElementById("datum");
+                if (datum) datum.value = "";
+            }
+        }
+
+        function goHome() {
+            show("home");
+            renderHomeUebersicht();
+        }
+
+
+        function openUebersicht() {
+            show("uebersichtView");
+            renderUebersicht();
+        }
+
+        function openGrafik() {
+            show("grafikView");
+        }
+
+        function openSettings() {
+            show("settingsView");
+            const z = getGehaltszeitraum();
+            const startInput = document.getElementById("startgehaltInput");
+            const tagInput = document.getElementById("gehaltstagInput");
+            if (startInput) startInput.value = getStartgehalt(z) || "";
+            if (tagInput) tagInput.value = getGehaltstag();
+        }
+
+        function openAddSheet() {
+            document.getElementById("addSheet")?.classList.remove("hidden");
+        }
+
+        function closeAddSheet() {
+            document.getElementById("addSheet")?.classList.add("hidden");
+        }
+
+        function focusLater(id) {
+            setTimeout(() => document.getElementById(id)?.focus(), 80);
+        }
+
+        function closeCategoryAddPanels() {
+            ["reisenAddPanel","versAddPanel","hausAddPanel","kostenAddPanel"].forEach(id => {
+                document.getElementById(id)?.classList.add("hidden");
+            });
+        }
+
+        function toggleCategoryAdd(panelId, focusId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+            const wirdGeoeffnet = panel.classList.contains("hidden");
+            closeCategoryAddPanels();
+            if (wirdGeoeffnet) {
+                panel.classList.remove("hidden");
+                focusLater(focusId);
+            }
+        }
+
+        function toggleFreiDetails() {
+            state.freiDetailsOffen = !state.freiDetailsOffen;
+            renderHomeUebersicht();
+        }
+
+        /* REISEN */
+        function openReisen() {
+            show("reisen");
+            closeCategoryAddPanels();
+
+            // 🔥 WICHTIG: alte Land-Ansicht komplett resetten
+            document.getElementById("land")?.classList.add("hidden");
+
+            state.editLandName = null;
+            offeneVersicherung = null;
+
+            renderLaender();
+        }
+
+        function openVersicherungen() {
+            show("versicherungenView");
+            closeCategoryAddPanels();
+            state.editVersicherungId = null;
+
+            const datum = document.getElementById("versDatum");
+            const monat = document.getElementById("versMonat");
+
+            if (datum && !datum.value) datum.value = heuteISO();
+            if (monat) monat.value = String(getAktuellerMonat());
+
+            renderVersicherungen();
+        }
+
+        function openHaushalt() {
+            show("haushaltView");
+            closeCategoryAddPanels();
+            state.editHaushaltId = null;
+
+            const datum = document.getElementById("hausDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+
+            renderHaushalt();
+        }
+
+        function openKosten() {
+            show("kostenView");
+            closeCategoryAddPanels();
+
+            const datum = document.getElementById("costDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+
+            renderLaufendeKosten();
+        }
+
+        function hideAllViews() {
+            ["versicherungenView", "haushaltView", "kostenView"].forEach(id => {
+                document.getElementById(id)?.classList.add("hidden");
+            });
+        }
+
+        /* LÄNDER */
+        function addLand() {
+            let name = document.getElementById("landInput").value.trim();
+            if (!name) return;
+
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+
+            if (!daten.Reisen[name]) {
+                daten.Reisen[name] = {
+                    Flug: [],
+                    Unterkunft: [],
+                    Transport: [],
+                    Aktivitäten: [],
+                    Verpflegung: []
+                };
+            }
+
+            speichern();
+            document.getElementById("landInput").value = "";
+            document.getElementById("reisenAddPanel")?.classList.add("hidden");
+            renderLaender();
+        }
+
+        function renderLaender() {
+            let div = document.getElementById("laenderListe");
+            div.innerHTML = "";
+
+            for (let land in daten.Reisen) {
+
+                let sum = 0;
+                for (let k in daten.Reisen[land]) {
+                    sum += daten.Reisen[land][k].reduce((a, b) => a + b.betrag, 0);
+                }
+
+                let row = document.createElement("div");
+                row.className = "row";
+
+                let item = document.createElement("div");
+                item.className = "item land-item";
+                item.style.flex = "1";
+
+                item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+
+                ${state.editLandName === land
+                        ? `<input id="editLand-${safeId(land)}" value="${land}">`
+                        : `<span>${land}</span>`
+                    }
+
+                <span style="font-weight:600;">
+                    ${formatBetrag(sum)}
+                </span>
+
+            </div>
+        `;
+
+                item.onclick = () => {
+                    if (state.editLandName !== land) {
+                        openLand(land);
+                    }
+                };
+
+                let editBtn = document.createElement("button");
+
+                if (state.editLandName === land) {
+
+                    editBtn.innerText = "💾";
+                    editBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        saveEditLand(land);
+                    };
+
+                } else {
+
+                    editBtn.className = "edit";
+                    editBtn.innerText = "✏️";
+                    editBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        startEditLand(land);
+                    };
+                }
+
+                let cancelBtn = document.createElement("button");
+
+                if (state.editLandName === land) {
+
+                    cancelBtn.innerText = "❌";
+                    cancelBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        cancelEditLand();
+                    };
+
+                }
+
+                // 🗑️ Button daneben
+                let delBtn = document.createElement("button");
+                delBtn.className = "delete";
+                delBtn.innerText = "🗑️";
+
+                // 🔥 wichtig: verhindert Öffnen
+                delBtn.onclick = (event) => deleteLand(event, land);
+
+                row.appendChild(item);
+                row.appendChild(editBtn);
+
+                if (state.editLandName === land) {
+                    row.appendChild(cancelBtn);
+                }
+
+                row.appendChild(delBtn);
+
+                if (state.editLandName === land) {
+                    setTimeout(() => {
+                        setupLandEditEnterFlow(land);
+
+                        let input = document.getElementById("editLand-" + safeId(land));
+                        if (input) {
+                            input.focus();
+                            input.select(); // 🔥 markiert direkt den Text
+                        }
+
+                    }, 10);
+                }
+
+                div.appendChild(row);
+            }
+        }
+
+        /* LAND */
+        function openLand(l) {
+
+            // 🔥 WICHTIG: alten Zustand sauber zurücksetzen
+            state.editLandName = null;
+            state.editReiseId = null;
+
+            aktuellesLand = l;
+
+            show("land");
+
+            document.getElementById("landTitel").innerText = l;
+
+            document.getElementById("datum").value =
+                new Date().toISOString().split('T')[0];
+
+            updateDropdown();
+            renderListe();
+            renderKategorienUebersicht();
+            renderQuickAdd();
+
+            setupReisenEnterFlow();
+
+            console.log("Reisen Enter Setup läuft");
+        }
+
+        function backToReisen() {
+            aktuellesLand = null;
+            state.editLandName = null;
+            state.editReiseId = null;
+
+            show("reisen");
+            renderLaender();
+        }
+
+        /* Dropdown */
+        function updateDropdown() {
+            let select = document.getElementById("kategorieSelect");
+            if (!select || !aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            select.innerHTML = "";
+
+            Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
+                let opt = document.createElement("option");
+                opt.value = k;
+                opt.innerText = k;
+                select.appendChild(opt);
+            });
+        }
+
+        /* Kategorie */
+        function addKategorie() {
+            let name = prompt("Neue Kategorie?");
+            if (!name) return;
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+
+            if (!daten.Reisen[aktuellesLand][name]) {
+                daten.Reisen[aktuellesLand][name] = [];
+            }
+
+            speichern();
+            updateDropdown();
+        }
+
+        function addItem(liste, item) {
+
+            if (!Array.isArray(liste)) {
+                console.error("❌ KEIN ARRAY:", liste);
+                return;
+            }
+
+            liste.push(item);
+            speichern();
+        }
+
+        /* Eintrag */
+        function addEintrag() {
+
+            let kat = document.getElementById("kategorieSelect").value;
+            let betrag = parseFloat(document.getElementById("betrag").value);
+            let text = document.getElementById("text").value;
+            let datum = document.getElementById("datum").value;
+
+            if (isNaN(betrag)) return;
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            if (!daten.Reisen[aktuellesLand][kat]) {
+                console.warn("❌ Kategorie existiert nicht:", kat);
+                return;
+            }
+
+            addItem(daten.Reisen[aktuellesLand][kat], {
+                id: generateId(),
+                betrag,
+                text,
+                datum
+            });
+
+            renderListe();
+        }
+
+        /* Toggle */
+        function toggleKategorie(k) {
+
+            // sicherstellen, dass state existiert
+            if (!state.offeneKategorie) {
+                state.offeneKategorie = null;
+            }
+
+            state.offeneKategorie = (state.offeneKategorie === k ? null : k);
+
+            renderListe();
+        }
+
+        function createItem(html, marginLeft = 0) {
+            let div = document.createElement("div");
+            div.className = "item";
+            div.style.marginLeft = marginLeft + "px";
+            div.innerHTML = html;
+            return div;
+        }
+
+        /* LISTE */
+        function renderListe() {
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            let div = document.getElementById("liste");
+            if (!div) return;
+
+            div.innerHTML = "";
+
+            let gesamt = 0;
+
+            for (let k in daten.Reisen[aktuellesLand]) {
+
+                let sum = daten.Reisen[aktuellesLand][k]
+                    .reduce((a, b) => a + (b.betrag || 0), 0);
+
+                gesamt += sum;
+
+                let item = document.createElement("div");
+                item.className = "item";
+
+                item.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="toggle-btn" onclick="toggleKategorie('${k}')">
+                    ${state.offeneKategorie === k ? '▲' : '▼'}
+                </button>
+
+                ${state.editKategorieName === k ? `
+                    <input id="editKategorie-${k.replace(/\s+/g, '_')}" value="${k}">
+                ` : `
+                    <span>${k} – ${sum.toFixed(2)} €</span>
+                `}
+            </div>
+
+            <div class="actions" style="display:flex; gap:8px; align-items:center;">
+                ${state.editKategorieName === k ? `
+                    <button onclick="saveEditKategorie('${k}')" class="btn btn-icon btn-primary">💾</button>
+                    <button onclick="cancelEditKategorie()" class="btn btn-icon btn-cancel">❌</button>
+                ` : `
+                    <button onclick="startEditKategorie('${k}')">✏️</button>
+                    <button onclick="clearKategorie('${k}')">✂️</button>
+                    <button onclick="deleteKategorie('${k}')">🗑️</button>
+                `}
+            </div>
+        `;
+
+                div.appendChild(item);
+
+                // ENTER Kategorie
+                if (state.editKategorieName === k) {
+                    setTimeout(() => setupKategorieEditEnterFlow(k), 10);
+                }
+
+                // Einträge
+                if (state.offeneKategorie === k) {
+
+                    daten.Reisen[aktuellesLand][k].forEach((e, i) => {
+
+                        let sub = document.createElement("div");
+                        sub.className = "item";
+                        sub.style.marginLeft = "20px";
+                        sub.style.background = "#3a3a3c";
+
+                        if (state.editReiseId === e.id) {
+
+                            sub.innerHTML = `
+                        <input id="editText-${e.id}" value="${e.text || ""}">
+                        <input id="editBetrag-${e.id}" type="number" value="${e.betrag}">
+                        <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
+
+                        <div class="actions">
+                            <button onclick="saveEditReise(${e.id})">💾</button>
+                            <button onclick="cancelEditReise()">❌</button>
+                        </div>
+                    `;
+
+                            setTimeout(() => setupReiseEditEnterFlow(e.id), 10);
+                        }
+
+                        else {
+                            sub.innerHTML = `
+                        <span>
+                            ${e.text || "-"}
+                            ${e.datum ? " | " + formatDatum(e.datum) : ""}
+                        </span>
+
+                        <div class="actions">
+                            <span style="font-weight:600; margin-right:5px;">
+                                ${formatBetrag(e.betrag)}
+                            </span>
+
+                            <button class="edit" onclick="startEditReise(${e.id})">✏️</button>
+                            <button class="delete" onclick="deleteEintrag('${k}', ${i})">🗑️</button>
+                        </div>
+                    `;
+                        }
+
+                        div.appendChild(sub);
+                    });
+                }
+            }
+
+            document.getElementById("gesamt").innerText =
+                "Gesamt: " + gesamt.toFixed(2) + " €";
+
+            renderKategorienUebersicht();
+        }
+
+        /* EDIT */
+        function editKategorie(k) {
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            let neuerName = prompt("Neuer Name:", k);
+            if (!neuerName) return;
+
+            neuerName = neuerName.charAt(0).toUpperCase() + neuerName.slice(1);
+
+            if (daten.Reisen[aktuellesLand][neuerName]) {
+                alert("Kategorie existiert bereits!");
+                return;
+            }
+
+            daten.Reisen[aktuellesLand][neuerName] = daten.Reisen[aktuellesLand][k];
+            delete daten.Reisen[aktuellesLand][k];
+
+            speichern();
+            updateDropdown();
+            renderListe();
+        }
+
+        function clearKategorie(k) {
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+            if (!daten.Reisen[aktuellesLand][k]) return;
+
+            if (!confirm("Alle Kosten löschen?")) return;
+
+            daten.Reisen[aktuellesLand][k] = [];
+
+            speichern();
+            renderListe();
+        }
+
+        /* DELETE */
+        function deleteKategorie(k) {
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+            if (!daten.Reisen[aktuellesLand][k]) return;
+
+            if (!confirm("Kategorie wirklich löschen?")) return;
+
+            // 🔥 sicherstellen
+            if (!daten.geloeschteKategorien[aktuellesLand]) {
+                daten.geloeschteKategorien[aktuellesLand] = [];
+            }
+
+            // 🔥 keine Duplikate
+            if (!daten.geloeschteKategorien[aktuellesLand].includes(k)) {
+                daten.geloeschteKategorien[aktuellesLand].push(k);
+            }
+
+            delete daten.Reisen[aktuellesLand][k];
+
+            speichern();
+            updateDropdown();
+            renderListe();
+        }
+
+
+        function toggleKostenAuswahlModus() {
+            state.kostenAuswahlModus = !state.kostenAuswahlModus;
+
+            if (!state.kostenAuswahlModus) {
+                state.ausgewaehlteKosten = [];
+            }
+
+            renderLaufendeKosten();
+        }
+
+        function toggleKostenAuswahl(id) {
+
+            const index = state.ausgewaehlteKosten.indexOf(String(id));
+
+            if (index === -1) {
+                state.ausgewaehlteKosten.push(String(id));
+            } else {
+                state.ausgewaehlteKosten.splice(index, 1);
+            }
+
+            renderLaufendeKosten();
+        }
+
+        function deleteAusgewaehlteKosten() {
+
+            if (state.ausgewaehlteKosten.length === 0) return;
+
+            if (!confirm("Ausgewählte Fixkosten löschen?")) return;
+
+            daten["Laufende Kosten"].fix =
+                daten["Laufende Kosten"].fix.filter(
+                    e => !state.ausgewaehlteKosten.includes(String(e.id))
+                );
+
+            state.ausgewaehlteKosten = [];
+            state.kostenAuswahlModus = false;
+
+            speichern();
+            renderLaufendeKosten();
+            renderHomeUebersicht();
+        }
+
+        function renderLaufendeKosten() {
+
+            const div = document.getElementById("kostenListe");
+            const total = document.getElementById("kostenGesamt");
+            if (!div) return;
+
+            div.innerHTML = "";
+
+            const auswahlBox = document.getElementById("kostenAuswahlAktionen");
+
+            if (auswahlBox) {
+                if (state.kostenAuswahlModus) {
+                    auswahlBox.innerHTML = `
+                        <button onclick="deleteAusgewaehlteKosten()" style="background:#ff453a;">
+                            🗑️ ${state.ausgewaehlteKosten.length} ausgewählte löschen
+                        </button>
+                    `;
+                } else {
+                    auswahlBox.innerHTML = "";
+                }
+            }
+
+            daten["Laufende Kosten"] ??= { fix: [] };
+            daten["Laufende Kosten"].fix ??= [];
+
+            if (daten["Laufende Kosten"].fix.length === 0) {
+                div.innerHTML = `<p style="opacity:0.7;">Noch keine Fixkosten eingetragen.</p>`;
+            }
+
+            let summe = 0;
+
+            daten["Laufende Kosten"].fix.forEach(k => {
+
+                const datum = k.datum || datumAusTagAktuellerMonat(k.tag);
+                const tag = tagAusDatum(datum);
+
+                // Für alte gespeicherte Einträge: Tag und Datum im Speicherobjekt ergänzen.
+                k.datum = datum;
+                k.tag = tag;
+                k.info = k.info || "";
+
+                summe += parseFloat(k.betrag) || 0;
+
+                const isEdit = String(state.editKostenId) === String(k.id);
+                let item;
+
+                if (isEdit) {
+                    item = createItem(`
+                    <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                        <input id="editKostenText-${k.id}" value="${escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung">
+                        <input id="editKostenBetrag-${k.id}" type="number" value="${k.betrag}" placeholder="Betrag">
+                        <input id="editKostenInfo-${k.id}" value="${escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
+                        <input id="editKostenDatum-${k.id}" type="date" value="${datum}">
+
+                        <div style="display:flex; gap:10px; margin-top:6px;">
+                            <button onclick="saveEditKosten('${k.id}')">💾 Speichern</button>
+                            <button onclick="cancelEditKosten()" style="background:#607d8b;">❌ Abbrechen</button>
+                        </div>
+                    </div>
+                `);
+
+                    setTimeout(() => setupKostenEditEnterFlow(k.id), 0);
+                } else {
+
+                    const ausgewaehlt = state.ausgewaehlteKosten.includes(String(k.id));
+
+                    item = createItem(`
+                    <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:flex-start;">
+
+                        <div style="display:flex; align-items:flex-start; gap:12px; flex:1;">
+
+                            ${state.kostenAuswahlModus ? `
+                                <div onclick="toggleKostenAuswahl('${k.id}')"
+                                     style="
+                                        width:24px;
+                                        height:24px;
+                                        border-radius:50%;
+                                        border:2px solid white;
+                                        margin-top:2px;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        background:${ausgewaehlt ? '#0a84ff' : 'transparent'};
+                                        cursor:pointer;
+                                        flex-shrink:0;
+                                     ">
+                                    ${ausgewaehlt ? '✓' : ''}
+                                </div>
+                            ` : ''}
+
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight:600;">${escapeHtml(k.text || k.name || "-")}</span>
+                                <small style="opacity:0.7;">monatlich am ${tag}. (${formatDatum(datum)})</small>
+                                ${k.info ? `<div class="info-text">ℹ️ ${escapeHtml(k.info)}</div>` : ""}
+                            </div>
+
+                        </div>
+
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                            ${formatBetrag(k.betrag)}
+
+                            ${!state.kostenAuswahlModus ? `
+                                <button class="edit" onclick="startEditKosten('${k.id}')">✏️</button>
+                                <button class="delete" onclick="deleteLaufendeKosten('${k.id}')">🗑️</button>
+                            ` : ''}
+                        </div>
+
+                    </div>
+                `);
+                }
+
+                div.appendChild(item);
+            });
+
+            if (total) {
+                total.innerHTML = "Gesamt: " + formatBetrag(summe);
+            }
+        }
+
+        function addKosten() {
+
+            let text = formatText(document.getElementById("costText").value);
+            let betrag = parseFloat(document.getElementById("costBetrag").value);
+            let info = document.getElementById("costInfo")?.value.trim() || "";
+            let datum = document.getElementById("costDatum").value;
+
+            if (!text || isNaN(betrag)) return;
+            if (!datum) datum = heuteISO();
+
+            const tag = tagAusDatum(datum);
+
+            // 🛡️ Struktur absichern
+            if (!daten["Laufende Kosten"]) {
+                daten["Laufende Kosten"] = { fix: [] };
+            }
+            if (!Array.isArray(daten["Laufende Kosten"].fix)) {
+                daten["Laufende Kosten"].fix = [];
+            }
+
+            addItem(daten["Laufende Kosten"].fix, {
+                id: generateId(),
+                text,
+                betrag,
+                info,
+                datum,
+                tag
+            });
+
+            speichern();
+
+            // reset
+            document.getElementById("costText").value = "";
+            document.getElementById("costBetrag").value = "";
+            document.getElementById("costInfo").value = "";
+            document.getElementById("costDatum").value = heuteISO();
+            document.getElementById("kostenAddPanel")?.classList.add("hidden");
+
+            renderLaufendeKosten();
+            renderHomeUebersicht();
+        }
+
+        function deleteLaufendeKosten(id) {
+
+            if (!confirm("Wirklich löschen?")) return;
+
+            if (!daten["Laufende Kosten"] || !Array.isArray(daten["Laufende Kosten"].fix)) return;
+
+            let liste = daten["Laufende Kosten"].fix;
+            let index = liste.findIndex(e => String(e.id) === String(id));
+
+            if (index !== -1) {
+                liste.splice(index, 1);
+            }
+
+            speichern();
+            renderLaufendeKosten();
+            renderHomeUebersicht();
+        }
+
+        function startEditKosten(id) {
+            state.editKostenId = id;
+            renderLaufendeKosten();
+        }
+
+        function cancelEditKosten() {
+            state.editKostenId = null;
+            renderLaufendeKosten();
+        }
+
+        function saveEditKosten(id) {
+
+            let item = daten["Laufende Kosten"].fix.find(e => String(e.id) === String(id));
+            if (!item) return;
+
+            const textEl = document.getElementById("editKostenText-" + id);
+            const betragEl = document.getElementById("editKostenBetrag-" + id);
+            const infoEl = document.getElementById("editKostenInfo-" + id);
+            const datumEl = document.getElementById("editKostenDatum-" + id);
+
+            if (!textEl || !betragEl || !datumEl) return;
+
+            let text = textEl.value;
+            let betrag = parseFloat(betragEl.value);
+            let info = infoEl?.value.trim() || "";
+            let datum = datumEl.value || heuteISO();
+
+            if (!text || isNaN(betrag)) return;
+
+            item.text = formatText(text);
+            item.betrag = betrag;
+            item.info = info;
+            item.datum = datum;
+            item.tag = tagAusDatum(datum);
+
+            speichern();
+            state.editKostenId = null;
+            renderLaufendeKosten();
+            renderHomeUebersicht();
+        }
+
+        function editLaufendeKosten(id) {
+            startEditKosten(id);
+        }
+
+        function deleteAlleLaufendeKosten() {
+
+            if (!confirm("Alle Fixkosten wirklich löschen?")) return;
+
+            // 🛡️ Struktur absichern
+            if (!daten["Laufende Kosten"]) {
+                daten["Laufende Kosten"] = { fix: [] };
+            } else {
+                daten["Laufende Kosten"].fix = [];
+            }
+
+            speichern();
+            state.editKostenId = null;
+            renderLaufendeKosten();
+            renderHomeUebersicht();
+        }
+
+        function renderSimple() {
+
+            if (!aktuelleSimple) return;
+
+            console.log("AKTUELLE KATEGORIE:", aktuelleSimple);
+
+            if (aktuelleSimple === "Versicherungen") {
+                renderVersicherungen();
+            }
+            else if (aktuelleSimple === "Laufende Kosten") {
+                renderLaufendeKosten();
+            }
+            else if (aktuelleSimple === "Haushalt") {
+                renderHaushalt();
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatDatum(d) {
+            if (!d) return "";
+            let parts = d.split("-");
+            return parts[2] + "." + parts[1] + "." + parts[0];
+        }
+
+        function editEintrag(k, i) {
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            let eintrag = daten.Reisen[aktuellesLand][k][i];
+            if (!eintrag) return;
+
+            let neuerText = prompt("Beschreibung:", eintrag.text);
+            if (neuerText === null) return;
+
+            let neuerBetrag = prompt("Betrag:", eintrag.betrag);
+            if (neuerBetrag === null) return;
+
+            let neuesDatum = prompt("Datum (YYYY-MM-DD):", eintrag.datum);
+            if (neuesDatum === null) return;
+
+            daten.Reisen[aktuellesLand][k][i] = {
+                ...eintrag,
+                text: neuerText,
+                betrag: parseFloat(neuerBetrag),
+                datum: neuesDatum
+            };
+
+            speichern();
+            renderListe();
+        }
+
+        function deleteEintrag(k, i) {
+
+            if (!confirm("Eintrag wirklich löschen?")) return;
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+            if (!daten.Reisen[aktuellesLand][k]) return;
+
+            daten.Reisen[aktuellesLand][k].splice(i, 1);
+
+            speichern();
+            renderListe();
+        }
+
+
+        // Versicherung hinzufügen ➕
+        function addVersicherung() {
+
+            let name = formatText(document.getElementById("versName").value);
+            let betrag = parseFloat(document.getElementById("versBetrag").value);
+            let datum = document.getElementById("versDatum").value;
+
+            let anbieter = formatText(document.getElementById("versAnbieter").value);
+            let versicherungsnummer = document.getElementById("versNummer").value;
+            let intervall = document.getElementById("versIntervall").value;
+            let monat = parseInt(document.getElementById("versMonat").value);
+
+            if (!name || isNaN(betrag)) return;
+
+            // 🛡️ Sicherheit
+            if (!Array.isArray(daten.Versicherungen)) {
+                daten.Versicherungen = [];
+            }
+
+            if (isNaN(monat)) monat = 1;
+
+            addItem(daten.Versicherungen, {
+                id: generateId(),
+                name,
+                betrag,
+                datum,
+                anbieter,
+                versicherungsnummer,
+                intervall,
+                monat
+            });
+
+            speichern();
+
+            // Reset
+            document.getElementById("versName").value = "";
+            document.getElementById("versBetrag").value = "";
+            document.getElementById("versDatum").value = heuteISO();
+
+            document.getElementById("versAnbieter").value = "";
+            document.getElementById("versNummer").value = "";
+
+            document.getElementById("versIntervall").value = "monatlich";
+            document.getElementById("versMonat").value = String(getAktuellerMonat());
+            document.getElementById("versAddPanel")?.classList.add("hidden");
+
+            renderVersicherungen();
+            renderHomeUebersicht();
+        }
+
+        function renderVersicherungen() {
+
+            const div = document.getElementById("versicherungenListe");
+            const footer = document.getElementById("versicherungenFooter");
+            const total = document.getElementById("versicherungenGesamt");
+
+            if (!div || !footer) return;
+
+            div.innerHTML = "";
+            footer.innerHTML = "";
+
+            if (!Array.isArray(daten.Versicherungen)) {
+                daten.Versicherungen = [];
+            }
+
+            if (!state.offeneVersicherungen) {
+                state.offeneVersicherungen = {};
+            }
+
+            if (daten.Versicherungen.length === 0) {
+                div.innerHTML = `<p style="opacity:0.7;">Noch keine Versicherungen eingetragen.</p>`;
+            }
+
+            daten.Versicherungen.forEach((v) => {
+
+                const naechste = naechsteZahlung(v);
+                const isEdit = String(state.editVersicherungId) === String(v.id);
+                const istOffen = !!state.offeneVersicherungen[String(v.id)];
+
+                const item = document.createElement("div");
+                item.className = "item";
+
+                if (!isEdit) {
+
+                    item.innerHTML = `
+                <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
+
+                    <div onclick="toggleVersicherungDetails('${v.id}')"
+                         style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:10px; cursor:pointer;">
+
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:600;">${escapeHtml(v.name || "Versicherung")}</span>
+
+                            <small style="opacity:0.7;">
+                                Nächste Zahlung: ${naechste}
+                            </small>
+                        </div>
+
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+
+                            ${formatBetrag(v.betrag)}
+
+                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
+
+                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
+
+                            <button onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"
+                                    style="width:34px; height:34px; padding:0; border-radius:10px; background:#3a3a3c;">
+                                ${istOffen ? "▲" : "▼"}
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    ${istOffen ? `
+                        <div style="
+                            background:#3a3a3c;
+                            border-radius:14px;
+                            padding:12px;
+                            display:flex;
+                            flex-direction:column;
+                            gap:8px;
+                            font-size:14px;
+                        ">
+                            <div style="display:flex; justify-content:space-between; gap:10px;">
+                                <span style="opacity:0.7;">Anbieter</span>
+                                <span style="font-weight:600; text-align:right;">${escapeHtml(v.anbieter || "-")}</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; gap:10px;">
+                                <span style="opacity:0.7;">Kunden-/Versicherungsnummer</span>
+                                <span style="font-weight:600; text-align:right;">${escapeHtml(v.versicherungsnummer || "-")}</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; gap:10px;">
+                                <span style="opacity:0.7;">Intervall</span>
+                                <span style="font-weight:600;">${escapeHtml(v.intervall || "-")}</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; gap:10px;">
+                                <span style="opacity:0.7;">Startdatum</span>
+                                <span style="font-weight:600;">${v.datum ? formatDatum(v.datum) : "-"}</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; gap:10px;">
+                                <span style="opacity:0.7;">Startmonat</span>
+                                <span style="font-weight:600;">${getMonatName(getStartMonatVersicherung(v))}</span>
+                            </div>
+                        </div>
+                    ` : ""}
+
+                </div>
+            `;
+                }
+
+                else {
+
+                    item.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+
+                    <input id="editName-${v.id}" value="${escapeHtml(v.name || "")}">
+                    <input id="editBetrag-${v.id}" type="number" value="${v.betrag}">
+                    <input id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
+
+                    <input id="editAnbieter-${v.id}" value="${escapeHtml(v.anbieter || "")}">
+                    <input id="editNummer-${v.id}" value="${escapeHtml(v.versicherungsnummer || "")}">
+
+                    <select id="editIntervall-${v.id}">
+                        <option value="monatlich" ${v.intervall === "monatlich" ? "selected" : ""}>monatlich</option>
+                        <option value="vierteljährlich" ${v.intervall === "vierteljährlich" ? "selected" : ""}>vierteljährlich</option>
+                        <option value="halbjährlich" ${v.intervall === "halbjährlich" ? "selected" : ""}>halbjährlich</option>
+                        <option value="jährlich" ${v.intervall === "jährlich" ? "selected" : ""}>jährlich</option>
+                    </select>
+
+                    <select id="editMonat-${v.id}">
+                        <option value="1" ${parseInt(v.monat) === 1 ? "selected" : ""}>Januar</option>
+                        <option value="2" ${parseInt(v.monat) === 2 ? "selected" : ""}>Februar</option>
+                        <option value="3" ${parseInt(v.monat) === 3 ? "selected" : ""}>März</option>
+                        <option value="4" ${parseInt(v.monat) === 4 ? "selected" : ""}>April</option>
+                        <option value="5" ${parseInt(v.monat) === 5 ? "selected" : ""}>Mai</option>
+                        <option value="6" ${parseInt(v.monat) === 6 ? "selected" : ""}>Juni</option>
+                        <option value="7" ${parseInt(v.monat) === 7 ? "selected" : ""}>Juli</option>
+                        <option value="8" ${parseInt(v.monat) === 8 ? "selected" : ""}>August</option>
+                        <option value="9" ${parseInt(v.monat) === 9 ? "selected" : ""}>September</option>
+                        <option value="10" ${parseInt(v.monat) === 10 ? "selected" : ""}>Oktober</option>
+                        <option value="11" ${parseInt(v.monat) === 11 ? "selected" : ""}>November</option>
+                        <option value="12" ${parseInt(v.monat) === 12 ? "selected" : ""}>Dezember</option>
+                    </select>
+
+                    <div style="display:flex; gap:10px; margin-top:6px;">
+                        <button onclick="saveEditVersicherung('${v.id}')">💾 Speichern</button>
+                        <button onclick="cancelEditVersicherung()">❌ Abbrechen</button>
+                    </div>
+
+                </div>
+            `;
+
+                    setTimeout(() => setupVersicherungEditEnterFlow(v.id), 0);
+                }
+
+                div.appendChild(item);
+            });
+
+            if (daten.Versicherungen.length > 0) {
+
+                const btn = document.createElement("button");
+                btn.innerText = "🗑️ Alle Versicherungen löschen";
+                btn.onclick = deleteAlleVersicherungen;
+                btn.style.background = "red";
+
+                footer.appendChild(btn);
+            }
+
+            if (total) {
+                total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + formatBetrag(berechneGesamtFixkosten());
+            }
+        }
+
+        function toggleVersicherungDetails(id) {
+            if (!state.offeneVersicherungen) {
+                state.offeneVersicherungen = {};
+            }
+
+            const key = String(id);
+            state.offeneVersicherungen[key] = !state.offeneVersicherungen[key];
+
+            renderVersicherungen();
+        }
+
+
+        function naechsteZahlung(v) {
+
+            if (!v.datum) return "-";
+
+            const heute = new Date();
+            const start = new Date(v.datum);
+
+            const tag = start.getDate();
+
+            let datum = new Date(start);
+
+            function addInterval(months = 0, years = 0) {
+
+                if (months) datum.setMonth(datum.getMonth() + months);
+                if (years) datum.setFullYear(datum.getFullYear() + years);
+
+                datum.setDate(tag);
+            }
+
+            if (v.intervall === "monatlich") {
+
+                while (datum <= heute) addInterval(1);
+
+            } else if (v.intervall === "vierteljährlich") {
+
+                while (datum <= heute) addInterval(3);
+
+            } else if (v.intervall === "halbjährlich") {
+
+                while (datum <= heute) addInterval(6);
+
+            } else if (v.intervall === "jährlich") {
+
+                while (datum <= heute) addInterval(0, 1);
+
+            } else {
+                return "-";
+            }
+
+            return formatDatum(datum.toISOString().split("T")[0]);
+        }
+
+        //Versicherung Bearbeiten ✏️
+        function editVersicherung(i) {
+
+            let v = daten.Versicherungen[i];
+            if (!v) return;
+
+            let nameInput = prompt("Name:", v.name);
+            if (nameInput === null) return;
+            let name = formatText(nameInput);
+
+            let betragInput = prompt("Betrag:", v.betrag);
+            if (betragInput === null) return;
+
+            let betrag = parseFloat(betragInput);
+            if (isNaN(betrag)) return;
+
+            let anbieterInput = prompt("Anbieter:", v.anbieter || "");
+            if (anbieterInput === null) return;
+            let anbieter = formatText(anbieterInput);
+
+            let versicherungsnummer = prompt("Versicherungsnummer:", v.versicherungsnummer || "");
+            if (versicherungsnummer === null) return;
+
+            let intervall = prompt(
+                "Intervall (monatlich / vierteljährlich / halbjährlich / jährlich):",
+                v.intervall || "monatlich"
+            );
+            if (intervall === null) return;
+
+            let monatInput = prompt(
+                "Monat (z.B. April):",
+                getMonatName(v.monat || 1)
+            );
+            if (monatInput === null) return;
+
+            let monat = monatZuZahl(monatInput);
+
+            daten.Versicherungen[i] = {
+                ...v, // 🔥 wichtig: ID bleibt erhalten
+                name,
+                betrag,
+                anbieter,
+                versicherungsnummer,
+                intervall,
+                monat: parseInt(monat)
+            };
+
+            speichern();
+            renderVersicherungen();
+        }
+
+        //Versicherung löschen 🗑️
+        function deleteVersicherung(id) {
+
+            if (!confirm("Versicherung löschen?")) return;
+
+            if (!Array.isArray(daten.Versicherungen)) {
+                daten.Versicherungen = [];
+                return;
+            }
+
+            let index = daten.Versicherungen.findIndex(v => String(v.id) === String(id));
+
+            if (index !== -1) {
+                daten.Versicherungen.splice(index, 1);
+            }
+
+            speichern();
+            renderVersicherungen();
+        }
+
+        function toggleVersicherung(id) {
+            toggleVersicherungDetails(id);
+        }
+
+        function getMonatName(m) {
+
+            const monate = [
+                "Januar", "Februar", "März", "April", "Mai", "Juni",
+                "Juli", "August", "September", "Oktober", "November", "Dezember"
+            ];
+
+            if (!m || m < 1 || m > 12) return "-";
+
+            return monate[m - 1];
+        }
+
+        function getStartMonatVersicherung(v) {
+
+            let monat = parseInt(v.monat);
+
+            if (!isNaN(monat) && monat >= 1 && monat <= 12) {
+                return monat;
+            }
+
+            if (v.datum) {
+                let d = new Date(v.datum);
+                if (!isNaN(d)) return d.getMonth() + 1;
+            }
+
+            return 1;
+        }
+
+        function istVersicherungFaelligInMonat(v, monatAktuell) {
+
+            let intervall = v.intervall || "monatlich";
+            let monat = getStartMonatVersicherung(v);
+
+            if (intervall === "monatlich") {
+                return true;
+            }
+
+            if (intervall === "jährlich") {
+                return monat === monatAktuell;
+            }
+
+            if (intervall === "halbjährlich") {
+                let zweiterMonat = ((monat + 6 - 1) % 12) + 1;
+                return monat === monatAktuell || zweiterMonat === monatAktuell;
+            }
+
+            if (intervall === "vierteljährlich") {
+                for (let i = 0; i < 4; i++) {
+                    let m = ((monat + i * 3 - 1) % 12) + 1;
+                    if (m === monatAktuell) return true;
+                }
+            }
+
+            return false;
+        }
+
+        function versicherungenDiesenMonat(monatAktuell = getAktuellerMonat()) {
+
+            if (!Array.isArray(daten.Versicherungen)) return [];
+
+            return daten.Versicherungen.filter(v => {
+                let betrag = parseFloat(v.betrag);
+                if (isNaN(betrag)) return false;
+
+                return istVersicherungFaelligInMonat(v, monatAktuell);
+            });
+        }
+
+        function berechneMonat(monatAktuell) {
+
+            return versicherungenDiesenMonat(monatAktuell).reduce((summe, v) => {
+                let betrag = parseFloat(v.betrag);
+                return summe + (isNaN(betrag) ? 0 : betrag);
+            }, 0);
+        }
+
+        function berechneSimpleMonat(liste, monatAktuell) {
+
+            if (!Array.isArray(liste)) return 0;
+
+            let summe = 0;
+
+            liste.forEach(e => {
+
+                let betrag = parseFloat(e.betrag);
+                if (isNaN(betrag)) return;
+
+                let monat = parseInt(e.monat);
+                if (isNaN(monat)) monat = 1;
+
+                if (e.intervall === "monatlich") {
+                    summe += betrag;
+                }
+
+                else if (e.intervall === "jährlich") {
+                    if (monat === monatAktuell) {
+                        summe += betrag;
+                    }
+                }
+
+            });
+
+            return summe;
+        }
+
+        function berechneMonatGesamt() {
+            const zeitraum = getGehaltszeitraum();
+
+            const laufende = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende)
+                .reduce((sum, e) => sum + e.betrag, 0);
+
+            const versicherungen = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende)
+                .reduce((sum, e) => sum + e.betrag, 0);
+
+            return laufende + versicherungen;
+        }
+        function deleteAlleVersicherungen() {
+
+            if (!confirm("Alle Versicherungen wirklich löschen?")) return;
+
+            if (!Array.isArray(daten.Versicherungen)) {
+                daten.Versicherungen = [];
+            } else {
+                daten.Versicherungen.length = 0;
+            }
+
+            speichern();
+            renderVersicherungen();
+        }
+
+        function renderKategorienUebersicht() {
+
+            let div = document.getElementById("kategorienUebersicht");
+            if (!div) return;
+
+            div.innerHTML = "";
+
+            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
+
+            for (let k in daten.Reisen[aktuellesLand]) {
+
+                let liste = daten.Reisen[aktuellesLand][k];
+
+                if (!Array.isArray(liste)) continue;
+
+                let sum = liste.reduce((a, b) => {
+                    let betrag = parseFloat(b.betrag);
+                    return a + (isNaN(betrag) ? 0 : betrag);
+                }, 0);
+
+                let item = document.createElement("div");
+                item.className = "item";
+
+                item.innerHTML = `
+            <span>${k}</span>
+            <span style="font-weight:600;">
+                ${sum.toFixed(2)} €
+            </span>
+        `;
+
+                div.appendChild(item);
+            }
+        }
+
+        function deleteLand(event, land) {
+
+            // 🛡️ Event-Schutz
+            if (event) {
+                event.stopPropagation();
+            }
+
+            if (!confirm(land + " wirklich löschen?")) return;
+
+            if (daten.Reisen && daten.Reisen[land]) {
+                delete daten.Reisen[land];
+            }
+
+            // 🔥 auch gelöschte Kategorien entfernen
+            if (daten.geloeschteKategorien && daten.geloeschteKategorien[land]) {
+                delete daten.geloeschteKategorien[land];
+            }
+
+            speichern();
+            renderLaender();
+        }
+
+        function clearLand() {
+
+            if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
+
+            if (!confirm("Wirklich ALLE Kosten in diesem Land löschen?")) return;
+
+            for (let k in daten.Reisen[aktuellesLand]) {
+                if (Array.isArray(daten.Reisen[aktuellesLand][k])) {
+                    daten.Reisen[aktuellesLand][k] = [];
+                }
+            }
+
+            speichern();
+            renderListe();
+        }
+
+        function addHaushalt() {
+
+            let text = formatText(document.getElementById("hausText").value);
+            let betrag = parseFloat(document.getElementById("hausBetrag").value);
+            let datum = document.getElementById("hausDatum").value;
+
+            if (!text || isNaN(betrag) || !datum) return;
+
+            let monat = new Date(datum).getMonth() + 1;
+
+            if (!daten.Haushalt[monat]) {
+                daten.Haushalt[monat] = [];
+            }
+
+            daten.Haushalt[monat].push({
+                id: generateId(),
+                text,
+                betrag,
+                datum
+            });
+
+            speichern();
+
+            // reset
+            document.getElementById("hausText").value = "";
+            document.getElementById("hausBetrag").value = "";
+            document.getElementById("hausDatum").value = heuteISO();
+            document.getElementById("hausAddPanel")?.classList.add("hidden");
+
+            renderHaushalt();
+        }
+
+        function renderQuickAdd() {
+
+            let div = document.getElementById("quickAdd");
+            if (!div) return;
+
+            div.innerHTML = "";
+
+            if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
+
+            Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
+
+                let btn = document.createElement("button");
+                btn.className = "quick-chip";
+                btn.innerText = "➕ " + k;
+
+                btn.onclick = () => quickAdd(k);
+
+                div.appendChild(btn);
+            });
+
+            let addBtn = document.createElement("button");
+            addBtn.innerText = "➕ Kategorie";
+            addBtn.style.background = "#555";
+
+            addBtn.onclick = () => {
+                addKategorie();
+                renderQuickAdd(); // ok, aber optional (siehe Hinweis unten)
+            };
+
+            div.appendChild(addBtn);
+        }
+
+        function quickAdd(k) {
+
+            quickKategorie = k;
+
+            const titel = document.getElementById("quickTitel");
+            const box = document.getElementById("quickBox");
+
+            if (!titel || !box) return;
+
+            titel.innerText = "➕ " + k;
+
+            box.classList.remove("hidden");
+
+            // Reset Felder
+            const betrag = document.getElementById("quickBetrag");
+            const text = document.getElementById("quickText");
+
+            if (betrag) betrag.value = "";
+            if (text) text.value = "";
+
+            setTimeout(() => {
+                box.classList.add("show");
+
+                // optional: nur setzen, wenn nicht schon gesetzt
+                setupQuickAddEnterFlow();
+
+                betrag?.focus();
+
+            }, 10);
+        }
+
+        function toggleManual() {
+
+            const box = document.getElementById("manualBox");
+            if (!box) return;
+
+            box.classList.toggle("hidden");
+        }
+
+        function saveQuickAdd() {
+
+            if (!aktuellesLand || !quickKategorie) return;
+
+            let betrag = parseFloat(document.getElementById("quickBetrag")?.value);
+            let text = document.getElementById("quickText")?.value || "";
+            let datum = new Date().toISOString().split('T')[0];
+
+            if (isNaN(betrag)) return;
+
+            if (!daten.Reisen[aktuellesLand]) return;
+
+            if (!Array.isArray(daten.Reisen[aktuellesLand][quickKategorie])) {
+                daten.Reisen[aktuellesLand][quickKategorie] = [];
+            }
+
+            daten.Reisen[aktuellesLand][quickKategorie].push({
+                id: generateId(),
+                betrag,
+                text,
+                datum
+            });
+
+            speichern();
+
+            const box = document.getElementById("quickBox");
+
+            if (box) {
+                box.classList.remove("show");
+
+                setTimeout(() => {
+                    box.classList.add("hidden");
+                }, 200);
+            }
+
+            renderListe();
+        }
+
+
+        //<!-- ===================== Enter Funktion ===================== -->
+        function enterToNext(current, next) {
+            if (!current || !next) return;
+
+            current.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    next.focus();
+                }
+            };
+        }
+
+        //<!-- ===================== Enter Reisen ===================== -->
+        function setupReisenEnterFlow() {
+
+            const betrag = document.getElementById("betrag");
+            const text = document.getElementById("text");
+
+            if (!betrag || !text) return;
+
+            enterToNext(betrag, text);
+
+            text.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addEintrag();
+                    setTimeout(() => betrag.focus(), 50);
+                }
+            };
+
+            betrag.focus();
+        }
+
+        function setupQuickAddEnterFlow() {
+
+            const betrag = document.getElementById("quickBetrag");
+            const text = document.getElementById("quickText");
+
+            if (!betrag || !text) return;
+
+            enterToNext(betrag, text);
+
+            text.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveQuickAdd();
+                    setTimeout(() => betrag.focus(), 10);
+                }
+            };
+
+            betrag.focus();
+        }
+
+        function setupReiseEditEnterFlow(id) {
+
+            const text = document.getElementById("editText-" + id);
+            const betrag = document.getElementById("editBetrag-" + id);
+            const datum = document.getElementById("editDatum-" + id);
+
+            if (!text || !betrag || !datum) return;
+
+            enterToNext(text, betrag);
+            enterToNext(betrag, datum);
+
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditReise(id);
+                }
+            };
+
+            text.focus();
+        }
+
+        function setupLandEnter() {
+
+            const input = document.getElementById("landInput");
+            if (!input) return;
+
+            input.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addLand();
+                    setTimeout(() => input.focus(), 10);
+                }
+            };
+
+            input.focus();
+        }
+
+        function setupLandEditEnterFlow(name) {
+
+            const input = document.getElementById("editLand-" + safeId(name));
+            if (!input) return;
+
+            input.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditLand(name);
+                }
+            };
+
+            input.focus();
+        }
+
+        function setupKategorieEditEnterFlow(name) {
+
+            const id = name.replace(/\s+/g, '_');
+            const input = document.getElementById("editKategorie-" + id);
+
+            if (!input) return;
+
+            input.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditKategorie(name);
+                }
+            };
+
+            input.focus();
+        }
+
+        //<!-- ===================== Enter Versicherungen ===================== -->
+        function setupVersicherungEnterFlow() {
+
+            const name = document.getElementById("versName");
+            const betrag = document.getElementById("versBetrag");
+            const datum = document.getElementById("versDatum");
+            const anbieter = document.getElementById("versAnbieter");
+            const nummer = document.getElementById("versNummer");
+
+            if (!name || !betrag || !datum || !anbieter || !nummer) return;
+
+            enterToNext(name, betrag);
+            enterToNext(betrag, datum);
+            enterToNext(datum, anbieter);
+            enterToNext(anbieter, nummer);
+
+            nummer.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addVersicherung();
+                    name.focus();
+                }
+            };
+
+            name.focus();
+        }
+
+        function setupVersicherungEditEnterFlow(id) {
+
+            const name = document.getElementById("editName-" + id);
+            const betrag = document.getElementById("editBetrag-" + id);
+            const anbieter = document.getElementById("editAnbieter-" + id);
+            const nummer = document.getElementById("editNummer-" + id);
+
+            if (!name || !betrag || !anbieter || !nummer) return;
+
+            enterToNext(name, betrag);
+            enterToNext(betrag, anbieter);
+            enterToNext(anbieter, nummer);
+
+            nummer.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditVersicherung(id);
+                }
+            };
+
+            name.focus();
+        }
+
+        //<!-- ===================== Enter Haushalt ===================== -->
+        function setupHaushaltEnterFlow() {
+
+            const text = document.getElementById("hausText");
+            const betrag = document.getElementById("hausBetrag");
+            const datum = document.getElementById("hausDatum");
+
+            if (!text || !betrag || !datum) return;
+
+            enterToNext(text, betrag);
+            enterToNext(betrag, datum);
+
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addHaushalt();
+                    text.focus();
+                }
+            };
+
+            text.focus();
+        }
+
+        function setupHaushaltEditEnterFlow(id) {
+
+            const text = document.getElementById("editText-" + id);
+            const betrag = document.getElementById("editBetrag-" + id);
+            const datum = document.getElementById("editDatum-" + id);
+
+            if (!text || !betrag || !datum) return;
+
+            enterToNext(text, betrag);
+            enterToNext(betrag, datum);
+
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditHaushalt(id);
+                }
+            };
+
+            text.focus();
+        }
+
+        //<!-- ===================== Enter Laufende Kosten ===================== -->
+        function setupKostenEnterFlow() {
+
+            const text = document.getElementById("costText");
+            const betrag = document.getElementById("costBetrag");
+            const info = document.getElementById("costInfo");
+            const datum = document.getElementById("costDatum");
+
+            if (!text || !betrag || !info || !datum) return;
+
+            enterToNext(text, betrag);
+            enterToNext(betrag, info);
+            enterToNext(info, datum);
+
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addKosten();
+                    text.focus();
+                }
+            };
+
+            text.focus();
+        }
+
+        function setupKostenEditEnterFlow(id) {
+
+            const text = document.getElementById("editKostenText-" + id);
+            const betrag = document.getElementById("editKostenBetrag-" + id);
+            const info = document.getElementById("editKostenInfo-" + id);
+            const datum = document.getElementById("editKostenDatum-" + id);
+
+            if (!text || !betrag || !info || !datum) return;
+
+            enterToNext(text, betrag);
+            enterToNext(betrag, info);
+            enterToNext(info, datum);
+
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveEditKosten(id);
+                }
+            };
+
+            text.focus();
+        }
+
+
+        function renderHaushalt() {
+
+            const container = document.getElementById("haushaltListe");
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            const data = gruppiereHaushalt();
+            const jahre = Object.keys(data).sort((a, b) => b - a);
+
+            if (jahre.length === 0) {
+                container.innerHTML = `<p style="opacity:0.7;">Noch keine Haushalt-Einträge eingetragen.</p>`;
+                return;
+            }
+
+            jahre.forEach(jahr => {
+
+                const jahrOffen = state.offeneHaushaltJahre[jahr];
+
+                const jahrSumme = Object.values(data[jahr])
+                    .flat()
+                    .reduce((a, b) => a + (parseFloat(b.betrag) || 0), 0);
+
+                container.appendChild(createItem(`
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                <div>
+                    <button class="toggle-btn" onclick="toggleHaushaltJahr('${jahr}')">
+                        ${jahrOffen ? '▲' : '▼'}
+                    </button>
+                    📁 ${jahr}
+                </div>
+                <div>${formatBetrag(jahrSumme)}</div>
+            </div>
+        `));
+
+                if (!jahrOffen) return;
+
+                const monate = Object.keys(data[jahr]).sort((a, b) => b - a);
+
+                monate.forEach(monat => {
+
+                    const key = jahr + "-" + monat;
+                    const monatOffen = state.offeneHaushaltMonate[key];
+
+                    const liste = data[jahr][monat];
+                    const summe = liste.reduce((a, b) => a + (parseFloat(b.betrag) || 0), 0);
+
+                    container.appendChild(createItem(`
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <div>
+                        <button class="toggle-btn" onclick="toggleHaushaltMonat('${jahr}', '${monat}')">
+                            ${monatOffen ? '▲' : '▼'}
+                        </button>
+                        📂 ${getMonatName(parseInt(monat))}
+                    </div>
+                    <div>${formatBetrag(summe)}</div>
+                </div>
+            `, 20));
+
+                    if (!monatOffen) return;
+
+                    liste.forEach(e => {
+
+                        const isEdit = state.editHaushaltId === e.id;
+                        let html;
+
+                        if (isEdit) {
+                            html = `
+                        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                            <input id="editText-${e.id}" value="${e.text || e.name || ""}">
+                            <input id="editBetrag-${e.id}" type="number" value="${e.betrag}">
+                            <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
+
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="saveEditHaushalt(${e.id})">💾 Speichern</button>
+                                <button onclick="cancelEditHaushalt()">❌ Abbrechen</button>
+                            </div>
+                        </div>
+                    `;
+                        } else {
+                            html = `
+                        <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
+                            <span>
+                                ${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}
+                            </span>
+
+                            <div class="actions" style="display:flex; align-items:center; gap:8px;">
+                                ${formatBetrag(e.betrag)}
+
+                                <button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button>
+                                <button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                        }
+
+                        const item = createItem(html, 40);
+                        item.style.background = "#3a3a3c";
+
+                        container.appendChild(item);
+
+                        if (isEdit) {
+                            setTimeout(() => setupHaushaltEditEnterFlow(e.id), 0);
+                        }
+                    });
+                });
+            });
+        }
+
+        function deleteAlleHaushalt() {
+
+            if (!confirm("Alle Haushalt-Einträge wirklich löschen?")) return;
+
+            if (!daten.Haushalt) {
+                daten.Haushalt = {};
+            }
+
+            for (let monat in daten.Haushalt) {
+                if (Array.isArray(daten.Haushalt[monat])) {
+                    daten.Haushalt[monat] = [];
+                }
+            }
+
+            speichern();
+            renderHaushalt();
+        }
+
+        function gruppiereHaushalt() {
+
+            let gruppiert = {};
+
+            if (!daten.Haushalt) return gruppiert;
+
+            for (let monat in daten.Haushalt) {
+
+                let liste = daten.Haushalt[monat];
+
+                if (!Array.isArray(liste)) continue;
+
+                liste.forEach(e => {
+
+                    if (!e || !e.datum) return;
+
+                    let d = new Date(e.datum);
+                    if (isNaN(d)) return;
+
+                    let jahr = d.getFullYear();
+                    let monatNum = d.getMonth() + 1;
+
+                    if (!gruppiert[jahr]) {
+                        gruppiert[jahr] = {};
+                    }
+
+                    if (!gruppiert[jahr][monatNum]) {
+                        gruppiert[jahr][monatNum] = [];
+                    }
+
+                    gruppiert[jahr][monatNum].push(e);
+                });
+            }
+
+            return gruppiert;
+        }
+
+        function toggleHaushaltJahr(jahr) {
+
+            if (!state.offeneHaushaltJahre) {
+                state.offeneHaushaltJahre = {};
+            }
+
+            state.offeneHaushaltJahre[jahr] = !state.offeneHaushaltJahre[jahr];
+
+            renderHaushalt();
+        }
+
+        function toggleHaushaltMonat(jahr, monat) {
+
+            if (!state.offeneHaushaltMonate) {
+                state.offeneHaushaltMonate = {};
+            }
+
+            let key = jahr + "-" + monat;
+
+            state.offeneHaushaltMonate[key] = !state.offeneHaushaltMonate[key];
+
+            renderHaushalt();
+        }
+
+        function editHaushalt(jahr, monat, index) {
+
+            let liste = gruppiereHaushalt()[jahr]?.[monat];
+            if (!liste) return;
+
+            let eintrag = liste[index];
+            if (!eintrag) return;
+
+            let neuerName = prompt("Beschreibung:", eintrag.text || eintrag.name || "");
+            if (neuerName === null) return;
+
+            let neuerBetrag = prompt("Betrag:", eintrag.betrag);
+            if (neuerBetrag === null) return;
+
+            let neuesDatum = prompt("Datum (YYYY-MM-DD):", eintrag.datum);
+            if (neuesDatum === null) return;
+
+            let originalMonat = new Date(eintrag.datum).getMonth() + 1;
+
+            let originalListe = daten.Haushalt[originalMonat];
+            if (!Array.isArray(originalListe)) return;
+
+            let originalIndex = originalListe.findIndex(e => e.id === eintrag.id);
+            if (originalIndex === -1) return;
+
+            let updated = {
+                id: eintrag.id,
+                text: formatText(neuerName),
+                betrag: parseFloat(neuerBetrag),
+                datum: neuesDatum
+            };
+
+            let neuerMonat = new Date(neuesDatum).getMonth() + 1;
+
+            if (neuerMonat === originalMonat) {
+
+                originalListe[originalIndex] = updated;
+
+            } else {
+
+                originalListe.splice(originalIndex, 1);
+
+                if (!daten.Haushalt[neuerMonat]) {
+                    daten.Haushalt[neuerMonat] = [];
+                }
+
+                daten.Haushalt[neuerMonat].push(updated);
+            }
+
+            speichern();
+            renderHaushalt();
+        }
+
+        function deleteHaushalt(id) {
+
+            if (!confirm("Eintrag löschen?")) return;
+
+            if (!daten.Haushalt) return;
+
+            for (let monat in daten.Haushalt) {
+
+                let liste = daten.Haushalt[monat];
+
+                if (!Array.isArray(liste)) continue;
+
+                let index = liste.findIndex(e => e.id === id);
+
+                if (index !== -1) {
+                    liste.splice(index, 1);
+                    break;
+                }
+            }
+
+            speichern();
+            renderHaushalt();
+        }
+
+        function startEditHaushalt(id) {
+            state.editHaushaltId = id;
+            renderHaushalt();
+        }
+
+        function saveEditHaushalt(id) {
+
+            let textEl = document.getElementById("editText-" + id);
+            let betragEl = document.getElementById("editBetrag-" + id);
+            let datumEl = document.getElementById("editDatum-" + id);
+
+            if (!textEl || !betragEl || !datumEl) return;
+
+            let text = textEl.value;
+            let betrag = parseFloat(betragEl.value);
+            let datum = datumEl.value;
+
+            if (!text || isNaN(betrag) || !datum) return;
+
+            let neuerMonat = new Date(datum).getMonth() + 1;
+
+            let updated = {
+                id,
+                text: formatText(text),
+                betrag,
+                datum
+            };
+
+            for (let monat in daten.Haushalt) {
+
+                let liste = daten.Haushalt[monat];
+
+                if (!Array.isArray(liste)) continue;
+
+                let index = liste.findIndex(e => String(e.id) === String(id));
+
+                if (index !== -1) {
+
+                    liste.splice(index, 1);
+
+                    if (!daten.Haushalt[neuerMonat]) {
+                        daten.Haushalt[neuerMonat] = [];
+                    }
+
+                    daten.Haushalt[neuerMonat].push(updated);
+
+                    break;
+                }
+            }
+
+            speichern();
+            state.editHaushaltId = null;
+            renderHaushalt();
+        }
+
+        function cancelEditHaushalt() {
+            state.editHaushaltId = null;
+            renderHaushalt();
+        }
+
+        function startEditVersicherung(id) {
+
+            state.editHaushaltId = null; // optional reset
+            state.editVersicherungId = id;
+
+            renderVersicherungen();
+        }
+
+        function cancelEditVersicherung() {
+            state.editVersicherungId = null;
+            renderVersicherungen();
+        }
+
+        function saveEditVersicherung(id) {
+
+            let v = daten.Versicherungen.find(e => String(e.id) === String(id));
+            if (!v) return;
+
+            let datumEl = document.getElementById("editDatum-" + id);
+            let nameEl = document.getElementById("editName-" + id);
+            let betragEl = document.getElementById("editBetrag-" + id);
+            let anbieterEl = document.getElementById("editAnbieter-" + id);
+            let nummerEl = document.getElementById("editNummer-" + id);
+            let intervallEl = document.getElementById("editIntervall-" + id);
+            let monatEl = document.getElementById("editMonat-" + id);
+
+            if (!datumEl || !nameEl || !betragEl || !anbieterEl || !nummerEl || !intervallEl || !monatEl) return;
+
+            let datum = datumEl.value;
+            let name = nameEl.value;
+            let betrag = parseFloat(betragEl.value);
+            let anbieter = anbieterEl.value;
+            let nummer = nummerEl.value;
+            let intervall = intervallEl.value;
+            let monat = parseInt(monatEl.value);
+
+            if (!name || isNaN(betrag) || !datum || isNaN(monat)) return;
+
+            v.datum = datum;
+            v.name = formatText(name);
+            v.betrag = betrag;
+            v.anbieter = formatText(anbieter || "");
+            v.versicherungsnummer = nummer || "";
+            v.intervall = intervall;
+            v.monat = monat;
+
+            speichern();
+
+            state.editVersicherungId = null;
+            renderVersicherungen();
+            renderHomeUebersicht();
+        }
+
+        function startEditReise(id) {
+
+            state.editReiseId = id;
+
+            renderListe();
+        }
+
+
+        function cancelEditVersicherung() {
+
+            state.editVersicherungId = null;
+
+            renderVersicherungen();
+        }
+
+        function saveEditReise(id) {
+
+            if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
+
+            let textEl = document.getElementById("editText-" + id);
+            let betragEl = document.getElementById("editBetrag-" + id);
+            let datumEl = document.getElementById("editDatum-" + id);
+
+            if (!textEl || !betragEl || !datumEl) return;
+
+            let text = textEl.value;
+            let betrag = parseFloat(betragEl.value);
+            let datum = datumEl.value;
+
+            if (!text || isNaN(betrag) || !datum) return;
+
+            for (let k in daten.Reisen[aktuellesLand]) {
+
+                let liste = daten.Reisen[aktuellesLand][k];
+
+                let eintrag = liste.find(e => String(e.id) === String(id));
+
+                if (eintrag) {
+
+                    eintrag.text = text;
+                    eintrag.betrag = betrag;
+                    eintrag.datum = datum;
+
+                    break;
+                }
+            }
+
+            speichern();
+            state.editReiseId = null; // 👈 vereinheitlicht
+            renderListe();
+        }
+
+        function cancelEditReise() {
+            state.editReiseId = null;
+            renderListe();
+        }
+
+        function saveEditKategorie(oldName) {
+
+            if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
+
+            let safeId = oldName.replace(/\s+/g, '_');
+            let input = document.getElementById("editKategorie-" + safeId);
+            if (!input) return;
+
+            let newName = input.value.trim();
+            if (!newName) return;
+
+            newName = newName.charAt(0).toUpperCase() + newName.slice(1);
+
+            let land = daten.Reisen[aktuellesLand];
+
+            if (!land || !land[oldName]) return;
+
+            if (land[newName]) {
+                alert("Kategorie existiert bereits!");
+                return;
+            }
+
+            land[newName] = land[oldName];
+            delete land[oldName];
+
+            state.editKategorieName = null;
+
+            speichern();
+            renderListe();
+        }
+
+        function cancelEditKategorie() {
+            state.editKategorieName = null;
+            renderListe();
+        }
+
+        function startEditKategorie(name) {
+            state.editKategorieName = name;
+            renderListe();
+        }
+
+        function formatBetrag(betrag) {
+
+            let value = parseFloat(betrag);
+
+            if (isNaN(value)) value = 0;
+
+            return `
+        <span style="white-space:nowrap; font-weight:600;">
+            ${value.toFixed(2)} €
+        </span>
+    `;
+        }
+
+        function editLand(oldName) {
+
+            if (!daten.Reisen) return;
+
+            let neuerName = prompt("Neuer Name:", oldName);
+            if (!neuerName) return;
+
+            neuerName = neuerName.trim();
+            if (!neuerName) return;
+
+            if (neuerName === oldName) return;
+
+            neuerName = neuerName.charAt(0).toUpperCase() + neuerName.slice(1);
+
+            let reisen = daten.Reisen;
+
+            if (reisen[neuerName]) {
+                alert("Land existiert bereits!");
+                return;
+            }
+
+            if (!reisen[oldName]) return;
+
+            reisen[neuerName] = reisen[oldName];
+            delete reisen[oldName];
+
+            if (!daten.geloeschteKategorien) {
+                daten.geloeschteKategorien = {};
+            }
+
+            if (daten.geloeschteKategorien[oldName]) {
+                daten.geloeschteKategorien[neuerName] =
+                    daten.geloeschteKategorien[oldName];
+
+                delete daten.geloeschteKategorien[oldName];
+            }
+
+            speichern();
+            renderLaender();
+        }
+
+        function startEditLand(name) {
+
+            state.editLandName = name;
+
+            renderLaender();
+
+            requestAnimationFrame(() => {
+
+                let input = document.getElementById("editLand-" + safeId(name));
+
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        }
+
+        function saveEditLand(oldName) {
+
+            if (!daten.Reisen) return;
+
+            let input = document.getElementById("editLand-" + safeId(oldName));
+            if (!input) return;
+
+            let newName = input.value.trim();
+            if (!newName) return;
+
+            if (newName === oldName) {
+                state.editLandName = null;
+                renderLaender();
+                return;
+            }
+
+            newName = newName.charAt(0).toUpperCase() + newName.slice(1);
+
+            let reisen = daten.Reisen;
+
+            if (reisen[newName]) {
+                alert("Land existiert bereits!");
+                return;
+            }
+
+            if (!reisen[oldName]) return;
+
+            reisen[newName] = reisen[oldName];
+            delete reisen[oldName];
+
+            if (!daten.geloeschteKategorien) {
+                daten.geloeschteKategorien = {};
+            }
+
+            if (daten.geloeschteKategorien[oldName]) {
+
+                daten.geloeschteKategorien[newName] =
+                    daten.geloeschteKategorien[oldName];
+
+                delete daten.geloeschteKategorien[oldName];
+            }
+
+            speichern();
+            state.editLandName = null;
+            renderLaender();
+        }
+
+        function cancelEditLand() {
+            state.editLandName = null;
+            renderLaender();
+        }
+
+        function toggleKostenDetails() {
+            state.homeKostenOffen = !state.homeKostenOffen;
+            renderHomeUebersicht();
+        }
+
+        function toggleFaelligDetails() {
+            state.homeFaelligOffen = !state.homeFaelligOffen;
+            renderHomeUebersicht();
+        }
+
+        function intervallInMonaten(intervall) {
+            if (intervall === "vierteljährlich") return 3;
+            if (intervall === "halbjährlich") return 6;
+            if (intervall === "jährlich") return 12;
+            return 1;
+        }
+
+        function laufendeKostenImZeitraum(von, bis) {
+            daten["Laufende Kosten"] ??= { fix: [] };
+            daten["Laufende Kosten"].fix ??= [];
+
+            const faellig = [];
+
+            daten["Laufende Kosten"].fix.forEach(k => {
+                const betrag = parseFloat(k.betrag);
+                if (isNaN(betrag)) return;
+
+                const startDatum = parseISODate(k.datum || datumAusTagAktuellerMonat(k.tag));
+                if (!startDatum) return;
+
+                const tag = tagAusDatum(k.datum || datumAusTagAktuellerMonat(k.tag));
+
+                // Wichtig:
+                // Das eingegebene Datum ist der erste mögliche Abbuchungstermin.
+                // Beispiel: 28.05. darf NICHT schon als 28.04. im Gehaltsmonat 26.04.-25.05. auftauchen.
+                let datum = datumMitSicheremTag(von.getFullYear(), von.getMonth(), tag);
+
+                while (datum < von || datum < startDatum) {
+                    datum = datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + 1, tag);
+                }
+
+                while (datum <= bis) {
+                    faellig.push({
+                        typ: "laufend",
+                        typLabel: "Fixkosten",
+                        name: k.text || k.name || "Fixkosten",
+                        betrag,
+                        datum: new Date(datum)
+                    });
+
+                    datum = datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + 1, tag);
+                }
+            });
+
+            return faellig;
+        }
+
+        function versicherungsZahlungenImZeitraum(von, bis) {
+            if (!Array.isArray(daten.Versicherungen)) return [];
+
+            const faellig = [];
+
+            daten.Versicherungen.forEach(v => {
+                const betrag = parseFloat(v.betrag);
+                if (isNaN(betrag)) return;
+
+                let start = parseISODate(v.datum);
+
+                if (!start) {
+                    const monat = getStartMonatVersicherung(v);
+                    start = datumMitSicheremTag(von.getFullYear(), monat - 1, 1);
+                }
+
+                const tag = start.getDate();
+                const intervallMonate = intervallInMonaten(v.intervall);
+                let datum = new Date(start);
+
+                while (datum < von) {
+                    datum = datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + intervallMonate, tag);
+                }
+
+                while (datum <= bis) {
+                    faellig.push({
+                        typ: "versicherung",
+                        typLabel: "Versicherung",
+                        name: v.name || "Versicherung",
+                        betrag,
+                        datum: new Date(datum)
+                    });
+
+                    datum = datumMitSicheremTag(datum.getFullYear(), datum.getMonth() + intervallMonate, tag);
+                }
+            });
+
+            return faellig;
+        }
+
+        function berechneNochFaelligBisGehalt() {
+            const zeitraum = getGehaltszeitraum();
+
+            const laufende = laufendeKostenImZeitraum(zeitraum.heute, zeitraum.ende);
+            const versicherungen = versicherungsZahlungenImZeitraum(zeitraum.heute, zeitraum.ende);
+
+            const alle = [...laufende, ...versicherungen].sort((a, b) => a.datum - b.datum);
+
+            const summeLaufend = laufende.reduce((sum, e) => sum + e.betrag, 0);
+            const summeVersicherungen = versicherungen.reduce((sum, e) => sum + e.betrag, 0);
+
+            return {
+                zeitraum,
+                laufende,
+                versicherungen,
+                alle,
+                summeLaufend,
+                summeVersicherungen,
+                gesamt: summeLaufend + summeVersicherungen
+            };
+        }
+
+        function gehaltsmonatKey(zeitraum = getGehaltszeitraum()) {
+            return isoAusDate(zeitraum.start);
+        }
+
+        function getStartgehalt(zeitraum = getGehaltszeitraum()) {
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.startgehaelter ??= {};
+            const wert = parseFloat(daten.Einstellungen.startgehaelter[gehaltsmonatKey(zeitraum)]);
+            return isNaN(wert) ? 0 : wert;
+        }
+
+        function saveStartgehalt() {
+            const input = document.getElementById("startgehaltInput");
+            if (!input) return;
+            const wert = parseFloat(input.value);
+            if (isNaN(wert) || wert < 0) return;
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.startgehaelter ??= {};
+            daten.Einstellungen.startgehaelter[gehaltsmonatKey()] = wert;
+            speichern();
+        }
+
+        function haushaltImZeitraum(von, bis) {
+            const liste = [];
+            if (!daten.Haushalt) return liste;
+            Object.values(daten.Haushalt).forEach(monatsListe => {
+                if (!Array.isArray(monatsListe)) return;
+                monatsListe.forEach(e => {
+                    const d = parseISODate(e.datum);
+                    const betrag = parseFloat(e.betrag);
+                    if (!d || isNaN(betrag)) return;
+                    if (d >= von && d <= bis) liste.push({ ...e, betrag, datumObj: d });
+                });
+            });
+            return liste;
+        }
+
+        function montagDerWoche(datum) {
+            const d = new Date(datum.getFullYear(), datum.getMonth(), datum.getDate());
+            const tag = d.getDay();
+            d.setDate(d.getDate() - (tag === 0 ? 6 : tag - 1));
+            return d;
+        }
+
+        function wochenSegmente(von, bis) {
+            const result = [];
+            let start = new Date(von);
+            while (start <= bis) {
+                const kalenderMontag = montagDerWoche(start);
+                let ende = addDays(kalenderMontag, 6);
+                if (ende > bis) ende = new Date(bis);
+                result.push({ start: new Date(start), ende });
+                start = addDays(ende, 1);
+            }
+            return result;
+        }
+
+        function renderBudgetUndWochen(zeitraum) {
+            const start = getStartgehalt(zeitraum);
+            const haushalt = haushaltImZeitraum(zeitraum.start, zeitraum.ende);
+            const haushaltSum = haushalt.reduce((s,e)=>s+e.betrag,0);
+            const laufende = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
+            const vers = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
+            const laufendSum = laufende.reduce((s,e)=>s+e.betrag,0);
+            const versSum = vers.reduce((s,e)=>s+e.betrag,0);
+            const verfuegbar = start - haushaltSum - laufendSum - versSum;
+
+            const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val); };
+            set("homeBudgetStart", start);
+            set("homeBudgetHaushalt", haushaltSum);
+            set("homeBudgetLaufend", laufendSum);
+            set("homeBudgetVers", versSum);
+            set("homeBudgetVerfuegbar", verfuegbar);
+            set("homeBudgetVerfuegbarDetail", verfuegbar);
+
+            const heute = startOfToday();
+            const abHeute = heute < zeitraum.start ? zeitraum.start : heute;
+            const restWochen = wochenSegmente(abHeute, zeitraum.ende);
+            const wochenAnzahl = Math.max(1, restWochen.length);
+            const wochenBudget = verfuegbar / wochenAnzahl;
+            set("homeWeekAmount", wochenBudget);
+
+            const montag = montagDerWoche(heute);
+            const sonntag = addDays(montag, 6);
+            const weekDates = document.getElementById("homeWeekDates");
+            if (weekDates) weekDates.innerText = `${formatKurzDatum(montag)} – ${formatKurzDatum(sonntag)}`;
+
+            const nextSalary = document.getElementById("homeNextSalary");
+            if (nextSalary) nextSalary.innerText = formatDatum(isoAusDate(zeitraum.naechstesGehalt));
+
+            const details = document.getElementById("freiDetails");
+            const toggle = document.getElementById("freiDetailsToggle");
+            if (details) details.classList.toggle("hidden", !state.freiDetailsOffen);
+            if (toggle) toggle.innerText = state.freiDetailsOffen ? "Details ausblenden ⌃" : "Details anzeigen ›";
+
+            const input=document.getElementById("startgehaltInput");
+            if(input && document.activeElement!==input) input.value = start || "";
+        }
+
+        function reisenGesamt() {
+            let sum = 0;
+            if (!daten.Reisen) return 0;
+            Object.values(daten.Reisen).forEach(land => {
+                if (!land || typeof land !== "object") return;
+                Object.values(land).forEach(liste => {
+                    if (!Array.isArray(liste)) return;
+                    liste.forEach(e => sum += parseFloat(e.betrag) || 0);
+                });
+            });
+            return sum;
+        }
+
+        function renderUebersicht() {
+            const z = getGehaltszeitraum();
+            const h = haushaltImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const f = laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const v = versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val);};
+            set("overviewHaushalt",h); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewReisen",reisenGesamt());
+        }
+
+        function renderHomeUebersicht() {
+
+            const zeitraum = getGehaltszeitraum();
+            renderBudgetUndWochen(zeitraum);
+
+            // Kosten im aktuellen Gehaltsmonat:
+            // Beispiel bei Gehaltstag 26: 26.04. bis 25.05.
+            const laufendeImGehalt = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
+            const versicherungenImGehalt = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
+
+            const laufend = laufendeImGehalt.reduce((sum, e) => sum + e.betrag, 0);
+            const versicherungen = versicherungenImGehalt.reduce((sum, e) => sum + e.betrag, 0);
+            const gesamt = laufend + versicherungen;
+
+            const gesamtEl = document.getElementById("homeKostenGesamt");
+            const laufendEl = document.getElementById("homeKostenLaufend");
+            const versicherungenEl = document.getElementById("homeKostenVersicherungen");
+            const monatEl = document.getElementById("homeKostenMonatLabel");
+            const kostenDetailsEl = document.getElementById("homeKostenDetails");
+            const kostenToggleEl = document.getElementById("homeKostenToggle");
+            const laufendListeEl = document.getElementById("homeKostenLaufendListe");
+            const versListeEl = document.getElementById("homeVersicherungenListe");
+
+            if (gesamtEl) gesamtEl.innerHTML = formatBetrag(gesamt);
+            if (laufendEl) laufendEl.innerHTML = formatBetrag(laufend);
+            if (versicherungenEl) versicherungenEl.innerHTML = formatBetrag(versicherungen);
+
+            if (kostenDetailsEl) {
+                kostenDetailsEl.classList.toggle("hidden", !state.homeKostenOffen);
+            }
+
+            if (kostenToggleEl) {
+                kostenToggleEl.innerText = state.homeKostenOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
+            }
+
+            if (laufendListeEl) {
+                if (laufendeImGehalt.length === 0) {
+                    laufendListeEl.innerHTML = `<small class="home-summary-small">Keine laufenden Kosten in diesem Gehaltsmonat.</small>`;
+                } else {
+                    laufendListeEl.innerHTML = `
+                    <small class="home-summary-small">Laufende Kosten</small>
+                    ${laufendeImGehalt.map(e => `
+                        <div class="home-mini-item">
+                            <span>${formatKurzDatum(e.datum)} ${escapeHtml(e.name || "Laufende Kosten")}</span>
+                            <span>${formatBetrag(e.betrag)}</span>
+                        </div>
+                    `).join("")}
+                `;
+                }
+            }
+
+            if (monatEl) {
+                monatEl.innerText =
+                    "Gehaltsmonat: " + formatDatum(isoAusDate(zeitraum.start)) +
+                    " bis " + formatDatum(isoAusDate(zeitraum.ende));
+            }
+
+            if (versListeEl) {
+                if (versicherungenImGehalt.length === 0) {
+                    versListeEl.innerHTML = `<small class="home-summary-small">Keine Versicherungen in diesem Gehaltsmonat.</small>`;
+                } else {
+                    versListeEl.innerHTML = `
+                    <small class="home-summary-small">Versicherungen</small>
+                    ${versicherungenImGehalt.map(e => `
+                        <div class="home-mini-item">
+                            <span>${formatKurzDatum(e.datum)} ${escapeHtml(e.name || "Versicherung")}</span>
+                            <span>${formatBetrag(e.betrag)}</span>
+                        </div>
+                    `).join("")}
+                `;
+                }
+            }
+
+            const faellig = berechneNochFaelligBisGehalt();
+            const gehaltstagInput = document.getElementById("gehaltstagInput");
+            const faelligGesamtEl = document.getElementById("homeFaelligGesamt");
+            const faelligLaufendEl = document.getElementById("homeFaelligLaufend");
+            const faelligVersEl = document.getElementById("homeFaelligVersicherungen");
+            const faelligZeitraumEl = document.getElementById("homeFaelligZeitraum");
+            const faelligListeEl = document.getElementById("homeFaelligListe");
+            const faelligDetailsEl = document.getElementById("homeFaelligDetails");
+            const faelligToggleEl = document.getElementById("homeFaelligToggle");
+
+            if (gehaltstagInput && document.activeElement !== gehaltstagInput) {
+                gehaltstagInput.value = getGehaltstag();
+            }
+
+            if (faelligGesamtEl) faelligGesamtEl.innerHTML = formatBetrag(faellig.gesamt);
+            if (faelligLaufendEl) faelligLaufendEl.innerHTML = formatBetrag(faellig.summeLaufend);
+            if (faelligVersEl) faelligVersEl.innerHTML = formatBetrag(faellig.summeVersicherungen);
+
+            if (faelligZeitraumEl) {
+                faelligZeitraumEl.innerText =
+                    "Von heute bis " + formatDatum(isoAusDate(faellig.zeitraum.ende)) +
+                    " · nächstes Gehalt am " + formatDatum(isoAusDate(faellig.zeitraum.naechstesGehalt));
+            }
+
+            if (faelligToggleEl) {
+                faelligToggleEl.innerText = state.homeFaelligOffen ? "▲ Details ausblenden" : "▼ Details anzeigen";
+            }
+
+            if (faelligDetailsEl) {
+                faelligDetailsEl.classList.toggle("hidden", !state.homeFaelligOffen);
+            }
+
+            if (faelligListeEl) {
+                if (faellig.alle.length === 0) {
+                    faelligListeEl.innerHTML = `<div class="home-empty">Bis zum nächsten Gehalt ist nichts mehr fällig.</div>`;
+                } else {
+                    faelligListeEl.innerHTML = faellig.alle.map(e => `
+                    <div class="home-due-item">
+                        <span class="home-due-date">${formatKurzDatum(e.datum)}</span>
+                        <span class="home-due-name">
+                            <span>${escapeHtml(e.name)}</span>
+                            <span class="home-due-type">${e.typLabel}</span>
+                        </span>
+                        <span class="home-due-amount">${formatBetrag(e.betrag)}</span>
+                    </div>
+                `).join("");
+                }
+            }
+        }
+
+        function kostenLaufend() {
+
+            daten["Laufende Kosten"] ??= { fix: [] };
+            daten["Laufende Kosten"].fix ??= [];
+
+            return daten["Laufende Kosten"].fix.reduce((sum, e) => {
+                let betrag = parseFloat(e.betrag);
+                return sum + (isNaN(betrag) ? 0 : betrag);
+            }, 0);
+        }
+
+        function berechneGesamtFixkosten() {
+            return berechneMonatGesamt();
+        }
+
+        function berechneLaufendeKosten(monatTag = new Date().getDate()) {
+
+            return daten["Laufende Kosten"].fix.reduce((sum, e) => {
+                return sum + e.betrag;
+            }, 0);
+        }
+
+        function faelligeKostenHeute() {
+            let tag = new Date().getDate();
+
+            return daten["Laufende Kosten"].fix.filter(e => tagAusDatum(e.datum || datumAusTagAktuellerMonat(e.tag)) === tag);
+        }
+
+        function bindOnce(el, event, handler) {
+            if (!el) return;
+            el.onkeydown = null; // 🔥 ALTEN CLEANEN
+            el.addEventListener(event, handler);
+        }
+
+        renderHomeUebersicht();
+
+
+    </script>
+
+</body>
+
+</html>
