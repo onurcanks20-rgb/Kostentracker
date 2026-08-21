@@ -92,6 +92,18 @@
             color: #000;
         }
 
+        /* iPhone: Datum linksbuendig wie die anderen Eingabefelder */
+        input[type="date"] {
+            text-align: left;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left;
+            margin: 0;
+        }
+
         /* 🔥 BUTTONS */
         button {
             width: 100%;
@@ -478,8 +490,9 @@
         .sheet-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.58); z-index:80; display:flex; align-items:flex-end; justify-content:center; padding:12px; }
         .sheet-backdrop.hidden { display:none; }
         .add-sheet { width:min(100%,520px); background:#1c1c1e; border-radius:24px 24px 18px 18px; padding:18px; box-shadow:0 -10px 30px rgba(0,0,0,.35); }
-        .add-sheet h3 { margin:2px 0 12px; }
-        .add-choice { background:#2c2c2e; text-align:left; }
+        .add-sheet h3 { margin:2px 0 16px; font-size:26px; line-height:1.2; }
+        .add-choice { background:#2c2c2e; text-align:left; font-size:19px; font-weight:650; min-height:62px; padding:16px 18px; }
+        .add-sheet > button:not(.add-choice) { font-size:18px; font-weight:650; min-height:58px; }
         /* ===== iPHONE / MOBILE ===== */
         @media (max-width: 600px) {
             .container.app-shell {
