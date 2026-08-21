@@ -27,6 +27,15 @@
             --danger: #ff453a;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            background: var(--bg);
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
             margin: 0;
             padding-top: env(safe-area-inset-top);
@@ -36,19 +45,21 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
             background: var(--bg);
             color: var(--text);
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
             min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
+        }
+
+        body > div {
+            width: 100%;
         }
 
         /* 🔥 CLEAN CONTAINER (zusammengeführt) */
         .container {
-            width: 100%;
+            width: calc(100% - 24px);
             max-width: 520px;
-            margin: 20px;
+            margin: 12px auto;
             padding: 20px;
 
             background: rgba(28, 28, 30, 0.9);
@@ -57,9 +68,9 @@
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 
-            /* optional für viele Einträge */
-            max-height: 90vh;
-            overflow-y: auto;
+            /* Seiteninhalt scrollt auf iOS als Ganzes */
+            max-height: none;
+            overflow: visible;
         }
 
         .hidden {
@@ -71,6 +82,7 @@
         select {
             width: 100%;
             padding: 14px;
+            font-size: 16px;
             margin: 8px 0;
             border-radius: 12px;
             border: none;
@@ -468,6 +480,81 @@
         .add-sheet { width:min(100%,520px); background:#1c1c1e; border-radius:24px 24px 18px 18px; padding:18px; box-shadow:0 -10px 30px rgba(0,0,0,.35); }
         .add-sheet h3 { margin:2px 0 12px; }
         .add-choice { background:#2c2c2e; text-align:left; }
+        /* ===== iPHONE / MOBILE ===== */
+        @media (max-width: 600px) {
+            .container.app-shell {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 16px 16px calc(104px + env(safe-area-inset-bottom));
+                border-radius: 0;
+                background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                box-shadow: none;
+            }
+
+            .topbar {
+                margin-top: 2px;
+                margin-bottom: 14px;
+            }
+
+            .hero-card {
+                padding: 20px 16px 14px;
+                border-radius: 22px;
+            }
+
+            .hero-amount {
+                font-size: clamp(36px, 11vw, 46px);
+            }
+
+            .week-summary-card {
+                padding: 15px;
+                border-radius: 18px;
+            }
+
+            .week-summary-head {
+                align-items: center;
+            }
+
+            .week-summary-amount {
+                font-size: clamp(24px, 8vw, 31px);
+            }
+
+            .salary-row {
+                padding: 10px 4px 14px;
+            }
+
+            .primary-add {
+                min-height: 54px;
+                border-radius: 16px;
+            }
+
+            .bottom-nav {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: none;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                gap: 0;
+                padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+                border-radius: 20px 20px 0 0;
+            }
+
+            .bottom-nav button {
+                min-height: 58px;
+                padding: 7px 4px;
+            }
+
+            .container:not(.app-shell) {
+                width: calc(100% - 24px);
+                margin: 12px auto;
+                padding: 16px;
+            }
+        }
+
         .settings-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-top:12px; }
         .settings-card label { display:block; opacity:.72; font-size:13px; margin-top:10px; }
         .settings-note { opacity:.62; font-size:12px; line-height:1.45; }
