@@ -973,6 +973,15 @@
                 <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
                 <div class="settings-note">Fällt der Gehaltstag auf Samstag oder Sonntag, verwendet die App automatisch den folgenden Montag.</div>
             </div>
+
+            <div class="settings-card">
+                <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Backup</div>
+                <div class="settings-note" style="margin-bottom:12px;">Sichere alle Einträge und Einstellungen in einer Datei. Die Backup-Datei kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</div>
+                <button onclick="exportBackup()">⬇️ Backup erstellen</button>
+                <button onclick="document.getElementById('backupImportInput')?.click()" style="background:#3a3a3c;">⬆️ Backup wiederherstellen</button>
+                <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
+                <div id="backupStatus" class="settings-note" style="margin-top:8px;"></div>
+            </div>
         </div>
     </div>
 
@@ -1382,6 +1391,96 @@
             }
 
             renderHomeUebersicht();
+        }
+
+        function backupDateiname() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, "0");
+            return `kostentracker-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+        }
+
+        function setBackupStatus(text) {
+            const el = document.getElementById("backupStatus");
+            if (el) el.textContent = text || "";
+        }
+
+        async function exportBackup() {
+            const payload = {
+                app: "Kostentracker",
+                version: 1,
+                erstelltAm: new Date().toISOString(),
+                daten
+            };
+
+            const json = JSON.stringify(payload, null, 2);
+            const file = new File([json], backupDateiname(), { type: "application/json" });
+
+            try {
+                if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: "Kostentracker Backup",
+                        text: "Backup meiner Kostentracker-Daten",
+                        files: [file]
+                    });
+                    setBackupStatus("Backup wurde zum Sichern bereitgestellt.");
+                    return;
+                }
+            } catch (error) {
+                if (error?.name === "AbortError") return;
+                console.warn("Teilen des Backups fehlgeschlagen:", error);
+            }
+
+            const url = URL.createObjectURL(file);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setBackupStatus("Backup wurde heruntergeladen.");
+        }
+
+        function istGueltigesBackup(obj) {
+            const kandidat = obj?.daten ?? obj;
+            return kandidat &&
+                typeof kandidat === "object" &&
+                !Array.isArray(kandidat) &&
+                kandidat.Reisen && typeof kandidat.Reisen === "object" &&
+                Array.isArray(kandidat.Versicherungen) &&
+                kandidat.Haushalt && typeof kandidat.Haushalt === "object" &&
+                kandidat["Laufende Kosten"] && typeof kandidat["Laufende Kosten"] === "object";
+        }
+
+        async function importBackup(event) {
+            const input = event?.target;
+            const file = input?.files?.[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+
+                if (!istGueltigesBackup(parsed)) {
+                    throw new Error("Ungültige Backup-Datei");
+                }
+
+                if (!confirm("Backup wiederherstellen? Deine aktuell gespeicherten Daten werden dadurch ersetzt.")) {
+                    input.value = "";
+                    return;
+                }
+
+                const neueDaten = parsed.daten ?? parsed;
+                localStorage.setItem("kostenApp", JSON.stringify(neueDaten));
+                setBackupStatus("Backup wurde wiederhergestellt. Die App wird neu geladen …");
+                setTimeout(() => location.reload(), 400);
+            } catch (error) {
+                console.error("Backup-Import fehlgeschlagen:", error);
+                alert("Die Backup-Datei konnte nicht gelesen werden. Bitte wähle ein gültiges Kostentracker-Backup aus.");
+                setBackupStatus("Backup konnte nicht wiederhergestellt werden.");
+            } finally {
+                if (input) input.value = "";
+            }
         }
 
         let offeneKategorie = null;
