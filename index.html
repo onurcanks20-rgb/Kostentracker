@@ -4777,7 +4777,59 @@
             el.addEventListener(event, handler);
         }
 
+        function handleSiriSchnelleingabe() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("siri") !== "1") return;
+
+            const bereich = (params.get("bereich") || "").toLowerCase().trim();
+            const textRaw = (params.get("text") || "").trim();
+            const betragRaw = (params.get("betrag") || "").replace(",", ".").trim();
+            const betrag = parseFloat(betragRaw);
+
+            // Ungültige oder unvollständige Siri-Aufrufe nicht speichern.
+            if (!textRaw || isNaN(betrag) || betrag <= 0) {
+                history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            const text = formatText(textRaw);
+            const datum = heuteISO();
+            const monat = new Date(datum + "T12:00:00").getMonth() + 1;
+
+            if (bereich === "haushalt") {
+                daten.Haushalt ??= {};
+                daten.Haushalt[monat] ??= [];
+                daten.Haushalt[monat].push({
+                    id: generateId(),
+                    text,
+                    betrag,
+                    datum,
+                    quelle: "siri"
+                });
+            } else if (bereich === "freizeit") {
+                daten.Freizeit ??= {};
+                daten.Freizeit[monat] ??= [];
+                daten.Freizeit[monat].push({
+                    id: generateId(),
+                    text,
+                    betrag,
+                    datum,
+                    quelle: "siri"
+                });
+            } else {
+                history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            speichern();
+            renderHomeUebersicht();
+
+            // Parameter entfernen, damit ein Neuladen die Ausgabe nicht doppelt speichert.
+            history.replaceState({}, document.title, window.location.pathname);
+        }
+
         renderHomeUebersicht();
+        handleSiriSchnelleingabe();
 
 
     </script>
