@@ -866,6 +866,7 @@
                     <div class="calc-row"><span>Fixkosten</span><span id="homeBudgetLaufend">0.00 €</span></div>
                     <div class="calc-row"><span>Versicherungen</span><span id="homeBudgetVers">0.00 €</span></div>
                     <div class="calc-row"><span>Haushalt bisher</span><span id="homeBudgetHaushalt">0.00 €</span></div>
+                    <div class="calc-row"><span>Freizeit bisher</span><span id="homeBudgetFreizeit">0.00 €</span></div>
                     <div class="calc-row total"><span>Frei verfügbar</span><span id="homeBudgetVerfuegbarDetail">0.00 €</span></div>
                     <div class="calc-row"><span>Noch kommende Abbuchungen</span><span id="homeFaelligGesamt">0.00 €</span></div>
                     <div class="detail-note">Die kommenden Abbuchungen sind im frei verfügbaren Betrag bereits berücksichtigt.</div>
@@ -910,6 +911,10 @@
             <div class="overview-card" onclick="openHaushalt()">
                 <div class="overview-card-top"><span class="overview-card-title">🛒 Haushalt</span><strong id="overviewHaushalt">0.00 €</strong></div>
                 <div class="overview-card-sub">Ausgaben im aktuellen Gehaltszeitraum</div>
+            </div>
+            <div class="overview-card" onclick="openFreizeit()">
+                <div class="overview-card-top"><span class="overview-card-title">🎉 Freizeit</span><strong id="overviewFreizeit">0.00 €</strong></div>
+                <div class="overview-card-sub">Ausgehen, Restaurant, Kino und Unternehmungen</div>
             </div>
             <div class="overview-card" onclick="openKosten()">
                 <div class="overview-card-top"><span class="overview-card-title">📌 Fixkosten</span><strong id="overviewFixkosten">0.00 €</strong></div>
@@ -990,6 +995,7 @@
         <div class="add-sheet">
             <h3>Abrechnung hinzufügen</h3>
             <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausText')">🛒 Haushalt</button>
+            <button class="add-choice" onclick="closeAddSheet(); openFreizeit(); toggleCategoryAdd('freizeitAddPanel','freizeitText')">🎉 Freizeit</button>
             <button class="add-choice" onclick="closeAddSheet(); openKosten(); toggleCategoryAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
             <button class="add-choice" onclick="closeAddSheet(); openVersicherungen(); toggleCategoryAdd('versAddPanel','versName')">🛡️ Versicherung</button>
             <button class="add-choice" onclick="closeAddSheet(); openReisen(); toggleCategoryAdd('reisenAddPanel','landInput')">✈️ Reise</button>
@@ -1168,6 +1174,35 @@
 
     </div>
 
+    <!-- ===================== Freizeit ===================== -->
+    <div id="freizeitView" class="hidden">
+
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Freizeit</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('freizeitAddPanel','freizeitText')" aria-label="Freizeitausgabe hinzufügen">＋</button>
+            </div>
+
+            <div id="freizeitAddPanel" class="category-add-panel hidden">
+                <h3>Freizeitausgabe hinzufügen</h3>
+                <input id="freizeitText" placeholder="Beschreibung">
+                <input id="freizeitBetrag" type="number" placeholder="Betrag">
+                <input id="freizeitDatum" type="date">
+                <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="freizeitListe"></div>
+        </div>
+
+        <div class="container">
+            <button onclick="deleteAlleFreizeit()" style="background:red;">🗑️ Alle Freizeit-Einträge löschen</button>
+        </div>
+
+    </div>
+
     <!-- ===================== Laufende Kosten ===================== -->
     <div id="kostenView" class="hidden">
 
@@ -1229,6 +1264,7 @@
             Reisen: {},
             Versicherungen: [],
             Haushalt: {},
+            Freizeit: {},
             "Laufende Kosten": {
                 fix: []
             },
@@ -1267,6 +1303,10 @@
 
         if (!daten.Haushalt || typeof daten.Haushalt !== "object" || Array.isArray(daten.Haushalt)) {
             daten.Haushalt = {};
+        }
+
+        if (!daten.Freizeit || typeof daten.Freizeit !== "object" || Array.isArray(daten.Freizeit)) {
+            daten.Freizeit = {};
         }
 
         if (!daten.geloeschteKategorien || typeof daten.geloeschteKategorien !== "object" || Array.isArray(daten.geloeschteKategorien)) {
@@ -1314,6 +1354,7 @@
 
         for (let i = 1; i <= 12; i++) {
             daten.Haushalt[i] ??= [];
+            daten.Freizeit[i] ??= [];
         }
 
         for (let land in daten.Reisen) {
@@ -1332,6 +1373,9 @@
             offeneHaushaltJahre: {},
             offeneHaushaltMonate: {},
             editHaushaltId: null,
+            offeneFreizeitJahre: {},
+            offeneFreizeitMonate: {},
+            editFreizeitId: null,
             editVersicherungId: null,
             editKategorieName: null,
             editLandName: null,
@@ -1650,6 +1694,7 @@
                 "reisen",
                 "land",
                 "haushaltView",
+                "freizeitView",
                 "kostenView",
                 "versicherungenView",
                 "uebersichtView",
@@ -1715,7 +1760,7 @@
         }
 
         function closeCategoryAddPanels() {
-            ["reisenAddPanel","versAddPanel","hausAddPanel","kostenAddPanel"].forEach(id => {
+            ["reisenAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","kostenAddPanel"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -1775,6 +1820,18 @@
             renderHaushalt();
         }
 
+        function openFreizeit() {
+            show("freizeitView");
+            closeCategoryAddPanels();
+            state.editFreizeitId = null;
+
+            const datum = document.getElementById("freizeitDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+
+            renderFreizeit();
+            setupFreizeitEnterFlow();
+        }
+
         function openKosten() {
             show("kostenView");
             closeCategoryAddPanels();
@@ -1786,7 +1843,7 @@
         }
 
         function hideAllViews() {
-            ["versicherungenView", "haushaltView", "kostenView"].forEach(id => {
+            ["versicherungenView", "haushaltView", "freizeitView", "kostenView"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -2514,6 +2571,9 @@
             else if (aktuelleSimple === "Haushalt") {
                 renderHaushalt();
             }
+            else if (aktuelleSimple === "Freizeit") {
+                renderFreizeit();
+            }
         }
 
         function escapeHtml(value) {
@@ -3154,6 +3214,25 @@
             renderHaushalt();
         }
 
+        function addFreizeit() {
+            let text = formatText(document.getElementById("freizeitText").value);
+            let betrag = parseFloat(document.getElementById("freizeitBetrag").value);
+            let datum = document.getElementById("freizeitDatum").value;
+
+            if (!text || isNaN(betrag) || !datum) return;
+
+            let monat = new Date(datum).getMonth() + 1;
+            daten.Freizeit[monat] ??= [];
+            daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum });
+            speichern();
+
+            document.getElementById("freizeitText").value = "";
+            document.getElementById("freizeitBetrag").value = "";
+            document.getElementById("freizeitDatum").value = heuteISO();
+            document.getElementById("freizeitAddPanel")?.classList.add("hidden");
+            renderFreizeit();
+        }
+
         function renderQuickAdd() {
 
             let div = document.getElementById("quickAdd");
@@ -3456,6 +3535,32 @@
                 }
             };
 
+            text.focus();
+        }
+
+        function setupFreizeitEnterFlow() {
+            const text = document.getElementById("freizeitText");
+            const betrag = document.getElementById("freizeitBetrag");
+            const datum = document.getElementById("freizeitDatum");
+            if (!text || !betrag || !datum) return;
+            enterToNext(text, betrag);
+            enterToNext(betrag, datum);
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") { e.preventDefault(); addFreizeit(); text.focus(); }
+            };
+            text.focus();
+        }
+
+        function setupFreizeitEditEnterFlow(id) {
+            const text = document.getElementById("editFreizeitText-" + id);
+            const betrag = document.getElementById("editFreizeitBetrag-" + id);
+            const datum = document.getElementById("editFreizeitDatum-" + id);
+            if (!text || !betrag || !datum) return;
+            enterToNext(text, betrag);
+            enterToNext(betrag, datum);
+            datum.onkeydown = (e) => {
+                if (e.key === "Enter") { e.preventDefault(); saveEditFreizeit(id); }
+            };
             text.focus();
         }
 
@@ -3852,6 +3957,106 @@
         function cancelEditHaushalt() {
             state.editHaushaltId = null;
             renderHaushalt();
+        }
+
+        function renderFreizeit() {
+            const container = document.getElementById("freizeitListe");
+            if (!container) return;
+            container.innerHTML = "";
+            const data = gruppiereFreizeit();
+            const jahre = Object.keys(data).sort((a, b) => b - a);
+            if (jahre.length === 0) {
+                container.innerHTML = `<p style="opacity:0.7;">Noch keine Freizeit-Einträge eingetragen.</p>`;
+                return;
+            }
+            jahre.forEach(jahr => {
+                const jahrOffen = state.offeneFreizeitJahre[jahr];
+                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b)=>a+(parseFloat(b.betrag)||0),0);
+                container.appendChild(createItem(`
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div><button class="toggle-btn" onclick="toggleFreizeitJahr('${jahr}')">${jahrOffen ? '▲' : '▼'}</button> 📁 ${jahr}</div>
+                        <div>${formatBetrag(jahrSumme)}</div>
+                    </div>`));
+                if (!jahrOffen) return;
+                Object.keys(data[jahr]).sort((a,b)=>b-a).forEach(monat => {
+                    const key = jahr + "-" + monat;
+                    const monatOffen = state.offeneFreizeitMonate[key];
+                    const liste = data[jahr][monat];
+                    const summe = liste.reduce((a,b)=>a+(parseFloat(b.betrag)||0),0);
+                    container.appendChild(createItem(`
+                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                            <div><button class="toggle-btn" onclick="toggleFreizeitMonat('${jahr}','${monat}')">${monatOffen ? '▲' : '▼'}</button> 📂 ${getMonatName(parseInt(monat))}</div>
+                            <div>${formatBetrag(summe)}</div>
+                        </div>`,20));
+                    if (!monatOffen) return;
+                    liste.forEach(e => {
+                        const isEdit = String(state.editFreizeitId) === String(e.id);
+                        let html;
+                        if (isEdit) {
+                            html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}">
+                                <input id="editFreizeitBetrag-${e.id}" type="number" value="${e.betrag}">
+                                <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
+                            </div>`;
+                        } else {
+                            html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
+                                <span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span>
+                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}<button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button></div>
+                            </div>`;
+                        }
+                        const item = createItem(html,40); item.style.background="#3a3a3c"; container.appendChild(item);
+                        if (isEdit) setTimeout(()=>setupFreizeitEditEnterFlow(e.id),0);
+                    });
+                });
+            });
+        }
+
+        function gruppiereFreizeit() {
+            const gruppiert = {};
+            if (!daten.Freizeit) return gruppiert;
+            Object.values(daten.Freizeit).forEach(liste => {
+                if (!Array.isArray(liste)) return;
+                liste.forEach(e => {
+                    if (!e || !e.datum) return;
+                    const d = new Date(e.datum); if (isNaN(d)) return;
+                    const jahr=d.getFullYear(), monat=d.getMonth()+1;
+                    gruppiert[jahr] ??= {}; gruppiert[jahr][monat] ??= []; gruppiert[jahr][monat].push(e);
+                });
+            });
+            return gruppiert;
+        }
+
+        function toggleFreizeitJahr(jahr){ state.offeneFreizeitJahre[jahr]=!state.offeneFreizeitJahre[jahr]; renderFreizeit(); }
+        function toggleFreizeitMonat(jahr,monat){ const key=jahr+'-'+monat; state.offeneFreizeitMonate[key]=!state.offeneFreizeitMonate[key]; renderFreizeit(); }
+        function startEditFreizeit(id){ state.editFreizeitId=id; renderFreizeit(); }
+        function cancelEditFreizeit(){ state.editFreizeitId=null; renderFreizeit(); }
+
+        function saveEditFreizeit(id){
+            const textEl=document.getElementById('editFreizeitText-'+id), betragEl=document.getElementById('editFreizeitBetrag-'+id), datumEl=document.getElementById('editFreizeitDatum-'+id);
+            if(!textEl||!betragEl||!datumEl) return;
+            const text=textEl.value, betrag=parseFloat(betragEl.value), datum=datumEl.value;
+            if(!text||isNaN(betrag)||!datum) return;
+            let found=null, oldMonat=null, oldIndex=-1;
+            for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){found=liste[i];oldMonat=monat;oldIndex=i;break;} }
+            if(!found) return;
+            daten.Freizeit[oldMonat].splice(oldIndex,1);
+            const neuerMonat=new Date(datum).getMonth()+1; daten.Freizeit[neuerMonat]??=[];
+            daten.Freizeit[neuerMonat].push({id:found.id,text:formatText(text),betrag,datum});
+            state.editFreizeitId=null; speichern(); renderFreizeit();
+        }
+
+        function deleteFreizeit(id){
+            if(!confirm('Eintrag löschen?')) return;
+            for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){liste.splice(i,1);break;} }
+            speichern(); renderFreizeit();
+        }
+
+        function deleteAlleFreizeit(){
+            if(!confirm('Alle Freizeit-Einträge wirklich löschen?')) return;
+            daten.Freizeit ??= {};
+            for(const monat in daten.Freizeit) if(Array.isArray(daten.Freizeit[monat])) daten.Freizeit[monat]=[];
+            speichern(); renderFreizeit();
         }
 
         function startEditVersicherung(id) {
@@ -4284,6 +4489,25 @@
             return liste;
         }
 
+        function freizeitImZeitraum(von, bis) {
+            const liste = [];
+            if (!daten.Freizeit) return liste;
+            Object.values(daten.Freizeit).forEach(monatsListe => {
+                if (!Array.isArray(monatsListe)) return;
+                monatsListe.forEach(e => {
+                    const d = parseISODate(e.datum);
+                    const betrag = parseFloat(e.betrag);
+                    if (!d || isNaN(betrag)) return;
+                    if (d >= von && d <= bis) liste.push({ ...e, betrag, datumObj: d });
+                });
+            });
+            return liste;
+        }
+
+        function alltagImZeitraum(von, bis) {
+            return [...haushaltImZeitraum(von, bis), ...freizeitImZeitraum(von, bis)];
+        }
+
         function montagDerWoche(datum) {
             const d = new Date(datum.getFullYear(), datum.getMonth(), datum.getDate());
             const tag = d.getDay();
@@ -4307,16 +4531,19 @@
         function renderBudgetUndWochen(zeitraum) {
             const start = getStartgehalt(zeitraum);
             const haushalt = haushaltImZeitraum(zeitraum.start, zeitraum.ende);
+            const freizeit = freizeitImZeitraum(zeitraum.start, zeitraum.ende);
             const haushaltSum = haushalt.reduce((s,e)=>s+e.betrag,0);
+            const freizeitSum = freizeit.reduce((s,e)=>s+e.betrag,0);
             const laufende = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende);
             const vers = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
             const laufendSum = laufende.reduce((s,e)=>s+e.betrag,0);
             const versSum = vers.reduce((s,e)=>s+e.betrag,0);
-            const verfuegbar = start - haushaltSum - laufendSum - versSum;
+            const verfuegbar = start - haushaltSum - freizeitSum - laufendSum - versSum;
 
             const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val); };
             set("homeBudgetStart", start);
             set("homeBudgetHaushalt", haushaltSum);
+            set("homeBudgetFreizeit", freizeitSum);
             set("homeBudgetLaufend", laufendSum);
             set("homeBudgetVers", versSum);
             set("homeBudgetVerfuegbar", verfuegbar);
@@ -4335,11 +4562,11 @@
             const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
-            const haushaltVorWoche = haushaltImZeitraum(zeitraum.start, addDays(wochenStart, -1))
+            const alltagVorWoche = alltagImZeitraum(zeitraum.start, addDays(wochenStart, -1))
                 .reduce((s, e) => s + e.betrag, 0);
 
             // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
-            const verfuegbarZuWochenbeginn = start - laufendSum - versSum - haushaltVorWoche;
+            const verfuegbarZuWochenbeginn = start - laufendSum - versSum - alltagVorWoche;
 
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
@@ -4348,11 +4575,11 @@
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
 
             const bisHeute = heute < wochenEnde ? heute : wochenEnde;
-            const haushaltDieseWoche = haushaltImZeitraum(wochenStart, bisHeute)
+            const alltagDieseWoche = alltagImZeitraum(wochenStart, bisHeute)
                 .reduce((s, e) => s + e.betrag, 0);
 
             // Waehrend der Woche bleibt wochenBudgetStart gleich. Nur der Restbetrag sinkt mit neuen Ausgaben.
-            const wochenBudgetUebrig = wochenBudgetStart - haushaltDieseWoche;
+            const wochenBudgetUebrig = wochenBudgetStart - alltagDieseWoche;
             set("homeWeekAmount", wochenBudgetUebrig);
 
             const weekDates = document.getElementById("homeWeekDates");
@@ -4386,10 +4613,11 @@
         function renderUebersicht() {
             const z = getGehaltszeitraum();
             const h = haushaltImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const fr = freizeitImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const f = laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const v = versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val);};
-            set("overviewHaushalt",h); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewReisen",reisenGesamt());
+            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewReisen",reisenGesamt());
         }
 
         function renderHomeUebersicht() {
