@@ -486,6 +486,11 @@
             background:#2c2c2e; border-radius:18px; padding:14px; margin:0 0 14px;
         }
         .category-add-panel h3 { margin:0 0 8px; }
+
+        .quick-category-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0 12px; }
+        .quick-category-btn { margin:0; padding:11px 8px; background:#3a3a3c; font-size:14px; font-weight:700; border:2px solid transparent; }
+        .quick-category-btn.selected { border-color:var(--primary); background:#263746; }
+        .category-badge { display:inline-flex; align-items:center; width:max-content; margin-top:4px; padding:3px 7px; border-radius:999px; background:rgba(255,255,255,.08); font-size:11px; opacity:.78; }
         .section-label { margin:18px 4px 6px; opacity:.58; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .sheet-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.58); z-index:80; display:flex; align-items:flex-end; justify-content:center; padding:12px; }
         .sheet-backdrop.hidden { display:none; }
@@ -1157,6 +1162,13 @@
 
             <div id="hausAddPanel" class="category-add-panel hidden">
                 <h3>Haushaltsausgabe hinzufügen</h3>
+                <div class="quick-category-grid" id="hausKategorieGrid">
+                    <button class="quick-category-btn selected" data-category="Lebensmittel" onclick="setQuickCategory('haus','Lebensmittel',this)">🛒 Lebensmittel</button>
+                    <button class="quick-category-btn" data-category="Tanken" onclick="setQuickCategory('haus','Tanken',this)">⛽ Tanken</button>
+                    <button class="quick-category-btn" data-category="Drogerie" onclick="setQuickCategory('haus','Drogerie',this)">🧴 Drogerie</button>
+                    <button class="quick-category-btn" data-category="Sonstiger Haushalt" onclick="setQuickCategory('haus','Sonstiger Haushalt',this)">🏠 Sonstiges</button>
+                </div>
+                <input id="hausKategorie" type="hidden" value="Lebensmittel">
                 <input id="hausText" placeholder="Beschreibung">
                 <input id="hausBetrag" type="number" placeholder="Betrag">
                 <input id="hausDatum" type="date">
@@ -1186,6 +1198,13 @@
 
             <div id="freizeitAddPanel" class="category-add-panel hidden">
                 <h3>Freizeitausgabe hinzufügen</h3>
+                <div class="quick-category-grid" id="freizeitKategorieGrid">
+                    <button class="quick-category-btn selected" data-category="Essen gehen" onclick="setQuickCategory('freizeit','Essen gehen',this)">🍽️ Essen gehen</button>
+                    <button class="quick-category-btn" data-category="Café" onclick="setQuickCategory('freizeit','Café',this)">☕ Café</button>
+                    <button class="quick-category-btn" data-category="Kino/Event" onclick="setQuickCategory('freizeit','Kino/Event',this)">🎬 Kino / Event</button>
+                    <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
+                </div>
+                <input id="freizeitKategorie" type="hidden" value="Essen gehen">
                 <input id="freizeitText" placeholder="Beschreibung">
                 <input id="freizeitBetrag" type="number" placeholder="Betrag">
                 <input id="freizeitDatum" type="date">
@@ -1356,6 +1375,16 @@
             daten.Haushalt[i] ??= [];
             daten.Freizeit[i] ??= [];
         }
+
+        // Unterkategorien für bestehende Einträge ergänzen.
+        Object.values(daten.Haushalt).forEach(liste => {
+            if (!Array.isArray(liste)) return;
+            liste.forEach(e => { if (e && !e.kategorie) e.kategorie = "Sonstiger Haushalt"; });
+        });
+        Object.values(daten.Freizeit).forEach(liste => {
+            if (!Array.isArray(liste)) return;
+            liste.forEach(e => { if (e && !e.kategorie) e.kategorie = "Sonstiges"; });
+        });
 
         for (let land in daten.Reisen) {
             for (let k in daten.Reisen[land]) {
@@ -3182,11 +3211,21 @@
             renderListe();
         }
 
+        function setQuickCategory(bereich, kategorie, button) {
+            const inputId = bereich === "haus" ? "hausKategorie" : "freizeitKategorie";
+            const gridId = bereich === "haus" ? "hausKategorieGrid" : "freizeitKategorieGrid";
+            const input = document.getElementById(inputId);
+            if (input) input.value = kategorie;
+            document.querySelectorAll(`#${gridId} .quick-category-btn`).forEach(btn => btn.classList.remove("selected"));
+            button?.classList.add("selected");
+        }
+
         function addHaushalt() {
 
             let text = formatText(document.getElementById("hausText").value);
             let betrag = parseFloat(document.getElementById("hausBetrag").value);
             let datum = document.getElementById("hausDatum").value;
+            let kategorie = document.getElementById("hausKategorie")?.value || "Sonstiger Haushalt";
 
             if (!text || isNaN(betrag) || !datum) return;
 
@@ -3200,7 +3239,8 @@
                 id: generateId(),
                 text,
                 betrag,
-                datum
+                datum,
+                kategorie
             });
 
             speichern();
@@ -3209,6 +3249,7 @@
             document.getElementById("hausText").value = "";
             document.getElementById("hausBetrag").value = "";
             document.getElementById("hausDatum").value = heuteISO();
+            setQuickCategory("haus", "Lebensmittel", document.querySelector('#hausKategorieGrid [data-category="Lebensmittel"]'));
             document.getElementById("hausAddPanel")?.classList.add("hidden");
 
             renderHaushalt();
@@ -3218,17 +3259,19 @@
             let text = formatText(document.getElementById("freizeitText").value);
             let betrag = parseFloat(document.getElementById("freizeitBetrag").value);
             let datum = document.getElementById("freizeitDatum").value;
+            let kategorie = document.getElementById("freizeitKategorie")?.value || "Sonstiges";
 
             if (!text || isNaN(betrag) || !datum) return;
 
             let monat = new Date(datum).getMonth() + 1;
             daten.Freizeit[monat] ??= [];
-            daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum });
+            daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum, kategorie });
             speichern();
 
             document.getElementById("freizeitText").value = "";
             document.getElementById("freizeitBetrag").value = "";
             document.getElementById("freizeitDatum").value = heuteISO();
+            setQuickCategory("freizeit", "Essen gehen", document.querySelector('#freizeitKategorieGrid [data-category="Essen gehen"]'));
             document.getElementById("freizeitAddPanel")?.classList.add("hidden");
             renderFreizeit();
         }
@@ -3716,8 +3759,9 @@
                         } else {
                             html = `
                         <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                            <span>
-                                ${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}
+                            <span style="display:flex; flex-direction:column; align-items:flex-start;">
+                                <span>${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
+                                <span class="category-badge">${escapeHtml(e.kategorie || "Sonstiger Haushalt")}</span>
                             </span>
 
                             <div class="actions" style="display:flex; align-items:center; gap:8px;">
@@ -3920,11 +3964,18 @@
 
             let neuerMonat = new Date(datum).getMonth() + 1;
 
+            let existingKategorie = "Sonstiger Haushalt";
+            for (let monat in daten.Haushalt) {
+                const found = Array.isArray(daten.Haushalt[monat]) ? daten.Haushalt[monat].find(e => String(e.id) === String(id)) : null;
+                if (found) { existingKategorie = found.kategorie || "Sonstiger Haushalt"; break; }
+            }
+
             let updated = {
                 id,
                 text: formatText(text),
                 betrag,
-                datum
+                datum,
+                kategorie: existingKategorie
             };
 
             for (let monat in daten.Haushalt) {
@@ -4001,7 +4052,7 @@
                             </div>`;
                         } else {
                             html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                                <span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span>
+                                <span style="display:flex; flex-direction:column; align-items:flex-start;"><span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span><span class="category-badge">${escapeHtml(e.kategorie || 'Sonstiges')}</span></span>
                                 <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}<button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button></div>
                             </div>`;
                         }
@@ -4042,7 +4093,7 @@
             if(!found) return;
             daten.Freizeit[oldMonat].splice(oldIndex,1);
             const neuerMonat=new Date(datum).getMonth()+1; daten.Freizeit[neuerMonat]??=[];
-            daten.Freizeit[neuerMonat].push({id:found.id,text:formatText(text),betrag,datum});
+            daten.Freizeit[neuerMonat].push({id:found.id,text:formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges"});
             state.editFreizeitId=null; speichern(); renderFreizeit();
         }
 
@@ -4804,6 +4855,7 @@
                     text,
                     betrag,
                     datum,
+                    kategorie: "Sonstiger Haushalt",
                     quelle: "siri"
                 });
             } else if (bereich === "freizeit") {
@@ -4814,6 +4866,7 @@
                     text,
                     betrag,
                     datum,
+                    kategorie: "Sonstiges",
                     quelle: "siri"
                 });
             } else {
