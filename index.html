@@ -4222,16 +4222,40 @@
             set("homeBudgetVerfuegbarDetail", verfuegbar);
 
             const heute = startOfToday();
-            const abHeute = heute < zeitraum.start ? zeitraum.start : heute;
-            const restWochen = wochenSegmente(abHeute, zeitraum.ende);
-            const wochenAnzahl = Math.max(1, restWochen.length);
-            const wochenBudget = verfuegbar / wochenAnzahl;
-            set("homeWeekAmount", wochenBudget);
 
-            const montag = montagDerWoche(heute);
-            const sonntag = addDays(montag, 6);
+            // Wochenbudget-Logik:
+            // - Montag bis Sonntag bleibt das Wochenbudget unveraendert.
+            // - Ausgaben der aktuellen Woche werden nur vom Wochenbudget abgezogen.
+            // - Erst mit Beginn einer neuen Woche wird aus dem dann verbleibenden Geld neu gerechnet.
+            // - Angebrochene Wochen bis zum Gehalt werden nach ihren tatsaechlichen Tagen gewichtet.
+            const kalenderMontag = montagDerWoche(heute);
+            const kalenderSonntag = addDays(kalenderMontag, 6);
+
+            const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
+            const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
+
+            const haushaltVorWoche = haushaltImZeitraum(zeitraum.start, addDays(wochenStart, -1))
+                .reduce((s, e) => s + e.betrag, 0);
+
+            // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
+            const verfuegbarZuWochenbeginn = start - laufendSum - versSum - haushaltVorWoche;
+
+            const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
+            const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
+
+            // Anteil fuer diese Woche. Dadurch werden Teilwochen vor dem Gehalt fair gewichtet.
+            const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
+
+            const bisHeute = heute < wochenEnde ? heute : wochenEnde;
+            const haushaltDieseWoche = haushaltImZeitraum(wochenStart, bisHeute)
+                .reduce((s, e) => s + e.betrag, 0);
+
+            // Waehrend der Woche bleibt wochenBudgetStart gleich. Nur der Restbetrag sinkt mit neuen Ausgaben.
+            const wochenBudgetUebrig = wochenBudgetStart - haushaltDieseWoche;
+            set("homeWeekAmount", wochenBudgetUebrig);
+
             const weekDates = document.getElementById("homeWeekDates");
-            if (weekDates) weekDates.innerText = `${formatKurzDatum(montag)} – ${formatKurzDatum(sonntag)}`;
+            if (weekDates) weekDates.innerText = `${formatKurzDatum(wochenStart)} – ${formatKurzDatum(wochenEnde)}`;
 
             const nextSalary = document.getElementById("homeNextSalary");
             if (nextSalary) nextSalary.innerText = formatDatum(isoAusDate(zeitraum.naechstesGehalt));
