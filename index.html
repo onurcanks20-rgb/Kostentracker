@@ -4828,6 +4828,212 @@
             el.addEventListener(event, handler);
         }
 
+        function normalisiereSprache(value) {
+            return String(value || "")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/ß/g, "ss")
+                .replace(/ä/g, "a")
+                .replace(/ö/g, "o")
+                .replace(/ü/g, "u")
+                .replace(/[^a-z0-9.,\s-]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function findeAlias(textNorm, aliasMap) {
+            for (const [ziel, aliases] of Object.entries(aliasMap)) {
+                const sortiert = [...aliases].sort((a, b) => b.length - a.length);
+                for (const alias of sortiert) {
+                    const aliasNorm = normalisiereSprache(alias);
+                    const rx = new RegExp(`(^|\\s)${aliasNorm.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?=\\s|$)`);
+                    if (rx.test(textNorm)) return { ziel, alias: aliasNorm };
+                }
+            }
+            return null;
+        }
+
+        function entferneWortfolge(text, wortfolge) {
+            if (!wortfolge) return text;
+            const escaped = wortfolge.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+            return text.replace(new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "g"), " ");
+        }
+
+        function parseUniverselleSiriEingabe(raw) {
+            const original = String(raw || "").trim();
+            let norm = normalisiereSprache(original);
+            if (!norm) return { ok: false, meldung: "Ich habe keine Ausgabe verstanden." };
+
+            // Betrag erkennen – funktioniert z. B. mit "25 Euro", "25,50 €" oder "für 25,50".
+            const betragMatch = norm.match(/(?:^|\s)(\d+(?:[.,]\d{1,2})?)(?=\s|$)/);
+            if (!betragMatch) return { ok: false, meldung: "Ich konnte keinen Betrag erkennen." };
+            const betrag = parseFloat(betragMatch[1].replace(",", "."));
+            if (!Number.isFinite(betrag) || betrag <= 0) return { ok: false, meldung: "Der Betrag ist ungültig." };
+
+            // Kategorien zuerst erkennen. Dadurch kann die App auch natürliche Sätze wie
+            // "Ich habe 18 Euro fürs Kino ausgegeben" einem Bereich zuordnen.
+            const haushaltKategorie = findeAlias(norm, {
+                "Lebensmittel": ["lebensmittel", "einkauf", "einkaufen", "supermarkt", "rewe", "edeka", "aldi", "lidl", "kaufland", "netto", "penny"],
+                "Tanken": ["tanken", "tankstelle", "benzin", "diesel", "sprit", "shell", "aral", "esso"],
+                "Drogerie": ["drogerie", "dm", "rossmann", "mueller", "muller"],
+                "Sonstiger Haushalt": ["sonstiger haushalt", "haushalt sonstiges"]
+            });
+            const freizeitKategorie = findeAlias(norm, {
+                "Essen gehen": ["essen gehen", "restaurant", "imbiss", "pizzeria", "burger", "döner", "doner"],
+                "Café": ["cafe", "kaffee", "bäckerei", "backerei"],
+                "Kino / Event": ["kino", "event", "konzert", "theater", "festival", "ticket"],
+                "Sonstiges": ["freizeit sonstiges"]
+            });
+            const reisenKategorie = findeAlias(norm, {
+                "Flug": ["flug", "fliegen", "flugticket"],
+                "Unterkunft": ["unterkunft", "hotel", "airbnb", "ferienwohnung"],
+                "Transport": ["transport", "taxi", "bahn", "zug", "bus", "mietwagen"],
+                "Aktivitäten": ["aktivitat", "aktivitaten", "ausflug", "museum", "eintritt"],
+                "Verpflegung": ["verpflegung", "essen", "restaurant", "lebensmittel"]
+            });
+
+            let bereichTreffer = findeAlias(norm, {
+                haushalt: ["haushalt", "haushaltsausgabe", "haushaltskosten"],
+                freizeit: ["freizeit", "freizeitausgabe", "unternehmung", "unternehmungen", "ausgehen"],
+                reisen: ["reisen", "reise", "reisekosten", "urlaub"]
+            });
+
+            // Wenn der Bereich nicht ausdrücklich genannt wurde, aus eindeutigen Begriffen ableiten.
+            if (!bereichTreffer) {
+                if (freizeitKategorie && !haushaltKategorie) bereichTreffer = { ziel: "freizeit", alias: null };
+                else if (haushaltKategorie && !freizeitKategorie) bereichTreffer = { ziel: "haushalt", alias: null };
+                else if (reisenKategorie && /\b(urlaub|reise|reisen)\b/.test(norm)) bereichTreffer = { ziel: "reisen", alias: null };
+            }
+            if (!bereichTreffer) {
+                return { ok: false, meldung: "Ich konnte den Bereich nicht sicher erkennen. Sage bitte Haushalt, Freizeit oder Reisen dazu." };
+            }
+
+            const bereich = bereichTreffer.ziel;
+            let kategorieTreffer = bereich === "haushalt" ? haushaltKategorie
+                : bereich === "freizeit" ? freizeitKategorie
+                : reisenKategorie;
+
+            // "Essen" ist im Alltag ohne weitere Angabe eher Freizeit; bei ausdrücklich genannter Reise Verpflegung.
+            if (bereich === "freizeit" && !kategorieTreffer && /\bessen\b/.test(norm)) {
+                kategorieTreffer = { ziel: "Essen gehen", alias: "essen" };
+            }
+
+            let land = null;
+            let landAlias = null;
+            if (bereich === "reisen") {
+                const laender = Object.keys(daten.Reisen || {});
+                for (const kandidat of laender.sort((a, b) => b.length - a.length)) {
+                    const kandidatNorm = normalisiereSprache(kandidat);
+                    const rx = new RegExp(`(^|\\s)${kandidatNorm.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?=\\s|$)`);
+                    if (rx.test(norm)) {
+                        land = kandidat;
+                        landAlias = kandidatNorm;
+                        break;
+                    }
+                }
+                if (!land && laender.length === 1) land = laender[0];
+                if (!land && laender.length === 0) {
+                    return { ok: false, meldung: "Lege zuerst ein Reiseziel in der App an." };
+                }
+                if (!land && laender.length > 1) {
+                    return { ok: false, meldung: "Bitte nenne bei Reisen auch das Reiseziel, z. B. Italien." };
+                }
+            }
+
+            const kategorie = kategorieTreffer?.ziel || (
+                bereich === "haushalt" ? "Sonstiger Haushalt" :
+                bereich === "freizeit" ? "Sonstiges" : null
+            );
+            if (bereich === "reisen" && !kategorie) {
+                return { ok: false, meldung: "Bitte nenne bei Reisen auch eine Kategorie wie Essen, Flug, Hotel oder Transport." };
+            }
+
+            // Aus dem Rest des gesprochenen Satzes eine kurze Beschreibung bilden.
+            // Füllwörter und bereits erkannte Angaben werden entfernt.
+            let rest = norm;
+            rest = rest.replace(/(?:^|\s)\d+(?:[.,]\d{1,2})?(?=\s|$)/, " ");
+            rest = rest.replace(/\b(euro|eur)\b/g, " ");
+            rest = entferneWortfolge(rest, bereichTreffer.alias);
+            rest = entferneWortfolge(rest, kategorieTreffer?.alias);
+            rest = entferneWortfolge(rest, landAlias);
+
+            const fuellwoerter = [
+                "trag", "trage", "tragen", "eintragen", "eingetragen", "buche", "buch", "buchen",
+                "mir", "bitte", "bei", "beim", "unter", "fur", "fuer", "furs", "fuers", "zum", "zur",
+                "in", "im", "ins", "ein", "eine", "einen", "einem", "einer", "die", "der", "das",
+                "ausgabe", "ausgaben", "zahlung", "kosten", "mit", "von", "vom", "am", "heute",
+                "ich", "habe", "hab", "hatte", "ausgegeben", "bezahlt", "gezahlt", "gekauft", "kostete", "kostet"
+            ];
+            for (const wort of fuellwoerter) rest = entferneWortfolge(rest, normalisiereSprache(wort));
+            rest = rest.replace(/\s+/g, " ").trim();
+
+            const beschreibung = rest
+                ? rest.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+                : (bereich === "reisen" ? kategorie : kategorie || "Siri-Ausgabe");
+
+            return { ok: true, bereich, betrag, kategorie, land, beschreibung };
+        }
+
+        function speichereUniverselleSiriEingabe(parsed) {
+            const datum = heuteISO();
+            const monat = new Date(datum + "T12:00:00").getMonth() + 1;
+
+            if (parsed.bereich === "haushalt") {
+                daten.Haushalt ??= {};
+                daten.Haushalt[monat] ??= [];
+                daten.Haushalt[monat].push({
+                    id: generateId(), text: parsed.beschreibung, betrag: parsed.betrag,
+                    datum, kategorie: parsed.kategorie, quelle: "siri"
+                });
+            } else if (parsed.bereich === "freizeit") {
+                daten.Freizeit ??= {};
+                daten.Freizeit[monat] ??= [];
+                daten.Freizeit[monat].push({
+                    id: generateId(), text: parsed.beschreibung, betrag: parsed.betrag,
+                    datum, kategorie: parsed.kategorie, quelle: "siri"
+                });
+            } else if (parsed.bereich === "reisen") {
+                if (!daten.Reisen?.[parsed.land]) return false;
+                daten.Reisen[parsed.land][parsed.kategorie] ??= [];
+                daten.Reisen[parsed.land][parsed.kategorie].push({
+                    id: generateId(), text: parsed.beschreibung, betrag: parsed.betrag,
+                    datum, quelle: "siri"
+                });
+            } else {
+                return false;
+            }
+
+            speichern();
+            renderHomeUebersicht();
+            return true;
+        }
+
+        function handleUniverselleSiriEingabe() {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get("eingabe");
+            if (!raw) return false;
+
+            const parsed = parseUniverselleSiriEingabe(raw);
+            history.replaceState({}, document.title, window.location.pathname);
+
+            if (!parsed.ok) {
+                alert("Siri-Eingabe nicht übernommen:\n\n" + parsed.meldung);
+                return true;
+            }
+
+            const ziel = parsed.bereich === "reisen"
+                ? `Reisen → ${parsed.land} → ${parsed.kategorie}`
+                : `${parsed.bereich === "haushalt" ? "Haushalt" : "Freizeit"} → ${parsed.kategorie}`;
+            const bestaetigt = confirm(
+                `${parsed.betrag.toFixed(2)} €\n${ziel}\n${parsed.beschreibung}\n\nAusgabe übernehmen?`
+            );
+            if (!bestaetigt) return true;
+
+            speichereUniverselleSiriEingabe(parsed);
+            return true;
+        }
+
         function handleSiriSchnelleingabe() {
             const params = new URLSearchParams(window.location.search);
             if (params.get("siri") !== "1") return;
@@ -4837,7 +5043,6 @@
             const betragRaw = (params.get("betrag") || "").replace(",", ".").trim();
             const betrag = parseFloat(betragRaw);
 
-            // Ungültige oder unvollständige Siri-Aufrufe nicht speichern.
             if (!textRaw || isNaN(betrag) || betrag <= 0) {
                 history.replaceState({}, document.title, window.location.pathname);
                 return;
@@ -4851,23 +5056,15 @@
                 daten.Haushalt ??= {};
                 daten.Haushalt[monat] ??= [];
                 daten.Haushalt[monat].push({
-                    id: generateId(),
-                    text,
-                    betrag,
-                    datum,
-                    kategorie: "Sonstiger Haushalt",
-                    quelle: "siri"
+                    id: generateId(), text, betrag, datum,
+                    kategorie: "Sonstiger Haushalt", quelle: "siri"
                 });
             } else if (bereich === "freizeit") {
                 daten.Freizeit ??= {};
                 daten.Freizeit[monat] ??= [];
                 daten.Freizeit[monat].push({
-                    id: generateId(),
-                    text,
-                    betrag,
-                    datum,
-                    kategorie: "Sonstiges",
-                    quelle: "siri"
+                    id: generateId(), text, betrag, datum,
+                    kategorie: "Sonstiges", quelle: "siri"
                 });
             } else {
                 history.replaceState({}, document.title, window.location.pathname);
@@ -4876,13 +5073,13 @@
 
             speichern();
             renderHomeUebersicht();
-
-            // Parameter entfernen, damit ein Neuladen die Ausgabe nicht doppelt speichert.
             history.replaceState({}, document.title, window.location.pathname);
         }
 
         renderHomeUebersicht();
-        handleSiriSchnelleingabe();
+        if (!handleUniverselleSiriEingabe()) {
+            handleSiriSchnelleingabe();
+        }
 
 
     </script>
