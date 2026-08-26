@@ -868,6 +868,7 @@
 
                 <div id="freiDetails" class="compact-details hidden">
                     <div class="calc-row"><span>Startgehalt</span><span id="homeBudgetStart">0.00 €</span></div>
+                    <div class="calc-row"><span>Einnahmen</span><span id="homeBudgetEinnahmen">+0.00 €</span></div>
                     <div class="calc-row"><span>Fixkosten</span><span id="homeBudgetLaufend">0.00 €</span></div>
                     <div class="calc-row"><span>Versicherungen</span><span id="homeBudgetVers">0.00 €</span></div>
                     <div class="calc-row"><span>Haushalt bisher</span><span id="homeBudgetHaushalt">0.00 €</span></div>
@@ -928,6 +929,10 @@
             <div class="overview-card" onclick="openVersicherungen()">
                 <div class="overview-card-top"><span class="overview-card-title">🛡️ Versicherungen</span><strong id="overviewVersicherungen">0.00 €</strong></div>
                 <div class="overview-card-sub">Fällige Versicherungen im Gehaltszeitraum</div>
+            </div>
+            <div class="overview-card" onclick="openEinnahmen()">
+                <div class="overview-card-top"><span class="overview-card-title">💰 Einnahmen</span><strong id="overviewEinnahmen">+0.00 €</strong></div>
+                <div class="overview-card-sub">Zusätzliche Geldeingänge im Gehaltszeitraum</div>
             </div>
 
             <div class="section-label">Separat</div>
@@ -1001,6 +1006,7 @@
             <h3>Abrechnung hinzufügen</h3>
             <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausText')">🛒 Haushalt</button>
             <button class="add-choice" onclick="closeAddSheet(); openFreizeit(); toggleCategoryAdd('freizeitAddPanel','freizeitText')">🎉 Freizeit</button>
+            <button class="add-choice" onclick="closeAddSheet(); openEinnahmen(); toggleCategoryAdd('einnahmenAddPanel','einnahmenText')">💰 Einnahme</button>
             <button class="add-choice" onclick="closeAddSheet(); openKosten(); toggleCategoryAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
             <button class="add-choice" onclick="closeAddSheet(); openVersicherungen(); toggleCategoryAdd('versAddPanel','versName')">🛡️ Versicherung</button>
             <button class="add-choice" onclick="closeAddSheet(); openReisen(); toggleCategoryAdd('reisenAddPanel','landInput')">✈️ Reise</button>
@@ -1222,6 +1228,41 @@
 
     </div>
 
+    <!-- ===================== Einnahmen ===================== -->
+    <div id="einnahmenView" class="hidden">
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Einnahmen</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('einnahmenAddPanel','einnahmenText')" aria-label="Einnahme hinzufügen">＋</button>
+            </div>
+
+            <div id="einnahmenAddPanel" class="category-add-panel hidden">
+                <h3>Einnahme hinzufügen</h3>
+                <input id="einnahmenText" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)">
+                <input id="einnahmenBetrag" type="number" min="0" step="0.01" placeholder="Betrag">
+                <input id="einnahmenVon" placeholder="Von wem? (optional)">
+                <label for="einnahmenDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Erste Zahlung / Datum</label>
+                <input id="einnahmenDatum" type="date">
+                <select id="einnahmenWiederholung">
+                    <option value="einmalig">Einmalig</option>
+                    <option value="monatlich">Monatlich</option>
+                </select>
+                <div class="info-text">Bei „Monatlich“ wird die Einnahme ab dem gewählten Datum jeden Monat im Budget berücksichtigt.</div>
+                <button onclick="addEinnahme()" class="btn btn-primary">Hinzufügen</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="einnahmenListe"></div>
+            <div class="total" id="einnahmenGesamt"></div>
+        </div>
+
+        <div class="container">
+            <button onclick="deleteAlleEinnahmen()" style="background:red;">🗑️ Alle Einnahmen löschen</button>
+        </div>
+    </div>
+
     <!-- ===================== Laufende Kosten ===================== -->
     <div id="kostenView" class="hidden">
 
@@ -1284,6 +1325,7 @@
             Versicherungen: [],
             Haushalt: {},
             Freizeit: {},
+            Einnahmen: [],
             "Laufende Kosten": {
                 fix: []
             },
@@ -1327,6 +1369,20 @@
         if (!daten.Freizeit || typeof daten.Freizeit !== "object" || Array.isArray(daten.Freizeit)) {
             daten.Freizeit = {};
         }
+
+        if (!Array.isArray(daten.Einnahmen)) {
+            daten.Einnahmen = [];
+        }
+
+        daten.Einnahmen = daten.Einnahmen.map(e => ({
+            ...e,
+            id: e.id || generateId(),
+            text: e.text || e.name || "Einnahme",
+            betrag: parseFloat(e.betrag) || 0,
+            datum: e.datum || heuteISO(),
+            wiederholung: e.wiederholung === "monatlich" ? "monatlich" : "einmalig",
+            von: e.von || ""
+        }));
 
         if (!daten.geloeschteKategorien || typeof daten.geloeschteKategorien !== "object" || Array.isArray(daten.geloeschteKategorien)) {
             daten.geloeschteKategorien = {};
@@ -1405,6 +1461,7 @@
             offeneFreizeitJahre: {},
             offeneFreizeitMonate: {},
             editFreizeitId: null,
+            editEinnahmeId: null,
             editVersicherungId: null,
             editKategorieName: null,
             editLandName: null,
@@ -1724,6 +1781,7 @@
                 "land",
                 "haushaltView",
                 "freizeitView",
+                "einnahmenView",
                 "kostenView",
                 "versicherungenView",
                 "uebersichtView",
@@ -1789,7 +1847,7 @@
         }
 
         function closeCategoryAddPanels() {
-            ["reisenAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","kostenAddPanel"].forEach(id => {
+            ["reisenAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -1861,6 +1919,17 @@
             setupFreizeitEnterFlow();
         }
 
+        function openEinnahmen() {
+            show("einnahmenView");
+            closeCategoryAddPanels();
+            state.editEinnahmeId = null;
+
+            const datum = document.getElementById("einnahmenDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+
+            renderEinnahmen();
+        }
+
         function openKosten() {
             show("kostenView");
             closeCategoryAddPanels();
@@ -1872,7 +1941,7 @@
         }
 
         function hideAllViews() {
-            ["versicherungenView", "haushaltView", "freizeitView", "kostenView"].forEach(id => {
+            ["versicherungenView", "haushaltView", "freizeitView", "einnahmenView", "kostenView"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -3209,6 +3278,102 @@
 
             speichern();
             renderListe();
+        }
+
+        function addEinnahme() {
+            const text = formatText(document.getElementById("einnahmenText")?.value || "");
+            const betrag = parseFloat(document.getElementById("einnahmenBetrag")?.value);
+            const von = formatText(document.getElementById("einnahmenVon")?.value || "");
+            const datum = document.getElementById("einnahmenDatum")?.value;
+            const wiederholung = document.getElementById("einnahmenWiederholung")?.value === "monatlich" ? "monatlich" : "einmalig";
+
+            if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
+            daten.Einnahmen ??= [];
+            daten.Einnahmen.push({ id: generateId(), text, betrag, von, datum, wiederholung });
+            speichern();
+
+            document.getElementById("einnahmenText").value = "";
+            document.getElementById("einnahmenBetrag").value = "";
+            document.getElementById("einnahmenVon").value = "";
+            document.getElementById("einnahmenDatum").value = heuteISO();
+            document.getElementById("einnahmenWiederholung").value = "einmalig";
+            document.getElementById("einnahmenAddPanel")?.classList.add("hidden");
+            renderEinnahmen();
+        }
+
+        function renderEinnahmen() {
+            const container = document.getElementById("einnahmenListe");
+            const total = document.getElementById("einnahmenGesamt");
+            if (!container) return;
+            container.innerHTML = "";
+            const liste = Array.isArray(daten.Einnahmen) ? [...daten.Einnahmen].sort((a,b) => String(b.datum).localeCompare(String(a.datum))) : [];
+
+            if (!liste.length) {
+                container.innerHTML = `<p style="opacity:0.7;">Noch keine Einnahmen eingetragen.</p>`;
+                if (total) total.innerHTML = "";
+                return;
+            }
+
+            liste.forEach(e => {
+                const isEdit = String(state.editEinnahmeId) === String(e.id);
+                let html;
+                if (isEdit) {
+                    html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                        <input id="editEinnahmenText-${e.id}" value="${escapeHtml(e.text || '')}">
+                        <input id="editEinnahmenBetrag-${e.id}" type="number" min="0" step="0.01" value="${e.betrag}">
+                        <input id="editEinnahmenVon-${e.id}" value="${escapeHtml(e.von || '')}" placeholder="Von wem? (optional)">
+                        <input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}">
+                        <select id="editEinnahmenWiederholung-${e.id}"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+                        <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
+                    </div>`;
+                } else {
+                    const info = e.wiederholung === "monatlich" ? `🔁 Monatlich am ${parseISODate(e.datum)?.getDate() || '-'} · seit ${formatDatum(e.datum)}` : `Einmalig · ${formatDatum(e.datum)}`;
+                    html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
+                        <span style="display:flex; flex-direction:column; align-items:flex-start; gap:3px;"><strong>${escapeHtml(e.text || 'Einnahme')}</strong><span style="opacity:.7; font-size:12px;">${escapeHtml(info)}${e.von ? ' · von ' + escapeHtml(e.von) : ''}</span></span>
+                        <div class="actions" style="display:flex; align-items:center; gap:8px;"><strong>+${formatBetrag(e.betrag)}</strong><button class="edit" onclick="startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="deleteEinnahme('${e.id}')">🗑️</button></div>
+                    </div>`;
+                }
+                const item = createItem(html);
+                item.style.background = "#3a3a3c";
+                container.appendChild(item);
+            });
+
+            const z = getGehaltszeitraum();
+            const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
+            if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
+        }
+
+        function startEditEinnahme(id) { state.editEinnahmeId = id; renderEinnahmen(); }
+        function cancelEditEinnahme() { state.editEinnahmeId = null; renderEinnahmen(); }
+
+        function saveEditEinnahme(id) {
+            const index = daten.Einnahmen.findIndex(e => String(e.id) === String(id));
+            if (index < 0) return;
+            const text = formatText(document.getElementById(`editEinnahmenText-${id}`)?.value || "");
+            const betrag = parseFloat(document.getElementById(`editEinnahmenBetrag-${id}`)?.value);
+            const von = formatText(document.getElementById(`editEinnahmenVon-${id}`)?.value || "");
+            const datum = document.getElementById(`editEinnahmenDatum-${id}`)?.value;
+            const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
+            if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
+            daten.Einnahmen[index] = { ...daten.Einnahmen[index], text, betrag, von, datum, wiederholung };
+            state.editEinnahmeId = null;
+            speichern();
+            renderEinnahmen();
+        }
+
+        function deleteEinnahme(id) {
+            if (!confirm("Einnahme wirklich löschen?")) return;
+            daten.Einnahmen = (daten.Einnahmen || []).filter(e => String(e.id) !== String(id));
+            speichern();
+            renderEinnahmen();
+        }
+
+        function deleteAlleEinnahmen() {
+            if (!Array.isArray(daten.Einnahmen) || !daten.Einnahmen.length) return;
+            if (!confirm("Alle Einnahmen wirklich löschen?")) return;
+            daten.Einnahmen = [];
+            speichern();
+            renderEinnahmen();
         }
 
         function setQuickCategory(bereich, kategorie, button) {
@@ -4555,6 +4720,44 @@
             return liste;
         }
 
+        function einnahmenZahlungenImZeitraum(von, bis) {
+            const result = [];
+            if (!Array.isArray(daten.Einnahmen)) return result;
+
+            daten.Einnahmen.forEach(e => {
+                const betrag = parseFloat(e.betrag);
+                const start = parseISODate(e.datum);
+                if (!start || isNaN(betrag) || betrag <= 0) return;
+
+                if (e.wiederholung !== "monatlich") {
+                    if (start >= von && start <= bis) result.push({ ...e, betrag, datumObj: start });
+                    return;
+                }
+
+                let jahr = von.getFullYear();
+                let monat = von.getMonth();
+                const startTag = start.getDate();
+                let kandidat = new Date(jahr, monat, Math.min(startTag, new Date(jahr, monat + 1, 0).getDate()));
+                if (kandidat < start) {
+                    monat += 1;
+                    if (monat > 11) { monat = 0; jahr += 1; }
+                }
+
+                while (true) {
+                    const letzterTag = new Date(jahr, monat + 1, 0).getDate();
+                    const zahlung = new Date(jahr, monat, Math.min(startTag, letzterTag));
+                    if (zahlung > bis) break;
+                    if (zahlung >= von && zahlung >= start) {
+                        result.push({ ...e, betrag, datumObj: zahlung, datumVorkommen: isoAusDate(zahlung) });
+                    }
+                    monat += 1;
+                    if (monat > 11) { monat = 0; jahr += 1; }
+                }
+            });
+
+            return result;
+        }
+
         function alltagImZeitraum(von, bis) {
             return [...haushaltImZeitraum(von, bis), ...freizeitImZeitraum(von, bis)];
         }
@@ -4589,10 +4792,14 @@
             const vers = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende);
             const laufendSum = laufende.reduce((s,e)=>s+e.betrag,0);
             const versSum = vers.reduce((s,e)=>s+e.betrag,0);
-            const verfuegbar = start - haushaltSum - freizeitSum - laufendSum - versSum;
+            const einnahmenSum = einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const verfuegbar = start + einnahmenSum - haushaltSum - freizeitSum - laufendSum - versSum;
 
             const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val); };
             set("homeBudgetStart", start);
+            set("homeBudgetEinnahmen", einnahmenSum);
+            const einnahmenDetail = document.getElementById("homeBudgetEinnahmen");
+            if (einnahmenDetail) einnahmenDetail.innerHTML = "+" + formatBetrag(einnahmenSum);
             set("homeBudgetHaushalt", haushaltSum);
             set("homeBudgetFreizeit", freizeitSum);
             set("homeBudgetLaufend", laufendSum);
@@ -4617,7 +4824,7 @@
                 .reduce((s, e) => s + e.betrag, 0);
 
             // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
-            const verfuegbarZuWochenbeginn = start - laufendSum - versSum - alltagVorWoche;
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche;
 
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
@@ -4667,8 +4874,11 @@
             const fr = freizeitImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const f = laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const v = versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const ei = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val);};
             set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewReisen",reisenGesamt());
+            const einnahmenEl = document.getElementById("overviewEinnahmen");
+            if (einnahmenEl) einnahmenEl.innerHTML = "+" + formatBetrag(ei);
         }
 
         function renderHomeUebersicht() {
