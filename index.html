@@ -848,7 +848,55 @@
             }
         }
 
-    </style>
+    
+        .delete-tools {
+            display:flex;
+            gap:10px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin-top:12px;
+        }
+        .delete-tools button {
+            flex:1;
+            min-width:140px;
+        }
+        .select-dot {
+            width:24px;
+            height:24px;
+            border-radius:50%;
+            border:2px solid #fff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+            cursor:pointer;
+            font-size:14px;
+            font-weight:700;
+        }
+        .select-dot.selected { background:#0a84ff; }
+    
+        /* ===== COMPACT BOTTOM NAV ===== */
+        @media (max-width: 600px) {
+            .container.app-shell {
+                padding-bottom: calc(86px + env(safe-area-inset-bottom));
+            }
+            .bottom-nav {
+                padding-top: 4px;
+                padding-bottom: calc(4px + env(safe-area-inset-bottom));
+                border-radius: 18px 18px 0 0;
+            }
+            .bottom-nav button {
+                min-height: 44px;
+                padding: 4px 4px;
+                font-size: 10.5px;
+                gap: 2px;
+            }
+            .nav-icon {
+                font-size: 18px;
+                min-height: 19px;
+            }
+        }
+</style>
 </head>
 
 <body>
@@ -979,7 +1027,7 @@
             </div>
             <div class="settings-card">
                 <label for="startgehaltInput">Startgehalt / Startbudget</label>
-                <input id="startgehaltInput" type="number" min="0" step="0.01" placeholder="z. B. 2500">
+                <input id="startgehaltInput" type="text" inputmode="decimal" min="0" step="0.01" placeholder="z. B. 2500">
                 <button onclick="saveStartgehalt()">Startgehalt speichern</button>
                 <div class="settings-note">Das Startgehalt wird getrennt für jeden Gehaltszeitraum gespeichert.</div>
 
@@ -1026,7 +1074,7 @@
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
                 <h3>Reise hinzufügen</h3>
-                <input id="landInput" placeholder="Neues Land">
+                <input id="landInput" autocapitalize="words" placeholder="Neues Land">
                 <button onclick="addLand()" class="btn btn-primary">Land hinzufügen</button>
             </div>
 
@@ -1051,8 +1099,8 @@
 
                 <h3 id="quickTitel"></h3>
 
-                <input id="quickBetrag" type="number" placeholder="Betrag">
-                <input id="quickText" placeholder="Beschreibung">
+                <input id="quickBetrag" type="text" inputmode="decimal" placeholder="Betrag">
+                <input id="quickText" autocapitalize="words" placeholder="Beschreibung">
 
                 <button onclick="saveQuickAdd()" class="btn btn-primary">
                     Speichern
@@ -1074,8 +1122,8 @@
                     <button onclick="addKategorie()">+</button>
                 </div>
 
-                <input id="betrag" type="number" placeholder="Betrag">
-                <input id="text" placeholder="Beschreibung">
+                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag">
+                <input id="text" autocapitalize="words" placeholder="Beschreibung">
                 <input id="datum" type="date">
 
                 <button onclick="addEintrag()" class="btn btn-primary">
@@ -1092,6 +1140,10 @@
         </div>
 
         <div class="container">
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('reisen')" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedReisen" onclick="deleteSelected('reisen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="liste"></div>
             <div class="total" id="gesamt"></div>
         </div>
@@ -1116,11 +1168,11 @@
 
             <div id="versAddPanel" class="category-add-panel hidden">
                 <h3>Versicherung hinzufügen</h3>
-                <input id="versName" placeholder="Versicherung">
-                <input id="versBetrag" type="number" placeholder="Betrag">
+                <input id="versName" autocapitalize="words" placeholder="Versicherung">
+                <input id="versBetrag" type="text" inputmode="decimal" placeholder="Betrag">
                 <input id="versDatum" type="date">
-                <input id="versAnbieter" placeholder="Anbieter">
-                <input id="versNummer" placeholder="Versicherungsnummer">
+                <input id="versAnbieter" autocapitalize="words" placeholder="Anbieter">
+                <input id="versNummer" autocapitalize="words" placeholder="Versicherungsnummer">
 
                 <select id="versIntervall">
                     <option value="monatlich">Monatlich</option>
@@ -1149,9 +1201,16 @@
         </div>
 
         <div class="container">
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('versicherungen')" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedVersicherungen" onclick="deleteSelected('versicherungen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="versicherungenListe"></div>
             <div class="total" id="versicherungenGesamt"></div>
             <div id="versicherungenFooter"></div>
+        </div>
+        <div class="container">
+            <button onclick="deleteAlleVersicherungen()" style="background:red;">🗑️ Alle Versicherungen löschen</button>
         </div>
 
     </div>
@@ -1175,14 +1234,18 @@
                     <button class="quick-category-btn" data-category="Sonstiger Haushalt" onclick="setQuickCategory('haus','Sonstiger Haushalt',this)">🏠 Sonstiges</button>
                 </div>
                 <input id="hausKategorie" type="hidden" value="Lebensmittel">
-                <input id="hausText" placeholder="Beschreibung">
-                <input id="hausBetrag" type="number" placeholder="Betrag">
+                <input id="hausText" autocapitalize="words" placeholder="Beschreibung">
+                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag">
                 <input id="hausDatum" type="date">
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
 
         <div class="container">
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('haushalt')" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedHaushalt" onclick="deleteSelected('haushalt')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="haushaltListe"></div>
         </div>
 
@@ -1211,14 +1274,18 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen gehen">
-                <input id="freizeitText" placeholder="Beschreibung">
-                <input id="freizeitBetrag" type="number" placeholder="Betrag">
+                <input id="freizeitText" autocapitalize="words" placeholder="Beschreibung">
+                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
 
         <div class="container">
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('freizeit')" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedFreizeit" onclick="deleteSelected('freizeit')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="freizeitListe"></div>
         </div>
 
@@ -1239,9 +1306,9 @@
 
             <div id="einnahmenAddPanel" class="category-add-panel hidden">
                 <h3>Einnahme hinzufügen</h3>
-                <input id="einnahmenText" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)">
-                <input id="einnahmenBetrag" type="number" min="0" step="0.01" placeholder="Betrag">
-                <input id="einnahmenVon" placeholder="Von wem? (optional)">
+                <input id="einnahmenText" autocapitalize="words" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)">
+                <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag">
+                <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)">
                 <label for="einnahmenDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Erste Zahlung / Datum</label>
                 <input id="einnahmenDatum" type="date">
                 <select id="einnahmenWiederholung">
@@ -1254,6 +1321,10 @@
         </div>
 
         <div class="container">
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('einnahmen')" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedEinnahmen" onclick="deleteSelected('einnahmen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="einnahmenListe"></div>
             <div class="total" id="einnahmenGesamt"></div>
         </div>
@@ -1275,9 +1346,9 @@
             <div id="kostenAddPanel" class="category-add-panel hidden">
                 <h3>Fixkosten hinzufügen</h3>
 
-            <input id="costText" placeholder="Beschreibung">
-            <input id="costBetrag" type="number" placeholder="Betrag">
-            <input id="costInfo" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
+            <input id="costText" autocapitalize="words" placeholder="Beschreibung">
+            <input id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag">
+            <input id="costInfo" autocapitalize="words" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
 
             <label for="costDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">
                 Erste Abbuchung
@@ -1288,10 +1359,10 @@
             <button onclick="addKosten()" class="btn btn-primary">Hinzufügen</button>
             </div>
 
-            <button onclick="toggleKostenAuswahlModus()" class="btn btn-primary" style="background:#3a3a3c;">
-                Auswahlmodus
-            </button>
-
+            <div class="delete-tools">
+                <button onclick="toggleMultiSelect('fixkosten')" class="btn btn-primary" style="background:#3a3a3c;">☑️ Auswählen</button>
+                <button id="deleteSelectedFixkosten" onclick="deleteSelected('fixkosten')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            </div>
             <div id="kostenAuswahlAktionen"></div>
         </div>
 
@@ -1378,7 +1449,7 @@
             ...e,
             id: e.id || generateId(),
             text: e.text || e.name || "Einnahme",
-            betrag: parseFloat(e.betrag) || 0,
+            betrag: parseBetrag(e.betrag) || 0,
             datum: e.datum || heuteISO(),
             wiederholung: e.wiederholung === "monatlich" ? "monatlich" : "einmalig",
             von: e.von || ""
@@ -1472,6 +1543,8 @@
             freiDetailsOffen: false,
             kostenAuswahlModus: false,
             ausgewaehlteKosten: [],
+            multiSelect: { haushalt:false, freizeit:false, einnahmen:false, versicherungen:false, fixkosten:false, reisen:false },
+            selected: { haushalt:[], freizeit:[], einnahmen:[], versicherungen:[], fixkosten:[], reisen:[] },
             offeneVersicherungen: {},
         };
 
@@ -2156,7 +2229,7 @@
         function addEintrag() {
 
             let kat = document.getElementById("kategorieSelect").value;
-            let betrag = parseFloat(document.getElementById("betrag").value);
+            let betrag = parseBetrag(document.getElementById("betrag").value);
             let text = document.getElementById("text").value;
             let datum = document.getElementById("datum").value;
 
@@ -2230,7 +2303,7 @@
                 ${state.editKategorieName === k ? `
                     <input id="editKategorie-${k.replace(/\s+/g, '_')}" value="${k}">
                 ` : `
-                    <span>${k} – ${sum.toFixed(2)} €</span>
+                    <span>${k} – ${formatBetragText(sum)}</span>
                 `}
             </div>
 
@@ -2266,8 +2339,8 @@
                         if (state.editReiseId === e.id) {
 
                             sub.innerHTML = `
-                        <input id="editText-${e.id}" value="${e.text || ""}">
-                        <input id="editBetrag-${e.id}" type="number" value="${e.betrag}">
+                        <input id="editText-${e.id}" value="${e.text || ""}" autocapitalize="words">
+                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
                         <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
                         <div class="actions">
@@ -2281,18 +2354,13 @@
 
                         else {
                             sub.innerHTML = `
-                        <span>
-                            ${e.text || "-"}
-                            ${e.datum ? " | " + formatDatum(e.datum) : ""}
-                        </span>
-
+                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                            ${selectionDot('reisen', e.id)}
+                            <span>${e.text || "-"}${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
+                        </div>
                         <div class="actions">
-                            <span style="font-weight:600; margin-right:5px;">
-                                ${formatBetrag(e.betrag)}
-                            </span>
-
-                            <button class="edit" onclick="startEditReise(${e.id})">✏️</button>
-                            <button class="delete" onclick="deleteEintrag('${k}', ${i})">🗑️</button>
+                            <span style="font-weight:600; margin-right:5px;">${formatBetrag(e.betrag)}</span>
+                            ${!state.multiSelect.reisen ? `<button class="edit" onclick="startEditReise(${e.id})">✏️</button><button class="delete" onclick="deleteEintrag('${k}', ${i})">🗑️</button>` : ''}
                         </div>
                     `;
                         }
@@ -2303,9 +2371,10 @@
             }
 
             document.getElementById("gesamt").innerText =
-                "Gesamt: " + gesamt.toFixed(2) + " €";
+                "Gesamt: " + formatBetragText(gesamt);
 
             renderKategorienUebersicht();
+            updateSelectionButton('reisen');
         }
 
         /* EDIT */
@@ -2370,6 +2439,82 @@
         }
 
 
+
+        function selectionLabel(type) {
+            return ({haushalt:'Haushalt', freizeit:'Freizeit', einnahmen:'Einnahmen', versicherungen:'Versicherungen', fixkosten:'Fixkosten', reisen:'Reisen'})[type] || type;
+        }
+
+        function toggleMultiSelect(type) {
+            state.multiSelect[type] = !state.multiSelect[type];
+            if (!state.multiSelect[type]) state.selected[type] = [];
+            renderForSelection(type);
+        }
+
+        function toggleSelected(type, id) {
+            const key = String(id);
+            const list = state.selected[type] || (state.selected[type] = []);
+            const i = list.indexOf(key);
+            if (i === -1) list.push(key); else list.splice(i, 1);
+            renderForSelection(type);
+        }
+
+        function selectionDot(type, id) {
+            if (!state.multiSelect[type]) return '';
+            const selected = (state.selected[type] || []).includes(String(id));
+            return `<div class="select-dot ${selected ? 'selected' : ''}" onclick="event.stopPropagation(); toggleSelected('${type}','${String(id).replace(/'/g,"\'")}')">${selected ? '✓' : ''}</div>`;
+        }
+
+        function updateSelectionButton(type) {
+            const map = {haushalt:'Haushalt',freizeit:'Freizeit',einnahmen:'Einnahmen',versicherungen:'Versicherungen',fixkosten:'Fixkosten',reisen:'Reisen'};
+            const el = document.getElementById('deleteSelected' + map[type]);
+            if (!el) return;
+            const n = (state.selected[type] || []).length;
+            el.style.display = state.multiSelect[type] ? '' : 'none';
+            el.textContent = `🗑️ ${n} ausgewählte löschen`;
+            el.disabled = n === 0;
+            el.style.opacity = n === 0 ? '.55' : '1';
+        }
+
+        function renderForSelection(type) {
+            if (type === 'haushalt') renderHaushalt();
+            else if (type === 'freizeit') renderFreizeit();
+            else if (type === 'einnahmen') renderEinnahmen();
+            else if (type === 'versicherungen') renderVersicherungen();
+            else if (type === 'fixkosten') renderLaufendeKosten();
+            else if (type === 'reisen') renderListe();
+            updateSelectionButton(type);
+        }
+
+        function deleteSelected(type) {
+            const ids = state.selected[type] || [];
+            if (!ids.length) return;
+            if (!confirm(`${ids.length} ausgewählte ${selectionLabel(type)}-Einträge wirklich löschen?`)) return;
+            const set = new Set(ids.map(String));
+
+            if (type === 'haushalt') {
+                Object.keys(daten.Haushalt || {}).forEach(m => { if (Array.isArray(daten.Haushalt[m])) daten.Haushalt[m] = daten.Haushalt[m].filter(e => !set.has(String(e.id))); });
+            } else if (type === 'freizeit') {
+                Object.keys(daten.Freizeit || {}).forEach(m => { if (Array.isArray(daten.Freizeit[m])) daten.Freizeit[m] = daten.Freizeit[m].filter(e => !set.has(String(e.id))); });
+            } else if (type === 'einnahmen') {
+                daten.Einnahmen = (daten.Einnahmen || []).filter(e => !set.has(String(e.id)));
+            } else if (type === 'versicherungen') {
+                daten.Versicherungen = (daten.Versicherungen || []).filter(e => !set.has(String(e.id)));
+            } else if (type === 'fixkosten') {
+                daten['Laufende Kosten'] ??= {fix:[]};
+                daten['Laufende Kosten'].fix = (daten['Laufende Kosten'].fix || []).filter(e => !set.has(String(e.id)));
+            } else if (type === 'reisen' && aktuellesLand && daten.Reisen?.[aktuellesLand]) {
+                Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
+                    if (Array.isArray(daten.Reisen[aktuellesLand][k])) daten.Reisen[aktuellesLand][k] = daten.Reisen[aktuellesLand][k].filter(e => !set.has(String(e.id)));
+                });
+            }
+
+            state.selected[type] = [];
+            state.multiSelect[type] = false;
+            speichern();
+            renderForSelection(type);
+            renderHomeUebersicht();
+        }
+
         function toggleKostenAuswahlModus() {
             state.kostenAuswahlModus = !state.kostenAuswahlModus;
 
@@ -2423,7 +2568,7 @@
             const auswahlBox = document.getElementById("kostenAuswahlAktionen");
 
             if (auswahlBox) {
-                if (state.kostenAuswahlModus) {
+                if (false && state.kostenAuswahlModus) {
                     auswahlBox.innerHTML = `
                         <button onclick="deleteAusgewaehlteKosten()" style="background:#ff453a;">
                             🗑️ ${state.ausgewaehlteKosten.length} ausgewählte löschen
@@ -2453,7 +2598,7 @@
                 k.tag = tag;
                 k.info = k.info || "";
 
-                summe += parseFloat(k.betrag) || 0;
+                summe += parseBetrag(k.betrag) || 0;
 
                 const isEdit = String(state.editKostenId) === String(k.id);
                 let item;
@@ -2461,9 +2606,9 @@
                 if (isEdit) {
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                        <input id="editKostenText-${k.id}" value="${escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung">
-                        <input id="editKostenBetrag-${k.id}" type="number" value="${k.betrag}" placeholder="Betrag">
-                        <input id="editKostenInfo-${k.id}" value="${escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
+                        <input id="editKostenText-${k.id}" value="${escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
+                        <input id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${formatInputBetrag(k.betrag)}" placeholder="Betrag">
+                        <input id="editKostenInfo-${k.id}" value="${escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
                         <label for="editKostenDatum-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Erste Abbuchung · danach monatlich</label>
                         <input id="editKostenDatum-${k.id}" type="date" value="${datum}">
 
@@ -2477,15 +2622,15 @@
                     setTimeout(() => setupKostenEditEnterFlow(k.id), 0);
                 } else {
 
-                    const ausgewaehlt = state.ausgewaehlteKosten.includes(String(k.id));
+                    const ausgewaehlt = (state.selected.fixkosten || []).includes(String(k.id));
 
                     item = createItem(`
                     <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:flex-start;">
 
                         <div style="display:flex; align-items:flex-start; gap:12px; flex:1;">
 
-                            ${state.kostenAuswahlModus ? `
-                                <div onclick="toggleKostenAuswahl('${k.id}')"
+                            ${state.multiSelect.fixkosten ? `
+                                <div onclick="toggleSelected('fixkosten','${k.id}')"
                                      style="
                                         width:24px;
                                         height:24px;
@@ -2514,7 +2659,7 @@
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             ${formatBetrag(k.betrag)}
 
-                            ${!state.kostenAuswahlModus ? `
+                            ${!state.multiSelect.fixkosten ? `
                                 <button class="edit" onclick="startEditKosten('${k.id}')">✏️</button>
                                 <button class="delete" onclick="deleteLaufendeKosten('${k.id}')">🗑️</button>
                             ` : ''}
@@ -2530,12 +2675,13 @@
             if (total) {
                 total.innerHTML = "Gesamt: " + formatBetrag(summe);
             }
+            updateSelectionButton('fixkosten');
         }
 
         function addKosten() {
 
             let text = formatText(document.getElementById("costText").value);
-            let betrag = parseFloat(document.getElementById("costBetrag").value);
+            let betrag = parseBetrag(document.getElementById("costBetrag").value);
             let info = document.getElementById("costInfo")?.value.trim() || "";
             let datum = document.getElementById("costDatum").value;
 
@@ -2615,7 +2761,7 @@
             if (!textEl || !betragEl || !datumEl) return;
 
             let text = textEl.value;
-            let betrag = parseFloat(betragEl.value);
+            let betrag = parseBetrag(betragEl.value);
             let info = infoEl?.value.trim() || "";
             let datum = datumEl.value || heuteISO();
 
@@ -2708,7 +2854,7 @@
             daten.Reisen[aktuellesLand][k][i] = {
                 ...eintrag,
                 text: neuerText,
-                betrag: parseFloat(neuerBetrag),
+                betrag: parseBetrag(neuerBetrag),
                 datum: neuesDatum
             };
 
@@ -2734,7 +2880,7 @@
         function addVersicherung() {
 
             let name = formatText(document.getElementById("versName").value);
-            let betrag = parseFloat(document.getElementById("versBetrag").value);
+            let betrag = parseBetrag(document.getElementById("versBetrag").value);
             let datum = document.getElementById("versDatum").value;
 
             let anbieter = formatText(document.getElementById("versAnbieter").value);
@@ -2817,29 +2963,29 @@
                     item.innerHTML = `
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
-                    <div onclick="toggleVersicherungDetails('${v.id}')"
+                    <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}')` : `toggleVersicherungDetails('${v.id}')`}"
                          style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:10px; cursor:pointer;">
 
-                        <div style="display:flex; flex-direction:column;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${selectionDot('versicherungen', v.id)}
+                            <div style="display:flex; flex-direction:column;">
                             <span style="font-weight:600;">${escapeHtml(v.name || "Versicherung")}</span>
 
                             <small style="opacity:0.7;">
                                 Nächste Zahlung: ${naechste}
                             </small>
+                            </div>
                         </div>
 
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
 
                             ${formatBetrag(v.betrag)}
 
+                            ${!state.multiSelect.versicherungen ? `
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
-
                             <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
-
-                            <button onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"
-                                    style="width:34px; height:34px; padding:0; border-radius:10px; background:#3a3a3c;">
-                                ${istOffen ? "▲" : "▼"}
-                            </button>
+                            <button onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')" style="width:34px; height:34px; padding:0; border-radius:10px; background:#3a3a3c;">${istOffen ? "▲" : "▼"}</button>
+                            ` : ''}
 
                         </div>
 
@@ -2891,12 +3037,12 @@
                     item.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
 
-                    <input id="editName-${v.id}" value="${escapeHtml(v.name || "")}">
-                    <input id="editBetrag-${v.id}" type="number" value="${v.betrag}">
+                    <input id="editName-${v.id}" value="${escapeHtml(v.name || "")}" autocapitalize="words">
+                    <input id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${formatInputBetrag(v.betrag)}">
                     <input id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
 
-                    <input id="editAnbieter-${v.id}" value="${escapeHtml(v.anbieter || "")}">
-                    <input id="editNummer-${v.id}" value="${escapeHtml(v.versicherungsnummer || "")}">
+                    <input id="editAnbieter-${v.id}" value="${escapeHtml(v.anbieter || "")}" autocapitalize="words">
+                    <input id="editNummer-${v.id}" value="${escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
 
                     <select id="editIntervall-${v.id}">
                         <option value="monatlich" ${v.intervall === "monatlich" ? "selected" : ""}>monatlich</option>
@@ -2934,19 +3080,11 @@
                 div.appendChild(item);
             });
 
-            if (daten.Versicherungen.length > 0) {
-
-                const btn = document.createElement("button");
-                btn.innerText = "🗑️ Alle Versicherungen löschen";
-                btn.onclick = deleteAlleVersicherungen;
-                btn.style.background = "red";
-
-                footer.appendChild(btn);
-            }
 
             if (total) {
                 total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + formatBetrag(berechneGesamtFixkosten());
             }
+            updateSelectionButton('versicherungen');
         }
 
         function toggleVersicherungDetails(id) {
@@ -3016,7 +3154,7 @@
             let betragInput = prompt("Betrag:", v.betrag);
             if (betragInput === null) return;
 
-            let betrag = parseFloat(betragInput);
+            let betrag = parseBetrag(betragInput);
             if (isNaN(betrag)) return;
 
             let anbieterInput = prompt("Anbieter:", v.anbieter || "");
@@ -3139,7 +3277,7 @@
             if (!Array.isArray(daten.Versicherungen)) return [];
 
             return daten.Versicherungen.filter(v => {
-                let betrag = parseFloat(v.betrag);
+                let betrag = parseBetrag(v.betrag);
                 if (isNaN(betrag)) return false;
 
                 return istVersicherungFaelligInMonat(v, monatAktuell);
@@ -3149,7 +3287,7 @@
         function berechneMonat(monatAktuell) {
 
             return versicherungenDiesenMonat(monatAktuell).reduce((summe, v) => {
-                let betrag = parseFloat(v.betrag);
+                let betrag = parseBetrag(v.betrag);
                 return summe + (isNaN(betrag) ? 0 : betrag);
             }, 0);
         }
@@ -3162,7 +3300,7 @@
 
             liste.forEach(e => {
 
-                let betrag = parseFloat(e.betrag);
+                let betrag = parseBetrag(e.betrag);
                 if (isNaN(betrag)) return;
 
                 let monat = parseInt(e.monat);
@@ -3224,7 +3362,7 @@
                 if (!Array.isArray(liste)) continue;
 
                 let sum = liste.reduce((a, b) => {
-                    let betrag = parseFloat(b.betrag);
+                    let betrag = parseBetrag(b.betrag);
                     return a + (isNaN(betrag) ? 0 : betrag);
                 }, 0);
 
@@ -3234,7 +3372,7 @@
                 item.innerHTML = `
             <span>${k}</span>
             <span style="font-weight:600;">
-                ${sum.toFixed(2)} €
+                ${formatBetragText(sum)}
             </span>
         `;
 
@@ -3282,7 +3420,7 @@
 
         function addEinnahme() {
             const text = formatText(document.getElementById("einnahmenText")?.value || "");
-            const betrag = parseFloat(document.getElementById("einnahmenBetrag")?.value);
+            const betrag = parseBetrag(document.getElementById("einnahmenBetrag")?.value);
             const von = formatText(document.getElementById("einnahmenVon")?.value || "");
             const datum = document.getElementById("einnahmenDatum")?.value;
             const wiederholung = document.getElementById("einnahmenWiederholung")?.value === "monatlich" ? "monatlich" : "einmalig";
@@ -3311,6 +3449,7 @@
             if (!liste.length) {
                 container.innerHTML = `<p style="opacity:0.7;">Noch keine Einnahmen eingetragen.</p>`;
                 if (total) total.innerHTML = "";
+                updateSelectionButton('einnahmen');
                 return;
             }
 
@@ -3319,9 +3458,9 @@
                 let html;
                 if (isEdit) {
                     html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                        <input id="editEinnahmenText-${e.id}" value="${escapeHtml(e.text || '')}">
-                        <input id="editEinnahmenBetrag-${e.id}" type="number" min="0" step="0.01" value="${e.betrag}">
-                        <input id="editEinnahmenVon-${e.id}" value="${escapeHtml(e.von || '')}" placeholder="Von wem? (optional)">
+                        <input id="editEinnahmenText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words">
+                        <input id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${formatInputBetrag(e.betrag)}">
+                        <input id="editEinnahmenVon-${e.id}" value="${escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
                         <input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}">
                         <select id="editEinnahmenWiederholung-${e.id}"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
                         <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
@@ -3329,8 +3468,8 @@
                 } else {
                     const info = e.wiederholung === "monatlich" ? `🔁 Monatlich am ${parseISODate(e.datum)?.getDate() || '-'} · seit ${formatDatum(e.datum)}` : `Einmalig · ${formatDatum(e.datum)}`;
                     html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                        <span style="display:flex; flex-direction:column; align-items:flex-start; gap:3px;"><strong>${escapeHtml(e.text || 'Einnahme')}</strong><span style="opacity:.7; font-size:12px;">${escapeHtml(info)}${e.von ? ' · von ' + escapeHtml(e.von) : ''}</span></span>
-                        <div class="actions" style="display:flex; align-items:center; gap:8px;"><strong>+${formatBetrag(e.betrag)}</strong><button class="edit" onclick="startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="deleteEinnahme('${e.id}')">🗑️</button></div>
+                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">${selectionDot('einnahmen', e.id)}<span style="display:flex; flex-direction:column; align-items:flex-start; gap:3px;"><strong>${escapeHtml(e.text || 'Einnahme')}</strong><span style="opacity:.7; font-size:12px;">${escapeHtml(info)}${e.von ? ' · von ' + escapeHtml(e.von) : ''}</span></span></div>
+                        <div class="actions" style="display:flex; align-items:center; gap:8px;"><strong>+${formatBetrag(e.betrag)}</strong>${!state.multiSelect.einnahmen ? `<button class="edit" onclick="startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="deleteEinnahme('${e.id}')">🗑️</button>` : ''}</div>
                     </div>`;
                 }
                 const item = createItem(html);
@@ -3341,6 +3480,7 @@
             const z = getGehaltszeitraum();
             const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
             if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
+            updateSelectionButton('einnahmen');
         }
 
         function startEditEinnahme(id) { state.editEinnahmeId = id; renderEinnahmen(); }
@@ -3350,7 +3490,7 @@
             const index = daten.Einnahmen.findIndex(e => String(e.id) === String(id));
             if (index < 0) return;
             const text = formatText(document.getElementById(`editEinnahmenText-${id}`)?.value || "");
-            const betrag = parseFloat(document.getElementById(`editEinnahmenBetrag-${id}`)?.value);
+            const betrag = parseBetrag(document.getElementById(`editEinnahmenBetrag-${id}`)?.value);
             const von = formatText(document.getElementById(`editEinnahmenVon-${id}`)?.value || "");
             const datum = document.getElementById(`editEinnahmenDatum-${id}`)?.value;
             const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
@@ -3388,7 +3528,7 @@
         function addHaushalt() {
 
             let text = formatText(document.getElementById("hausText").value);
-            let betrag = parseFloat(document.getElementById("hausBetrag").value);
+            let betrag = parseBetrag(document.getElementById("hausBetrag").value);
             let datum = document.getElementById("hausDatum").value;
             let kategorie = document.getElementById("hausKategorie")?.value || "Sonstiger Haushalt";
 
@@ -3422,7 +3562,7 @@
 
         function addFreizeit() {
             let text = formatText(document.getElementById("freizeitText").value);
-            let betrag = parseFloat(document.getElementById("freizeitBetrag").value);
+            let betrag = parseBetrag(document.getElementById("freizeitBetrag").value);
             let datum = document.getElementById("freizeitDatum").value;
             let kategorie = document.getElementById("freizeitKategorie")?.value || "Sonstiges";
 
@@ -3516,7 +3656,7 @@
 
             if (!aktuellesLand || !quickKategorie) return;
 
-            let betrag = parseFloat(document.getElementById("quickBetrag")?.value);
+            let betrag = parseBetrag(document.getElementById("quickBetrag")?.value);
             let text = document.getElementById("quickText")?.value || "";
             let datum = new Date().toISOString().split('T')[0];
 
@@ -3854,6 +3994,7 @@
 
             if (jahre.length === 0) {
                 container.innerHTML = `<p style="opacity:0.7;">Noch keine Haushalt-Einträge eingetragen.</p>`;
+                updateSelectionButton('haushalt');
                 return;
             }
 
@@ -3863,7 +4004,7 @@
 
                 const jahrSumme = Object.values(data[jahr])
                     .flat()
-                    .reduce((a, b) => a + (parseFloat(b.betrag) || 0), 0);
+                    .reduce((a, b) => a + (parseBetrag(b.betrag) || 0), 0);
 
                 container.appendChild(createItem(`
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
@@ -3887,7 +4028,7 @@
                     const monatOffen = state.offeneHaushaltMonate[key];
 
                     const liste = data[jahr][monat];
-                    const summe = liste.reduce((a, b) => a + (parseFloat(b.betrag) || 0), 0);
+                    const summe = liste.reduce((a, b) => a + (parseBetrag(b.betrag) || 0), 0);
 
                     container.appendChild(createItem(`
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
@@ -3911,8 +4052,8 @@
                         if (isEdit) {
                             html = `
                         <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editText-${e.id}" value="${e.text || e.name || ""}">
-                            <input id="editBetrag-${e.id}" type="number" value="${e.betrag}">
+                            <input id="editText-${e.id}" value="${e.text || e.name || ""}" autocapitalize="words">
+                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
                             <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
                             <div style="display:flex; gap:10px;">
@@ -3924,16 +4065,18 @@
                         } else {
                             html = `
                         <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                            ${selectionDot('haushalt', e.id)}
                             <span style="display:flex; flex-direction:column; align-items:flex-start;">
                                 <span>${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
                                 <span class="category-badge">${escapeHtml(e.kategorie || "Sonstiger Haushalt")}</span>
                             </span>
+                            </div>
 
                             <div class="actions" style="display:flex; align-items:center; gap:8px;">
                                 ${formatBetrag(e.betrag)}
 
-                                <button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button>
-                                <button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>
+                                ${!state.multiSelect.haushalt ? `<button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button><button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -3950,6 +4093,7 @@
                     });
                 });
             });
+            updateSelectionButton('haushalt');
         }
 
         function deleteAlleHaushalt() {
@@ -4059,7 +4203,7 @@
             let updated = {
                 id: eintrag.id,
                 text: formatText(neuerName),
-                betrag: parseFloat(neuerBetrag),
+                betrag: parseBetrag(neuerBetrag),
                 datum: neuesDatum
             };
 
@@ -4122,7 +4266,7 @@
             if (!textEl || !betragEl || !datumEl) return;
 
             let text = textEl.value;
-            let betrag = parseFloat(betragEl.value);
+            let betrag = parseBetrag(betragEl.value);
             let datum = datumEl.value;
 
             if (!text || isNaN(betrag) || !datum) return;
@@ -4183,11 +4327,12 @@
             const jahre = Object.keys(data).sort((a, b) => b - a);
             if (jahre.length === 0) {
                 container.innerHTML = `<p style="opacity:0.7;">Noch keine Freizeit-Einträge eingetragen.</p>`;
+                updateSelectionButton('freizeit');
                 return;
             }
             jahre.forEach(jahr => {
                 const jahrOffen = state.offeneFreizeitJahre[jahr];
-                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b)=>a+(parseFloat(b.betrag)||0),0);
+                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b)=>a+(parseBetrag(b.betrag)||0),0);
                 container.appendChild(createItem(`
                     <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                         <div><button class="toggle-btn" onclick="toggleFreizeitJahr('${jahr}')">${jahrOffen ? '▲' : '▼'}</button> 📁 ${jahr}</div>
@@ -4198,7 +4343,7 @@
                     const key = jahr + "-" + monat;
                     const monatOffen = state.offeneFreizeitMonate[key];
                     const liste = data[jahr][monat];
-                    const summe = liste.reduce((a,b)=>a+(parseFloat(b.betrag)||0),0);
+                    const summe = liste.reduce((a,b)=>a+(parseBetrag(b.betrag)||0),0);
                     container.appendChild(createItem(`
                         <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                             <div><button class="toggle-btn" onclick="toggleFreizeitMonat('${jahr}','${monat}')">${monatOffen ? '▲' : '▼'}</button> 📂 ${getMonatName(parseInt(monat))}</div>
@@ -4210,15 +4355,15 @@
                         let html;
                         if (isEdit) {
                             html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}">
-                                <input id="editFreizeitBetrag-${e.id}" type="number" value="${e.betrag}">
+                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words">
+                                <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
                                 <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
                                 <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
                             </div>`;
                         } else {
                             html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                                <span style="display:flex; flex-direction:column; align-items:flex-start;"><span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span><span class="category-badge">${escapeHtml(e.kategorie || 'Sonstiges')}</span></span>
-                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}<button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button></div>
+                                <div style="display:flex; align-items:center; gap:10px; min-width:0;">${selectionDot('freizeit', e.id)}<span style="display:flex; flex-direction:column; align-items:flex-start;"><span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span><span class="category-badge">${escapeHtml(e.kategorie || 'Sonstiges')}</span></span></div>
+                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}${!state.multiSelect.freizeit ? `<button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button>` : ''}</div>
                             </div>`;
                         }
                         const item = createItem(html,40); item.style.background="#3a3a3c"; container.appendChild(item);
@@ -4226,6 +4371,7 @@
                     });
                 });
             });
+            updateSelectionButton('freizeit');
         }
 
         function gruppiereFreizeit() {
@@ -4251,7 +4397,7 @@
         function saveEditFreizeit(id){
             const textEl=document.getElementById('editFreizeitText-'+id), betragEl=document.getElementById('editFreizeitBetrag-'+id), datumEl=document.getElementById('editFreizeitDatum-'+id);
             if(!textEl||!betragEl||!datumEl) return;
-            const text=textEl.value, betrag=parseFloat(betragEl.value), datum=datumEl.value;
+            const text=textEl.value, betrag=parseBetrag(betragEl.value), datum=datumEl.value;
             if(!text||isNaN(betrag)||!datum) return;
             let found=null, oldMonat=null, oldIndex=-1;
             for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){found=liste[i];oldMonat=monat;oldIndex=i;break;} }
@@ -4305,7 +4451,7 @@
 
             let datum = datumEl.value;
             let name = nameEl.value;
-            let betrag = parseFloat(betragEl.value);
+            let betrag = parseBetrag(betragEl.value);
             let anbieter = anbieterEl.value;
             let nummer = nummerEl.value;
             let intervall = intervallEl.value;
@@ -4354,7 +4500,7 @@
             if (!textEl || !betragEl || !datumEl) return;
 
             let text = textEl.value;
-            let betrag = parseFloat(betragEl.value);
+            let betrag = parseBetrag(betragEl.value);
             let datum = datumEl.value;
 
             if (!text || isNaN(betrag) || !datum) return;
@@ -4426,15 +4572,36 @@
             renderListe();
         }
 
+        function parseBetrag(value) {
+            if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+            if (value === null || value === undefined) return NaN;
+            let text = String(value).trim()
+                .replace(/\s/g, "")
+                .replace(/€/g, "");
+
+            // German input: 1.234,56 -> 1234.56; 23,10 -> 23.10
+            if (text.includes(",")) {
+                text = text.replace(/\./g, "").replace(",", ".");
+            }
+            return Number(text);
+        }
+
+        function formatInputBetrag(value) {
+            const number = parseBetrag(value);
+            if (!Number.isFinite(number)) return "";
+            return number.toFixed(2).replace(".", ",");
+        }
+
+        function formatBetragText(betrag) {
+            let value = parseBetrag(betrag);
+            if (!Number.isFinite(value)) value = 0;
+            return value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        }
+
         function formatBetrag(betrag) {
-
-            let value = parseFloat(betrag);
-
-            if (isNaN(value)) value = 0;
-
             return `
         <span style="white-space:nowrap; font-weight:600;">
-            ${value.toFixed(2)} €
+            ${formatBetragText(betrag)}
         </span>
     `;
         }
@@ -4573,7 +4740,7 @@
             const faellig = [];
 
             daten["Laufende Kosten"].fix.forEach(k => {
-                const betrag = parseFloat(k.betrag);
+                const betrag = parseBetrag(k.betrag);
                 if (isNaN(betrag)) return;
 
                 const startDatum = parseISODate(k.datum || datumAusTagAktuellerMonat(k.tag));
@@ -4612,7 +4779,7 @@
             const faellig = [];
 
             daten.Versicherungen.forEach(v => {
-                const betrag = parseFloat(v.betrag);
+                const betrag = parseBetrag(v.betrag);
                 if (isNaN(betrag)) return;
 
                 let start = parseISODate(v.datum);
@@ -4675,14 +4842,14 @@
         function getStartgehalt(zeitraum = getGehaltszeitraum()) {
             daten.Einstellungen ??= {};
             daten.Einstellungen.startgehaelter ??= {};
-            const wert = parseFloat(daten.Einstellungen.startgehaelter[gehaltsmonatKey(zeitraum)]);
+            const wert = parseBetrag(daten.Einstellungen.startgehaelter[gehaltsmonatKey(zeitraum)]);
             return isNaN(wert) ? 0 : wert;
         }
 
         function saveStartgehalt() {
             const input = document.getElementById("startgehaltInput");
             if (!input) return;
-            const wert = parseFloat(input.value);
+            const wert = parseBetrag(input.value);
             if (isNaN(wert) || wert < 0) return;
             daten.Einstellungen ??= {};
             daten.Einstellungen.startgehaelter ??= {};
@@ -4697,7 +4864,7 @@
                 if (!Array.isArray(monatsListe)) return;
                 monatsListe.forEach(e => {
                     const d = parseISODate(e.datum);
-                    const betrag = parseFloat(e.betrag);
+                    const betrag = parseBetrag(e.betrag);
                     if (!d || isNaN(betrag)) return;
                     if (d >= von && d <= bis) liste.push({ ...e, betrag, datumObj: d });
                 });
@@ -4712,7 +4879,7 @@
                 if (!Array.isArray(monatsListe)) return;
                 monatsListe.forEach(e => {
                     const d = parseISODate(e.datum);
-                    const betrag = parseFloat(e.betrag);
+                    const betrag = parseBetrag(e.betrag);
                     if (!d || isNaN(betrag)) return;
                     if (d >= von && d <= bis) liste.push({ ...e, betrag, datumObj: d });
                 });
@@ -4725,7 +4892,7 @@
             if (!Array.isArray(daten.Einnahmen)) return result;
 
             daten.Einnahmen.forEach(e => {
-                const betrag = parseFloat(e.betrag);
+                const betrag = parseBetrag(e.betrag);
                 const start = parseISODate(e.datum);
                 if (!start || isNaN(betrag) || betrag <= 0) return;
 
@@ -4852,7 +5019,7 @@
             if (toggle) toggle.innerText = state.freiDetailsOffen ? "Details ausblenden ⌃" : "Details anzeigen ›";
 
             const input=document.getElementById("startgehaltInput");
-            if(input && document.activeElement!==input) input.value = start || "";
+            if(input && document.activeElement!==input) input.value = start === "" ? "" : formatInputBetrag(start);
         }
 
         function reisenGesamt() {
@@ -4862,7 +5029,7 @@
                 if (!land || typeof land !== "object") return;
                 Object.values(land).forEach(liste => {
                     if (!Array.isArray(liste)) return;
-                    liste.forEach(e => sum += parseFloat(e.betrag) || 0);
+                    liste.forEach(e => sum += parseBetrag(e.betrag) || 0);
                 });
             });
             return sum;
@@ -5010,7 +5177,7 @@
             daten["Laufende Kosten"].fix ??= [];
 
             return daten["Laufende Kosten"].fix.reduce((sum, e) => {
-                let betrag = parseFloat(e.betrag);
+                let betrag = parseBetrag(e.betrag);
                 return sum + (isNaN(betrag) ? 0 : betrag);
             }, 0);
         }
@@ -5078,7 +5245,7 @@
             // Betrag erkennen – funktioniert z. B. mit "25 Euro", "25,50 €" oder "für 25,50".
             const betragMatch = norm.match(/(?:^|\s)(\d+(?:[.,]\d{1,2})?)(?=\s|$)/);
             if (!betragMatch) return { ok: false, meldung: "Ich konnte keinen Betrag erkennen." };
-            const betrag = parseFloat(betragMatch[1].replace(",", "."));
+            const betrag = parseBetrag(betragMatch[1].replace(",", "."));
             if (!Number.isFinite(betrag) || betrag <= 0) return { ok: false, meldung: "Der Betrag ist ungültig." };
 
             // Kategorien zuerst erkennen. Dadurch kann die App auch natürliche Sätze wie
@@ -5236,7 +5403,7 @@
                 ? `Reisen → ${parsed.land} → ${parsed.kategorie}`
                 : `${parsed.bereich === "haushalt" ? "Haushalt" : "Freizeit"} → ${parsed.kategorie}`;
             const bestaetigt = confirm(
-                `${parsed.betrag.toFixed(2)} €\n${ziel}\n${parsed.beschreibung}\n\nAusgabe übernehmen?`
+                `${formatBetragText(parsed.betrag)}\n${ziel}\n${parsed.beschreibung}\n\nAusgabe übernehmen?`
             );
             if (!bestaetigt) return true;
 
@@ -5251,7 +5418,7 @@
             const bereich = (params.get("bereich") || "").toLowerCase().trim();
             const textRaw = (params.get("text") || "").trim();
             const betragRaw = (params.get("betrag") || "").replace(",", ".").trim();
-            const betrag = parseFloat(betragRaw);
+            const betrag = parseBetrag(betragRaw);
 
             if (!textRaw || isNaN(betrag) || betrag <= 0) {
                 history.replaceState({}, document.title, window.location.pathname);
