@@ -222,6 +222,39 @@
             background: red;
         }
 
+        /* Verhindert, dass lange Bezeichnungen oder Aktionsbuttons aus Karten herausragen */
+        .item > * {
+            min-width: 0;
+        }
+
+        .item .actions {
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .item span,
+        .item small,
+        .item .info-text {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        @media (max-width: 430px) {
+            .item {
+                padding: 12px;
+            }
+
+            .item .actions {
+                gap: 5px !important;
+                margin-left: 4px;
+            }
+
+            .item .actions button {
+                margin-left: 0;
+                padding: 6px 8px;
+            }
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -2627,7 +2660,7 @@
                     item = createItem(`
                     <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:flex-start;">
 
-                        <div style="display:flex; align-items:flex-start; gap:12px; flex:1;">
+                        <div style="display:flex; align-items:flex-start; gap:12px; flex:1; min-width:0;">
 
                             ${state.multiSelect.fixkosten ? `
                                 <div onclick="toggleSelected('fixkosten','${k.id}')"
@@ -2648,8 +2681,8 @@
                                 </div>
                             ` : ''}
 
-                            <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:600;">${escapeHtml(k.text || k.name || "-")}</span>
+                            <div style="display:flex; flex-direction:column; min-width:0;">
+                                <span style="font-weight:600; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
                                 <small style="opacity:0.7;">🔁 Monatlich am ${tag}. · seit ${formatDatum(datum)}</small>
                                 ${k.info ? `<div class="info-text">ℹ️ ${escapeHtml(k.info)}</div>` : ""}
                             </div>
