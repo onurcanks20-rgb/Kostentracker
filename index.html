@@ -882,6 +882,19 @@
         }
 
     
+        .list-search {
+            width:100%;
+            margin:10px 0 12px;
+            padding:12px 14px;
+            border-radius:14px;
+            background:#2c2c2e;
+            border:1px solid rgba(255,255,255,.08);
+            color:#fff;
+            font-size:16px;
+            box-sizing:border-box;
+        }
+        .list-search::placeholder { color:rgba(255,255,255,.45); }
+
         .delete-tools {
             display:flex;
             gap:10px;
@@ -1111,6 +1124,7 @@
                 <button onclick="addLand()" class="btn btn-primary">Land hinzufügen</button>
             </div>
 
+            <input id="reisenSuche" class="list-search" type="search" placeholder="🔎 Reisen durchsuchen" oninput="renderLaender()">
             <div id="laenderListe"></div>
         </div>
     </div>
@@ -1173,6 +1187,7 @@
         </div>
 
         <div class="container">
+            <input id="reiseEintragSuche" class="list-search" type="search" placeholder="🔎 Kosten durchsuchen" oninput="renderListe()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('reisen')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedReisen" onclick="deleteSelected('reisen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1234,6 +1249,7 @@
         </div>
 
         <div class="container">
+            <input id="versicherungenSuche" class="list-search" type="search" placeholder="🔎 Versicherungen durchsuchen" oninput="renderVersicherungen()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('versicherungen')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedVersicherungen" onclick="deleteSelected('versicherungen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1275,6 +1291,7 @@
         </div>
 
         <div class="container">
+            <input id="haushaltSuche" class="list-search" type="search" placeholder="🔎 Haushalt durchsuchen" oninput="renderHaushalt()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('haushalt')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedHaushalt" onclick="deleteSelected('haushalt')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1315,6 +1332,7 @@
         </div>
 
         <div class="container">
+            <input id="freizeitSuche" class="list-search" type="search" placeholder="🔎 Freizeit durchsuchen" oninput="renderFreizeit()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('freizeit')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedFreizeit" onclick="deleteSelected('freizeit')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1354,6 +1372,7 @@
         </div>
 
         <div class="container">
+            <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Einnahmen durchsuchen" oninput="renderEinnahmen()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('einnahmen')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedEinnahmen" onclick="deleteSelected('einnahmen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1392,6 +1411,7 @@
             <button onclick="addKosten()" class="btn btn-primary">Hinzufügen</button>
             </div>
 
+            <input id="fixkostenSuche" class="list-search" type="search" placeholder="🔎 Fixkosten durchsuchen" oninput="renderLaufendeKosten()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('fixkosten')" class="btn btn-primary" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedFixkosten" onclick="deleteSelected('fixkosten')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -2079,7 +2099,15 @@
             let div = document.getElementById("laenderListe");
             div.innerHTML = "";
 
-            for (let land in daten.Reisen) {
+            const suche = getSearchTerm("reisenSuche");
+            const laender = Object.keys(daten.Reisen).filter(land => {
+                if (matchesSearch(suche, land)) return true;
+                return Object.entries(daten.Reisen[land] || {}).some(([kat, liste]) =>
+                    matchesSearch(suche, kat) || (Array.isArray(liste) && liste.some(e => matchesSearch(suche, e.text, e.datum, e.betrag)))
+                );
+            }).sort((a,b) => a.localeCompare(b, "de"));
+
+            for (const land of laender) {
 
                 let sum = 0;
                 for (let k in daten.Reisen[land]) {
@@ -2297,6 +2325,20 @@
             renderListe();
         }
 
+        function getSearchTerm(id) {
+            return (document.getElementById(id)?.value || "").trim().toLocaleLowerCase("de-DE");
+        }
+
+        function matchesSearch(term, ...werte) {
+            if (!term) return true;
+            return werte.some(v => String(v ?? "").toLocaleLowerCase("de-DE").includes(term));
+        }
+
+        function datumZeitwert(value) {
+            const d = parseISODate ? parseISODate(value) : new Date(value);
+            return d && !isNaN(d) ? d.getTime() : 0;
+        }
+
         function createItem(html, marginLeft = 0) {
             let div = document.createElement("div");
             div.className = "item";
@@ -2316,11 +2358,17 @@
             div.innerHTML = "";
 
             let gesamt = 0;
+            const suche = getSearchTerm("reiseEintragSuche");
 
             for (let k in daten.Reisen[aktuellesLand]) {
 
-                let sum = daten.Reisen[aktuellesLand][k]
-                    .reduce((a, b) => a + (b.betrag || 0), 0);
+                const alleEintraege = Array.isArray(daten.Reisen[aktuellesLand][k]) ? daten.Reisen[aktuellesLand][k] : [];
+                const gefilterteEintraege = alleEintraege
+                    .filter(e => matchesSearch(suche, k, e.text, e.datum, e.betrag))
+                    .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+                if (suche && !matchesSearch(suche, k) && gefilterteEintraege.length === 0) continue;
+
+                let sum = gefilterteEintraege.reduce((a, b) => a + (b.betrag || 0), 0);
 
                 gesamt += sum;
 
@@ -2362,7 +2410,7 @@
                 // Einträge
                 if (state.offeneKategorie === k) {
 
-                    daten.Reisen[aktuellesLand][k].forEach((e, i) => {
+                    gefilterteEintraege.forEach((e, i) => {
 
                         let sub = document.createElement("div");
                         sub.className = "item";
@@ -2621,7 +2669,21 @@
 
             let summe = 0;
 
-            daten["Laufende Kosten"].fix.forEach(k => {
+            const suche = getSearchTerm("fixkostenSuche");
+            const sortierteFixkosten = [...daten["Laufende Kosten"].fix]
+                .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.datum, k.tag, k.betrag))
+                .sort((a, b) => {
+                const datumA = a.datum || datumAusTagAktuellerMonat(a.tag);
+                const datumB = b.datum || datumAusTagAktuellerMonat(b.tag);
+                const tagA = tagAusDatum(datumA);
+                const tagB = tagAusDatum(datumB);
+
+                // Primär nach monatlichem Abbuchungstag sortieren, bei gleichem Tag nach Startdatum.
+                if (tagA !== tagB) return tagA - tagB;
+                return String(datumA).localeCompare(String(datumB));
+            });
+
+            sortierteFixkosten.forEach(k => {
 
                 const datum = k.datum || datumAusTagAktuellerMonat(k.tag);
                 const tag = tagAusDatum(datum);
@@ -2982,7 +3044,16 @@
                 div.innerHTML = `<p style="opacity:0.7;">Noch keine Versicherungen eingetragen.</p>`;
             }
 
-            daten.Versicherungen.forEach((v) => {
+            const suche = getSearchTerm("versicherungenSuche");
+            const versicherungenSortiert = [...daten.Versicherungen]
+                .filter(v => matchesSearch(suche, v.name, v.anbieter, v.versicherungsnummer, v.intervall, v.datum, v.betrag))
+                .sort((a,b) => {
+                    const da = naechsteZahlungDatum(a);
+                    const db = naechsteZahlungDatum(b);
+                    return (da?.getTime() || Number.MAX_SAFE_INTEGER) - (db?.getTime() || Number.MAX_SAFE_INTEGER);
+                });
+
+            versicherungenSortiert.forEach((v) => {
 
                 const naechste = naechsteZahlung(v);
                 const isEdit = String(state.editVersicherungId) === String(v.id);
@@ -3132,7 +3203,34 @@
         }
 
 
+        function naechsteZahlungDatum(v) {
+            if (!v.datum) return null;
+            const heute = new Date();
+            heute.setHours(0,0,0,0);
+            const start = parseISODate(v.datum) || new Date(v.datum);
+            if (!start || isNaN(start)) return null;
+            const tag = start.getDate();
+            let datum = new Date(start);
+            function addInterval(months = 0, years = 0) {
+                if (months) datum.setMonth(datum.getMonth() + months);
+                if (years) datum.setFullYear(datum.getFullYear() + years);
+                datum.setDate(tag);
+            }
+            if (v.intervall === "monatlich") while (datum <= heute) addInterval(1);
+            else if (v.intervall === "vierteljährlich") while (datum <= heute) addInterval(3);
+            else if (v.intervall === "halbjährlich") while (datum <= heute) addInterval(6);
+            else if (v.intervall === "jährlich") while (datum <= heute) addInterval(0, 1);
+            else return null;
+            return datum;
+        }
+
         function naechsteZahlung(v) {
+            const datum = naechsteZahlungDatum(v);
+            if (!datum) return "-";
+            return formatDatum(datum.toISOString().split("T")[0]);
+        }
+
+        function naechsteZahlung_ALT_UNUSED(v) {
 
             if (!v.datum) return "-";
 
@@ -3477,7 +3575,10 @@
             const total = document.getElementById("einnahmenGesamt");
             if (!container) return;
             container.innerHTML = "";
-            const liste = Array.isArray(daten.Einnahmen) ? [...daten.Einnahmen].sort((a,b) => String(b.datum).localeCompare(String(a.datum))) : [];
+            const suche = getSearchTerm("einnahmenSuche");
+            const liste = Array.isArray(daten.Einnahmen) ? [...daten.Einnahmen]
+                .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag))
+                .sort((a,b) => String(b.datum).localeCompare(String(a.datum))) : [];
 
             if (!liste.length) {
                 container.innerHTML = `<p style="opacity:0.7;">Noch keine Einnahmen eingetragen.</p>`;
@@ -4023,6 +4124,14 @@
             container.innerHTML = "";
 
             const data = gruppiereHaushalt();
+            const suche = getSearchTerm("haushaltSuche");
+            Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
+                data[j][m] = data[j][m]
+                    .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
+                    .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+                if (!data[j][m].length) delete data[j][m];
+            }));
+            Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
             const jahre = Object.keys(data).sort((a, b) => b - a);
 
             if (jahre.length === 0) {
@@ -4357,6 +4466,14 @@
             if (!container) return;
             container.innerHTML = "";
             const data = gruppiereFreizeit();
+            const suche = getSearchTerm("freizeitSuche");
+            Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
+                data[j][m] = data[j][m]
+                    .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
+                    .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+                if (!data[j][m].length) delete data[j][m];
+            }));
+            Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
             const jahre = Object.keys(data).sort((a, b) => b - a);
             if (jahre.length === 0) {
                 container.innerHTML = `<p style="opacity:0.7;">Noch keine Freizeit-Einträge eingetragen.</p>`;
