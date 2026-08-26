@@ -489,7 +489,18 @@
         .calc-row:first-child { border-top:0; }
         .calc-row.total { font-weight:800; font-size:17px; }
         .detail-note { opacity:.65; font-size:12px; line-height:1.4; margin-top:8px; }
-        .week-summary-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-bottom:12px; }
+        .week-summary-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-bottom:12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+        .week-summary-card:active { transform:scale(.995); }
+        .week-preview-note { font-size:13px; opacity:.68; margin:-6px 0 14px; line-height:1.35; }
+        .week-preview-list { display:flex; flex-direction:column; gap:10px; margin:8px 0 14px; }
+        .week-preview-row { background:#2c2c2e; border-radius:16px; padding:13px 14px; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+        .week-preview-row.current { outline:1px solid rgba(10,132,255,.7); }
+        .week-preview-left { min-width:0; }
+        .week-preview-label { font-weight:750; font-size:16px; }
+        .week-preview-dates { margin-top:3px; font-size:12px; opacity:.62; }
+        .week-preview-value { white-space:nowrap; font-size:19px; font-weight:800; }
+        .week-preview-total { display:flex; justify-content:space-between; gap:12px; padding:14px 2px 4px; border-top:1px solid rgba(255,255,255,.1); font-weight:750; }
+        .week-preview-empty { padding:16px 4px; opacity:.7; text-align:center; }
         .week-summary-head { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; }
         .week-summary-title { font-size:13px; opacity:.7; text-transform:uppercase; letter-spacing:.06em; }
         .week-summary-dates { opacity:.62; font-size:12px; margin-top:3px; }
@@ -973,7 +984,7 @@
                 </div>
             </div>
 
-            <div class="week-summary-card">
+            <div class="week-summary-card" onclick="openWeekPreview()" role="button" tabindex="0" aria-label="Wochenbudget und Vorschau anzeigen" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openWeekPreview();}">
                 <div class="week-summary-head">
                     <div>
                         <div class="week-summary-title">📅 Diese Woche</div>
@@ -1091,6 +1102,17 @@
                 <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
                 <div id="backupStatus" class="settings-note" style="margin-top:8px;"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ===================== WOCHENBUDGET VORSCHAU ===================== -->
+    <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
+        <div class="add-sheet">
+            <h3>Wochenbudget</h3>
+            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen sind eine Vorschau auf Basis deines aktuellen Stands und werden beim nächsten Wochenstart neu berechnet.</div>
+            <div id="weekPreviewList" class="week-preview-list"></div>
+            <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
+            <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
         </div>
     </div>
 
@@ -1969,6 +1991,79 @@
             const tagInput = document.getElementById("gehaltstagInput");
             if (startInput) startInput.value = getStartgehalt(z) || "";
             if (tagInput) tagInput.value = getGehaltstag();
+        }
+
+        function openWeekPreview() {
+            const sheet = document.getElementById("weekPreviewSheet");
+            const list = document.getElementById("weekPreviewList");
+            const totalEl = document.getElementById("weekPreviewTotal");
+            if (!sheet || !list || !totalEl) return;
+
+            const zeitraum = getGehaltszeitraum();
+            const start = getStartgehalt(zeitraum);
+            const laufendSum = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const versSum = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const einnahmenSum = einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const alltagGesamt = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const freiJetzt = start + einnahmenSum - laufendSum - versSum - alltagGesamt;
+
+            const heute = startOfToday();
+            const kalenderMontag = montagDerWoche(heute);
+            const kalenderSonntag = addDays(kalenderMontag, 6);
+            const wochenStart = kalenderMontag < zeitraum.start ? new Date(zeitraum.start) : kalenderMontag;
+            const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
+
+            const alltagVorWoche = alltagImZeitraum(zeitraum.start, addDays(wochenStart, -1)).reduce((s,e)=>s+e.betrag,0);
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche;
+            const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
+            const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
+            const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
+            const bisHeute = heute < wochenEnde ? heute : wochenEnde;
+            const alltagDieseWoche = alltagImZeitraum(wochenStart, bisHeute).reduce((s,e)=>s+e.betrag,0);
+            const dieseWocheUebrig = wochenBudgetStart - alltagDieseWoche;
+
+            const rows = [{
+                label: "Diese Woche · fest",
+                start: wochenStart,
+                ende: wochenEnde,
+                betrag: dieseWocheUebrig,
+                current: true
+            }];
+
+            // Vorschau ab dem naechsten Montag: Stand jetzt. Nicht ausgegebenes Geld
+            // dieser Woche wird damit bereits als moeglicher Uebertrag beruecksichtigt.
+            let futureStart = addDays(kalenderSonntag, 1);
+            if (futureStart < zeitraum.start) futureStart = new Date(zeitraum.start);
+            if (futureStart <= zeitraum.ende) {
+                const futureSegments = wochenSegmente(futureStart, zeitraum.ende);
+                const futureDays = Math.max(1, Math.round((zeitraum.ende - futureStart) / 86400000) + 1);
+                futureSegments.forEach((seg, idx) => {
+                    const days = Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1);
+                    rows.push({
+                        label: idx === 0 ? "Nächste Woche · Vorschau" : `Woche ${idx + 2} · Vorschau`,
+                        start: seg.start,
+                        ende: seg.ende,
+                        betrag: freiJetzt * (days / futureDays),
+                        current: false
+                    });
+                });
+            }
+
+            list.innerHTML = rows.map(r => `
+                <div class="week-preview-row${r.current ? ' current' : ''}">
+                    <div class="week-preview-left">
+                        <div class="week-preview-label">${r.label}</div>
+                        <div class="week-preview-dates">${formatKurzDatum(r.start)} – ${formatKurzDatum(r.ende)}</div>
+                    </div>
+                    <div class="week-preview-value">${formatBetrag(r.betrag)}</div>
+                </div>`).join("");
+
+            totalEl.innerHTML = formatBetrag(freiJetzt);
+            sheet.classList.remove("hidden");
+        }
+
+        function closeWeekPreview() {
+            document.getElementById("weekPreviewSheet")?.classList.add("hidden");
         }
 
         function openAddSheet() {
