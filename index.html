@@ -2755,6 +2755,7 @@
                             ${formatBetrag(k.betrag)}
 
                             ${!state.multiSelect.fixkosten ? `
+                                <button onclick="moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
                                 <button class="edit" onclick="startEditKosten('${k.id}')">✏️</button>
                                 <button class="delete" onclick="deleteLaufendeKosten('${k.id}')">🗑️</button>
                             ` : ''}
@@ -3086,6 +3087,7 @@
                             ${formatBetrag(v.betrag)}
 
                             ${!state.multiSelect.versicherungen ? `
+                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
                             <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
                             <button onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')" style="width:34px; height:34px; padding:0; border-radius:10px; background:#3a3a3c;">${istOffen ? "▲" : "▼"}</button>
@@ -3463,6 +3465,104 @@
 
             return laufende + versicherungen;
         }
+
+        // ===================== Ausgaben verschieben =====================
+        function findeAusgabeZumVerschieben(quelle, id) {
+            const sid = String(id);
+            if (quelle === "fixkosten") {
+                const liste = daten["Laufende Kosten"]?.fix || [];
+                const index = liste.findIndex(e => String(e.id) === sid);
+                return index >= 0 ? { eintrag: liste[index], entfernen: () => liste.splice(index, 1) } : null;
+            }
+            if (quelle === "versicherungen") {
+                const liste = Array.isArray(daten.Versicherungen) ? daten.Versicherungen : [];
+                const index = liste.findIndex(e => String(e.id) === sid);
+                return index >= 0 ? { eintrag: liste[index], entfernen: () => liste.splice(index, 1) } : null;
+            }
+            const bereich = quelle === "haushalt" ? daten.Haushalt : quelle === "freizeit" ? daten.Freizeit : null;
+            if (!bereich) return null;
+            for (const key of Object.keys(bereich)) {
+                const liste = bereich[key];
+                if (!Array.isArray(liste)) continue;
+                const index = liste.findIndex(e => String(e.id) === sid);
+                if (index >= 0) return { eintrag: liste[index], entfernen: () => liste.splice(index, 1) };
+            }
+            return null;
+        }
+
+        function moveAusgabe(quelle, id) {
+            const gefunden = findeAusgabeZumVerschieben(quelle, id);
+            if (!gefunden) return;
+
+            const labels = {
+                haushalt: "Haushalt",
+                freizeit: "Freizeit",
+                fixkosten: "Fixkosten",
+                versicherungen: "Versicherungen"
+            };
+            const optionen = ["haushalt", "freizeit", "fixkosten", "versicherungen"].filter(x => x !== quelle);
+            const auswahlText = optionen.map((x, i) => `${i + 1} = ${labels[x]}`).join("\n");
+            const antwort = prompt(`Wohin soll „${gefunden.eintrag.text || gefunden.eintrag.name || "Eintrag"}“ verschoben werden?\n\n${auswahlText}`);
+            if (antwort === null) return;
+            const ziel = optionen[parseInt(antwort, 10) - 1];
+            if (!ziel) {
+                alert("Bitte eine der angezeigten Zahlen eingeben.");
+                return;
+            }
+            if (!confirm(`Eintrag von ${labels[quelle]} nach ${labels[ziel]} verschieben?`)) return;
+
+            const e = gefunden.eintrag;
+            const datum = e.datum || heuteISO();
+            const betrag = parseBetrag(e.betrag) || 0;
+            const text = e.text || e.name || "Ausgabe";
+            const neueId = e.id || generateId();
+
+            if (ziel === "haushalt") {
+                daten.Haushalt ??= {};
+                const monat = (parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
+                daten.Haushalt[monat] ??= [];
+                daten.Haushalt[monat].push({ id: neueId, text, betrag, datum, kategorie: "Sonstiger Haushalt" });
+            } else if (ziel === "freizeit") {
+                daten.Freizeit ??= {};
+                const monat = (parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
+                daten.Freizeit[monat] ??= [];
+                daten.Freizeit[monat].push({ id: neueId, text, betrag, datum, kategorie: "Sonstiges" });
+            } else if (ziel === "fixkosten") {
+                daten["Laufende Kosten"] ??= { fix: [] };
+                daten["Laufende Kosten"].fix ??= [];
+                const infoTeile = [];
+                if (e.info) infoTeile.push(e.info);
+                if (e.anbieter) infoTeile.push(e.anbieter);
+                if (e.versicherungsnummer) infoTeile.push(e.versicherungsnummer);
+                daten["Laufende Kosten"].fix.push({ id: neueId, text, betrag, datum, tag: tagAusDatum(datum), info: infoTeile.join(" · ") });
+            } else if (ziel === "versicherungen") {
+                daten.Versicherungen ??= [];
+                const d = parseISODate(datum) || new Date();
+                daten.Versicherungen.push({
+                    id: neueId,
+                    name: text,
+                    betrag,
+                    datum,
+                    anbieter: e.anbieter || "",
+                    versicherungsnummer: e.versicherungsnummer || e.info || "",
+                    intervall: e.intervall || "monatlich",
+                    monat: e.monat || (d.getMonth() + 1)
+                });
+            }
+
+            gefunden.entfernen();
+            speichern();
+            renderHomeUebersicht();
+            renderHaushalt();
+            renderFreizeit();
+            renderLaufendeKosten();
+            renderVersicherungen();
+
+            if (ziel === "versicherungen" && !e.intervall) {
+                alert("Verschoben. Die Versicherung wurde zunächst als monatlich angelegt. Intervall/Anbieter kannst du über ✏️ anpassen.");
+            }
+        }
+
         function deleteAlleVersicherungen() {
 
             if (!confirm("Alle Versicherungen wirklich löschen?")) return;
@@ -4218,7 +4318,7 @@
                             <div class="actions" style="display:flex; align-items:center; gap:8px;">
                                 ${formatBetrag(e.betrag)}
 
-                                ${!state.multiSelect.haushalt ? `<button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button><button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>` : ''}
+                                ${!state.multiSelect.haushalt ? `<button onclick="moveAusgabe('haushalt','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button><button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -4513,7 +4613,7 @@
                         } else {
                             html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
                                 <div style="display:flex; align-items:center; gap:10px; min-width:0;">${selectionDot('freizeit', e.id)}<span style="display:flex; flex-direction:column; align-items:flex-start;"><span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span><span class="category-badge">${escapeHtml(e.kategorie || 'Sonstiges')}</span></span></div>
-                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}${!state.multiSelect.freizeit ? `<button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button>` : ''}</div>
+                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}${!state.multiSelect.freizeit ? `<button onclick="moveAusgabe('freizeit','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button>` : ''}</div>
                             </div>`;
                         }
                         const item = createItem(html,40); item.style.background="#3a3a3c"; container.appendChild(item);
