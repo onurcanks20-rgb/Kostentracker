@@ -1109,7 +1109,7 @@
     <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
         <div class="add-sheet">
             <h3>Wochenbudget</h3>
-            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen sind eine Vorschau auf Basis deines aktuellen Stands und werden beim nächsten Wochenstart neu berechnet.</div>
+            <div class="week-preview-note">Diese Woche ist fest. Auch die Vorschau der kommenden Wochen bleibt bis Sonntag unverändert. Am nächsten Wochenstart wird mit dem tatsächlichen Rest neu berechnet.</div>
             <div id="weekPreviewList" class="week-preview-list"></div>
             <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
             <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
@@ -2090,20 +2090,25 @@
                 current: true
             }];
 
-            // Vorschau ab dem naechsten Montag: Stand jetzt. Nicht ausgegebenes Geld
-            // dieser Woche wird damit bereits als moeglicher Uebertrag beruecksichtigt.
+            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest.
+            // Grundlage ist ausschliesslich der Stand zu Wochenbeginn. Ausgaben aus
+            // Haushalt/Freizeit in dieser Woche veraendern daher nur "Diese Woche".
+            // Erst am naechsten Montag wird mit dem dann tatsaechlich verbliebenen Geld
+            // neu verteilt.
             let futureStart = addDays(kalenderSonntag, 1);
             if (futureStart < zeitraum.start) futureStart = new Date(zeitraum.start);
             if (futureStart <= zeitraum.ende) {
                 const futureSegments = wochenSegmente(futureStart, zeitraum.ende);
                 const futureDays = Math.max(1, Math.round((zeitraum.ende - futureStart) / 86400000) + 1);
+                const fuerFolgewochenZuWochenbeginn = Math.max(0, verfuegbarZuWochenbeginn - wochenBudgetStart);
+
                 futureSegments.forEach((seg, idx) => {
                     const days = Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1);
                     rows.push({
                         label: idx === 0 ? "Nächste Woche · Vorschau" : `Woche ${idx + 2} · Vorschau`,
                         start: seg.start,
                         ende: seg.ende,
-                        betrag: freiJetzt * (days / futureDays),
+                        betrag: fuerFolgewochenZuWochenbeginn * (days / futureDays),
                         current: false
                     });
                 });
