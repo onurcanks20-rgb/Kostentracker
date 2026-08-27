@@ -1308,13 +1308,13 @@
             <div id="hausAddPanel" class="category-add-panel hidden">
                 <h3>Haushaltsausgabe hinzufügen</h3>
                 <div class="quick-category-grid" id="hausKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Lebensmittel" onclick="setQuickCategory('haus','Lebensmittel',this)">🛒 Lebensmittel</button>
+                    <button class="quick-category-btn selected" data-category="Einkauf" onclick="setQuickCategory('haus','Einkauf',this)">🛒 Einkauf</button>
                     <button class="quick-category-btn" data-category="Tanken" onclick="setQuickCategory('haus','Tanken',this)">⛽ Tanken</button>
                     <button class="quick-category-btn" data-category="Drogerie" onclick="setQuickCategory('haus','Drogerie',this)">🧴 Drogerie</button>
-                    <button class="quick-category-btn" data-category="Sonstiger Haushalt" onclick="setQuickCategory('haus','Sonstiger Haushalt',this)">🏠 Sonstiges</button>
+                    <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('haus','Sonstiges',this)">🏠 Sonstiges</button>
                 </div>
-                <input id="hausKategorie" type="hidden" value="Lebensmittel">
-                <input id="hausText" autocapitalize="words" placeholder="Beschreibung">
+                <input id="hausKategorie" type="hidden" value="Einkauf">
+                <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)">
                 <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag">
                 <input id="hausDatum" type="date">
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
@@ -1349,13 +1349,13 @@
             <div id="freizeitAddPanel" class="category-add-panel hidden">
                 <h3>Freizeitausgabe hinzufügen</h3>
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Essen gehen" onclick="setQuickCategory('freizeit','Essen gehen',this)">🍽️ Essen gehen</button>
-                    <button class="quick-category-btn" data-category="Café" onclick="setQuickCategory('freizeit','Café',this)">☕ Café</button>
-                    <button class="quick-category-btn" data-category="Kino/Event" onclick="setQuickCategory('freizeit','Kino/Event',this)">🎬 Kino / Event</button>
+                    <button class="quick-category-btn selected" data-category="Essen" onclick="setQuickCategory('freizeit','Essen',this)">🍽️ Essen</button>
+                    <button class="quick-category-btn" data-category="Trinken" onclick="setQuickCategory('freizeit','Trinken',this)">🥤 Trinken</button>
+                    <button class="quick-category-btn" data-category="Aktivität" onclick="setQuickCategory('freizeit','Aktivität',this)">🎯 Aktivität</button>
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
-                <input id="freizeitKategorie" type="hidden" value="Essen gehen">
-                <input id="freizeitText" autocapitalize="words" placeholder="Beschreibung">
+                <input id="freizeitKategorie" type="hidden" value="Essen">
+                <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)">
                 <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
@@ -1590,12 +1590,47 @@
         // Unterkategorien für bestehende Einträge ergänzen.
         Object.values(daten.Haushalt).forEach(liste => {
             if (!Array.isArray(liste)) return;
-            liste.forEach(e => { if (e && !e.kategorie) e.kategorie = "Sonstiger Haushalt"; });
+            liste.forEach(e => { if (e && !e.kategorie) e.kategorie = "Sonstiges"; });
         });
         Object.values(daten.Freizeit).forEach(liste => {
             if (!Array.isArray(liste)) return;
             liste.forEach(e => { if (e && !e.kategorie) e.kategorie = "Sonstiges"; });
         });
+
+        // Alte Unterkategorien auf die vereinfachte Struktur umstellen.
+        Object.values(daten.Haushalt).forEach(liste => {
+            if (!Array.isArray(liste)) return;
+            liste.forEach(e => {
+                if (!e) return;
+                if (e.kategorie === "Lebensmittel") e.kategorie = "Einkauf";
+                if (e.kategorie === "Sonstiger Haushalt") e.kategorie = "Sonstiges";
+            });
+        });
+        Object.values(daten.Freizeit).forEach(liste => {
+            if (!Array.isArray(liste)) return;
+            liste.forEach(e => {
+                if (!e) return;
+                if (e.kategorie === "Essen gehen") e.kategorie = "Essen";
+                if (e.kategorie === "Café") e.kategorie = "Trinken";
+                if (e.kategorie === "Kino/Event" || e.kategorie === "Kino / Event") e.kategorie = "Aktivität";
+                if (e.kategorie === "Snacks") e.kategorie = "Essen";
+            });
+        });
+        for (const land of Object.keys(daten.Reisen || {})) {
+            const reise = daten.Reisen[land];
+            if (!reise || typeof reise !== "object") continue;
+            const mergeKat = (alt, neu) => {
+                if (!Array.isArray(reise[alt])) return;
+                reise[neu] ??= [];
+                reise[neu].push(...reise[alt]);
+                delete reise[alt];
+            };
+            mergeKat("Flug", "Transport");
+            mergeKat("Aktivitäten", "Aktivität");
+            mergeKat("Verpflegung", "Essen");
+            mergeKat("Snacks", "Essen");
+            ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"].forEach(k => reise[k] ??= []);
+        }
 
         for (let land in daten.Reisen) {
             for (let k in daten.Reisen[land]) {
@@ -1639,11 +1674,13 @@
         }
 
         const standardKategorien = [
-            "Flug",
-            "Unterkunft",
+            "Essen",
+            "Trinken",
             "Transport",
-            "Aktivitäten",
-            "Verpflegung"
+            "Unterkunft",
+            "Aktivität",
+            "Einkauf",
+            "Sonstiges"
         ];
 
         for (let land in daten.Reisen) {
@@ -2187,11 +2224,13 @@
 
             if (!daten.Reisen[name]) {
                 daten.Reisen[name] = {
-                    Flug: [],
-                    Unterkunft: [],
+                    Essen: [],
+                    Trinken: [],
                     Transport: [],
-                    Aktivitäten: [],
-                    Verpflegung: []
+                    Unterkunft: [],
+                    Aktivität: [],
+                    Einkauf: [],
+                    Sonstiges: []
                 };
             }
 
@@ -3683,7 +3722,7 @@
                 daten.Haushalt ??= {};
                 const monat = (parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
                 daten.Haushalt[monat] ??= [];
-                daten.Haushalt[monat].push({id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiger Haushalt"});
+                daten.Haushalt[monat].push({id:neueId,text,betrag,datum,kategorie:e.kategorie || "Sonstiges"});
             } else if (ziel === "freizeit") {
                 daten.Freizeit ??= {};
                 const monat = (parseISODate(datum)?.getMonth() ?? new Date().getMonth()) + 1;
@@ -3938,9 +3977,10 @@
             let text = formatText(document.getElementById("hausText").value);
             let betrag = parseBetrag(document.getElementById("hausBetrag").value);
             let datum = document.getElementById("hausDatum").value;
-            let kategorie = document.getElementById("hausKategorie")?.value || "Sonstiger Haushalt";
+            let kategorie = document.getElementById("hausKategorie")?.value || "Sonstiges";
 
-            if (!text || isNaN(betrag) || !datum) return;
+            if (isNaN(betrag) || !datum) return;
+            if (!text) text = kategorie;
 
             let monat = new Date(datum).getMonth() + 1;
 
@@ -3962,7 +4002,7 @@
             document.getElementById("hausText").value = "";
             document.getElementById("hausBetrag").value = "";
             document.getElementById("hausDatum").value = heuteISO();
-            setQuickCategory("haus", "Lebensmittel", document.querySelector('#hausKategorieGrid [data-category="Lebensmittel"]'));
+            setQuickCategory("haus", "Einkauf", document.querySelector('#hausKategorieGrid [data-category="Einkauf"]'));
             document.getElementById("hausAddPanel")?.classList.add("hidden");
 
             renderHaushalt();
@@ -3974,7 +4014,8 @@
             let datum = document.getElementById("freizeitDatum").value;
             let kategorie = document.getElementById("freizeitKategorie")?.value || "Sonstiges";
 
-            if (!text || isNaN(betrag) || !datum) return;
+            if (isNaN(betrag) || !datum) return;
+            if (!text) text = kategorie;
 
             let monat = new Date(datum).getMonth() + 1;
             daten.Freizeit[monat] ??= [];
@@ -3984,7 +4025,7 @@
             document.getElementById("freizeitText").value = "";
             document.getElementById("freizeitBetrag").value = "";
             document.getElementById("freizeitDatum").value = heuteISO();
-            setQuickCategory("freizeit", "Essen gehen", document.querySelector('#freizeitKategorieGrid [data-category="Essen gehen"]'));
+            setQuickCategory("freizeit", "Essen", document.querySelector('#freizeitKategorieGrid [data-category="Essen"]'));
             document.getElementById("freizeitAddPanel")?.classList.add("hidden");
             renderFreizeit();
         }
@@ -4485,7 +4526,7 @@
                             ${selectionDot('haushalt', e.id)}
                             <span style="display:flex; flex-direction:column; align-items:flex-start;">
                                 <span>${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
-                                <span class="category-badge">${escapeHtml(e.kategorie || "Sonstiger Haushalt")}</span>
+                                <span class="category-badge">${escapeHtml(e.kategorie || "Sonstiges")}</span>
                             </span>
                             </div>
 
@@ -4689,10 +4730,10 @@
 
             let neuerMonat = new Date(datum).getMonth() + 1;
 
-            let existingKategorie = "Sonstiger Haushalt";
+            let existingKategorie = "Sonstiges";
             for (let monat in daten.Haushalt) {
                 const found = Array.isArray(daten.Haushalt[monat]) ? daten.Haushalt[monat].find(e => String(e.id) === String(id)) : null;
-                if (found) { existingKategorie = found.kategorie || "Sonstiger Haushalt"; break; }
+                if (found) { existingKategorie = found.kategorie || "Sonstiges"; break; }
             }
 
             let updated = {
@@ -5675,23 +5716,25 @@
             // Kategorien zuerst erkennen. Dadurch kann die App auch natürliche Sätze wie
             // "Ich habe 18 Euro fürs Kino ausgegeben" einem Bereich zuordnen.
             const haushaltKategorie = findeAlias(norm, {
-                "Lebensmittel": ["lebensmittel", "einkauf", "einkaufen", "supermarkt", "rewe", "edeka", "aldi", "lidl", "kaufland", "netto", "penny"],
+                "Einkauf": ["lebensmittel", "einkauf", "einkaufen", "supermarkt", "rewe", "edeka", "aldi", "lidl", "kaufland", "netto", "penny"],
                 "Tanken": ["tanken", "tankstelle", "benzin", "diesel", "sprit", "shell", "aral", "esso"],
                 "Drogerie": ["drogerie", "dm", "rossmann", "mueller", "muller"],
-                "Sonstiger Haushalt": ["sonstiger haushalt", "haushalt sonstiges"]
+                "Sonstiges": ["sonstiger haushalt", "haushalt sonstiges", "sonstiges"]
             });
             const freizeitKategorie = findeAlias(norm, {
-                "Essen gehen": ["essen gehen", "restaurant", "imbiss", "pizzeria", "burger", "döner", "doner"],
-                "Café": ["cafe", "kaffee", "bäckerei", "backerei"],
-                "Kino / Event": ["kino", "event", "konzert", "theater", "festival", "ticket"],
+                "Essen": ["essen", "essen gehen", "restaurant", "imbiss", "pizzeria", "burger", "döner", "doner"],
+                "Trinken": ["trinken", "getränk", "getraenk", "bar", "cafe", "kaffee"],
+                "Aktivität": ["aktivitat", "aktivitaet", "aktivitäten", "aktivitaeten", "kino", "event", "konzert", "theater", "festival", "ticket", "ausflug"],
                 "Sonstiges": ["freizeit sonstiges"]
             });
             const reisenKategorie = findeAlias(norm, {
-                "Flug": ["flug", "fliegen", "flugticket"],
+                "Essen": ["essen", "restaurant", "verpflegung", "lebensmittel"],
+                "Trinken": ["trinken", "getränk", "getraenk", "bar", "kaffee", "cafe"],
+                "Transport": ["transport", "taxi", "bahn", "zug", "bus", "mietwagen", "flug", "fliegen", "flugticket"],
                 "Unterkunft": ["unterkunft", "hotel", "airbnb", "ferienwohnung"],
-                "Transport": ["transport", "taxi", "bahn", "zug", "bus", "mietwagen"],
-                "Aktivitäten": ["aktivitat", "aktivitaten", "ausflug", "museum", "eintritt"],
-                "Verpflegung": ["verpflegung", "essen", "restaurant", "lebensmittel"]
+                "Aktivität": ["aktivitat", "aktivitaet", "aktivitäten", "aktivitaeten", "ausflug", "museum", "eintritt", "event"],
+                "Einkauf": ["einkauf", "einkaufen", "shopping", "laden", "supermarkt"],
+                "Sonstiges": ["reise sonstiges", "sonstiges"]
             });
 
             let bereichTreffer = findeAlias(norm, {
@@ -5717,7 +5760,7 @@
 
             // "Essen" ist im Alltag ohne weitere Angabe eher Freizeit; bei ausdrücklich genannter Reise Verpflegung.
             if (bereich === "freizeit" && !kategorieTreffer && /\bessen\b/.test(norm)) {
-                kategorieTreffer = { ziel: "Essen gehen", alias: "essen" };
+                kategorieTreffer = { ziel: "Essen", alias: "essen" };
             }
 
             let land = null;
@@ -5743,11 +5786,11 @@
             }
 
             const kategorie = kategorieTreffer?.ziel || (
-                bereich === "haushalt" ? "Sonstiger Haushalt" :
+                bereich === "haushalt" ? "Sonstiges" :
                 bereich === "freizeit" ? "Sonstiges" : null
             );
             if (bereich === "reisen" && !kategorie) {
-                return { ok: false, meldung: "Bitte nenne bei Reisen auch eine Kategorie wie Essen, Flug, Hotel oder Transport." };
+                return { ok: false, meldung: "Bitte nenne bei Reisen auch eine Kategorie wie Essen, Trinken, Transport, Unterkunft oder Aktivität." };
             }
 
             // Aus dem Rest des gesprochenen Satzes eine kurze Beschreibung bilden.
@@ -5858,7 +5901,7 @@
                 daten.Haushalt[monat] ??= [];
                 daten.Haushalt[monat].push({
                     id: generateId(), text, betrag, datum,
-                    kategorie: "Sonstiger Haushalt", quelle: "siri"
+                    kategorie: "Sonstiges", quelle: "siri"
                 });
             } else if (bereich === "freizeit") {
                 daten.Freizeit ??= {};
