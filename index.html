@@ -1120,8 +1120,8 @@
     <div id="addSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeAddSheet()">
         <div class="add-sheet">
             <h3>Abrechnung hinzufügen</h3>
-            <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausText')">🛒 Haushalt</button>
-            <button class="add-choice" onclick="closeAddSheet(); openFreizeit(); toggleCategoryAdd('freizeitAddPanel','freizeitText')">🎉 Freizeit</button>
+            <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausBetrag')">🛒 Haushalt</button>
+            <button class="add-choice" onclick="closeAddSheet(); openFreizeit(); toggleCategoryAdd('freizeitAddPanel','freizeitBetrag')">🎉 Freizeit</button>
             <button class="add-choice" onclick="closeAddSheet(); openEinnahmen(); toggleCategoryAdd('einnahmenAddPanel','einnahmenText')">💰 Einnahme</button>
             <button class="add-choice" onclick="closeAddSheet(); openKosten(); toggleCategoryAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
             <button class="add-choice" onclick="closeAddSheet(); openVersicherungen(); toggleCategoryAdd('versAddPanel','versName')">🛡️ Versicherung</button>
@@ -1151,7 +1151,7 @@
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
                 <h3>Reise hinzufügen</h3>
-                <input id="landInput" autocapitalize="words" placeholder="Neues Land">
+                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="done">
                 <button onclick="addLand()" class="btn btn-primary">Land hinzufügen</button>
             </div>
 
@@ -1177,8 +1177,8 @@
 
                 <h3 id="quickTitel"></h3>
 
-                <input id="quickBetrag" type="text" inputmode="decimal" placeholder="Betrag">
-                <input id="quickText" autocapitalize="words" placeholder="Beschreibung">
+                <input id="quickBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <input id="quickText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="done">
 
                 <button onclick="saveQuickAdd()" class="btn btn-primary">
                     Speichern
@@ -1200,8 +1200,8 @@
                     <button onclick="addKategorie()">+</button>
                 </div>
 
-                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag">
-                <input id="text" autocapitalize="words" placeholder="Beschreibung">
+                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="datum" type="date">
 
                 <button onclick="addEintrag()" class="btn btn-primary">
@@ -1247,11 +1247,11 @@
 
             <div id="versAddPanel" class="category-add-panel hidden">
                 <h3>Versicherung hinzufügen</h3>
-                <input id="versName" autocapitalize="words" placeholder="Versicherung">
-                <input id="versBetrag" type="text" inputmode="decimal" placeholder="Betrag">
+                <input id="versName" autocapitalize="words" placeholder="Versicherung" enterkeyhint="next">
+                <input id="versBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <input id="versDatum" type="date">
-                <input id="versAnbieter" autocapitalize="words" placeholder="Anbieter">
-                <input id="versNummer" autocapitalize="words" placeholder="Versicherungsnummer">
+                <input id="versAnbieter" autocapitalize="words" placeholder="Anbieter" enterkeyhint="next">
+                <input id="versNummer" autocapitalize="words" placeholder="Versicherungsnummer" enterkeyhint="next">
 
                 <select id="versIntervall">
                     <option value="monatlich">Monatlich</option>
@@ -1302,7 +1302,7 @@
             <div class="category-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2>Haushalt</h2>
-                <button class="category-add-btn" onclick="toggleCategoryAdd('hausAddPanel','hausText')" aria-label="Haushaltsausgabe hinzufügen">＋</button>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('hausAddPanel','hausBetrag')" aria-label="Haushaltsausgabe hinzufügen">＋</button>
             </div>
 
             <div id="hausAddPanel" class="category-add-panel hidden">
@@ -1314,8 +1314,8 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('haus','Sonstiges',this)">🏠 Sonstiges</button>
                 </div>
                 <input id="hausKategorie" type="hidden" value="Einkauf">
-                <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)">
-                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag">
+                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="hausDatum" type="date">
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
             </div>
@@ -1343,7 +1343,7 @@
             <div class="category-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2>Freizeit</h2>
-                <button class="category-add-btn" onclick="toggleCategoryAdd('freizeitAddPanel','freizeitText')" aria-label="Freizeitausgabe hinzufügen">＋</button>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('freizeitAddPanel','freizeitBetrag')" aria-label="Freizeitausgabe hinzufügen">＋</button>
             </div>
 
             <div id="freizeitAddPanel" class="category-add-panel hidden">
@@ -1355,8 +1355,8 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen">
-                <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)">
-                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag">
+                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
             </div>
@@ -1388,9 +1388,9 @@
 
             <div id="einnahmenAddPanel" class="category-add-panel hidden">
                 <h3>Einnahme hinzufügen</h3>
-                <input id="einnahmenText" autocapitalize="words" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)">
-                <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag">
-                <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)">
+                <input id="einnahmenText" autocapitalize="words" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)" enterkeyhint="next">
+                <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag" enterkeyhint="next">
+                <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)" enterkeyhint="next">
                 <label for="einnahmenDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Erste Zahlung / Datum</label>
                 <input id="einnahmenDatum" type="date">
                 <select id="einnahmenWiederholung">
@@ -1429,9 +1429,9 @@
             <div id="kostenAddPanel" class="category-add-panel hidden">
                 <h3>Fixkosten hinzufügen</h3>
 
-            <input id="costText" autocapitalize="words" placeholder="Beschreibung">
-            <input id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag">
-            <input id="costInfo" autocapitalize="words" placeholder="Info (z. B. Kundennummer, Vertragsnummer)">
+            <input id="costText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+            <input id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+            <input id="costInfo" autocapitalize="words" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" enterkeyhint="next">
 
             <label for="costDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">
                 Erste Abbuchung
@@ -2128,7 +2128,10 @@
             closeCategoryAddPanels();
             if (wirdGeoeffnet) {
                 panel.classList.remove("hidden");
-                focusLater(focusId);
+                setTimeout(() => {
+                    const firstId = setupUniversalAddEnterFlow(panelId) || focusId;
+                    document.getElementById(firstId)?.focus();
+                }, 80);
             }
         }
 
@@ -2565,8 +2568,8 @@
                         if (state.editReiseId === e.id) {
 
                             sub.innerHTML = `
-                        <input id="editText-${e.id}" value="${e.text || ""}" autocapitalize="words">
-                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
+                        <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                        <input id="editText-${e.id}" value="${e.text || ""}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
                         <div class="actions">
@@ -4150,27 +4153,52 @@
                     next.focus();
                 }
             };
+            if (current.tagName === "INPUT") current.enterKeyHint = "next";
+        }
+
+        function setupEnterSequence(ids, submitFn) {
+            const fields = ids.map(id => document.getElementById(id)).filter(Boolean);
+            if (!fields.length) return null;
+
+            fields.forEach((field, index) => {
+                if (field.tagName === "INPUT") {
+                    field.enterKeyHint = index === fields.length - 1 ? "done" : "next";
+                }
+                field.onkeydown = (e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    if (index < fields.length - 1) {
+                        fields[index + 1].focus();
+                    } else if (typeof submitFn === "function") {
+                        submitFn();
+                    }
+                };
+            });
+            return fields[0]?.id || null;
+        }
+
+        // Einheitlicher Enter-Ablauf in allen Hinzufügen-Formularen.
+        function setupUniversalAddEnterFlow(panelId) {
+            const flows = {
+                reisenAddPanel: { ids: ["landInput"], submit: () => addLand() },
+                versAddPanel: { ids: ["versName","versBetrag","versDatum","versAnbieter","versNummer","versIntervall","versMonat"], submit: () => addVersicherung() },
+                hausAddPanel: { ids: ["hausBetrag","hausText","hausDatum"], submit: () => addHaushalt() },
+                freizeitAddPanel: { ids: ["freizeitBetrag","freizeitText","freizeitDatum"], submit: () => addFreizeit() },
+                einnahmenAddPanel: { ids: ["einnahmenText","einnahmenBetrag","einnahmenVon","einnahmenDatum","einnahmenWiederholung"], submit: () => addEinnahme() },
+                kostenAddPanel: { ids: ["costText","costBetrag","costInfo","costDatum"], submit: () => addKosten() }
+            };
+            const flow = flows[panelId];
+            if (!flow) return null;
+            return setupEnterSequence(flow.ids, flow.submit);
         }
 
         //<!-- ===================== Enter Reisen ===================== -->
         function setupReisenEnterFlow() {
-
-            const betrag = document.getElementById("betrag");
-            const text = document.getElementById("text");
-
-            if (!betrag || !text) return;
-
-            enterToNext(betrag, text);
-
-            text.onkeydown = (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    addEintrag();
-                    setTimeout(() => betrag.focus(), 50);
-                }
-            };
-
-            betrag.focus();
+            const first = setupEnterSequence(["betrag", "text", "datum"], () => {
+                addEintrag();
+                setTimeout(() => document.getElementById("betrag")?.focus(), 50);
+            });
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupQuickAddEnterFlow() {
@@ -4194,24 +4222,8 @@
         }
 
         function setupReiseEditEnterFlow(id) {
-
-            const text = document.getElementById("editText-" + id);
-            const betrag = document.getElementById("editBetrag-" + id);
-            const datum = document.getElementById("editDatum-" + id);
-
-            if (!text || !betrag || !datum) return;
-
-            enterToNext(text, betrag);
-            enterToNext(betrag, datum);
-
-            datum.onkeydown = (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveEditReise(id);
-                }
-            };
-
-            text.focus();
+            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => saveEditReise(id));
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupLandEnter() {
@@ -4314,72 +4326,23 @@
 
         //<!-- ===================== Enter Haushalt ===================== -->
         function setupHaushaltEnterFlow() {
-
-            const text = document.getElementById("hausText");
-            const betrag = document.getElementById("hausBetrag");
-            const datum = document.getElementById("hausDatum");
-
-            if (!text || !betrag || !datum) return;
-
-            enterToNext(text, betrag);
-            enterToNext(betrag, datum);
-
-            datum.onkeydown = (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    addHaushalt();
-                    text.focus();
-                }
-            };
-
-            text.focus();
+            const first = setupEnterSequence(["hausBetrag", "hausText", "hausDatum"], () => addHaushalt());
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEnterFlow() {
-            const text = document.getElementById("freizeitText");
-            const betrag = document.getElementById("freizeitBetrag");
-            const datum = document.getElementById("freizeitDatum");
-            if (!text || !betrag || !datum) return;
-            enterToNext(text, betrag);
-            enterToNext(betrag, datum);
-            datum.onkeydown = (e) => {
-                if (e.key === "Enter") { e.preventDefault(); addFreizeit(); text.focus(); }
-            };
-            text.focus();
+            const first = setupEnterSequence(["freizeitBetrag", "freizeitText", "freizeitDatum"], () => addFreizeit());
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupFreizeitEditEnterFlow(id) {
-            const text = document.getElementById("editFreizeitText-" + id);
-            const betrag = document.getElementById("editFreizeitBetrag-" + id);
-            const datum = document.getElementById("editFreizeitDatum-" + id);
-            if (!text || !betrag || !datum) return;
-            enterToNext(text, betrag);
-            enterToNext(betrag, datum);
-            datum.onkeydown = (e) => {
-                if (e.key === "Enter") { e.preventDefault(); saveEditFreizeit(id); }
-            };
-            text.focus();
+            const first = setupEnterSequence(["editFreizeitBetrag-" + id, "editFreizeitText-" + id, "editFreizeitDatum-" + id], () => saveEditFreizeit(id));
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupHaushaltEditEnterFlow(id) {
-
-            const text = document.getElementById("editText-" + id);
-            const betrag = document.getElementById("editBetrag-" + id);
-            const datum = document.getElementById("editDatum-" + id);
-
-            if (!text || !betrag || !datum) return;
-
-            enterToNext(text, betrag);
-            enterToNext(betrag, datum);
-
-            datum.onkeydown = (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveEditHaushalt(id);
-                }
-            };
-
-            text.focus();
+            const first = setupEnterSequence(["editBetrag-" + id, "editText-" + id, "editDatum-" + id], () => saveEditHaushalt(id));
+            if (first) document.getElementById(first)?.focus();
         }
 
         //<!-- ===================== Enter Laufende Kosten ===================== -->
@@ -4509,8 +4472,8 @@
                         if (isEdit) {
                             html = `
                         <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <input id="editText-${e.id}" value="${e.text || e.name || ""}" autocapitalize="words">
-                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
+                            <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <input id="editText-${e.id}" value="${e.text || e.name || ""}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
 
                             <div style="display:flex; gap:10px;">
@@ -4820,8 +4783,8 @@
                         let html;
                         if (isEdit) {
                             html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words">
-                                <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}">
+                                <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                                 <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
                                 <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
                             </div>`;
