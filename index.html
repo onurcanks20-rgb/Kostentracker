@@ -1322,7 +1322,11 @@
         </div>
 
         <div class="container">
-            <input id="haushaltSuche" class="list-search" type="search" placeholder="🔎 Haushalt durchsuchen" oninput="renderHaushalt()">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+                <h3 style="margin:0;">Letzte 7 Tage</h3>
+                <button onclick="openAusgabenArchiv('haushalt')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
+            </div>
+            <input id="haushaltSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderHaushalt()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('haushalt')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedHaushalt" onclick="deleteSelected('haushalt')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1363,7 +1367,11 @@
         </div>
 
         <div class="container">
-            <input id="freizeitSuche" class="list-search" type="search" placeholder="🔎 Freizeit durchsuchen" oninput="renderFreizeit()">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+                <h3 style="margin:0;">Letzte 7 Tage</h3>
+                <button onclick="openAusgabenArchiv('freizeit')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
+            </div>
+            <input id="freizeitSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderFreizeit()">
             <div class="delete-tools">
                 <button onclick="toggleMultiSelect('freizeit')" style="background:#3a3a3c;">☑️ Auswählen</button>
                 <button id="deleteSelectedFreizeit" onclick="deleteSelected('freizeit')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
@@ -1375,6 +1383,19 @@
             <button onclick="deleteAlleFreizeit()" style="background:red;">🗑️ Alle Freizeit-Einträge löschen</button>
         </div>
 
+    </div>
+
+    <!-- ===================== Haushalt / Freizeit Archiv ===================== -->
+    <div id="ausgabenArchivView" class="hidden">
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="closeAusgabenArchiv()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 id="ausgabenArchivTitel">Alle Einträge</h2>
+                <span style="width:44px;"></span>
+            </div>
+            <input id="ausgabenArchivSuche" class="list-search" type="search" placeholder="🔎 Alle Einträge durchsuchen" oninput="renderAusgabenArchiv()">
+            <div id="ausgabenArchivListe"></div>
+        </div>
     </div>
 
     <!-- ===================== Einnahmen ===================== -->
@@ -1651,6 +1672,7 @@
             offeneFreizeitJahre: {},
             offeneFreizeitMonate: {},
             editFreizeitId: null,
+            ausgabenArchivTyp: "haushalt",
             editEinnahmeId: null,
             editVersicherungId: null,
             editKategorieName: null,
@@ -1977,6 +1999,7 @@
                 "land",
                 "haushaltView",
                 "freizeitView",
+                "ausgabenArchivView",
                 "einnahmenView",
                 "kostenView",
                 "versicherungenView",
@@ -2189,6 +2212,19 @@
 
             renderFreizeit();
             setupFreizeitEnterFlow();
+        }
+
+        function openAusgabenArchiv(typ) {
+            state.ausgabenArchivTyp = typ === "freizeit" ? "freizeit" : "haushalt";
+            const suche = document.getElementById("ausgabenArchivSuche");
+            if (suche) suche.value = "";
+            show("ausgabenArchivView");
+            renderAusgabenArchiv();
+        }
+
+        function closeAusgabenArchiv() {
+            if (state.ausgabenArchivTyp === "freizeit") openFreizeit();
+            else openHaushalt();
         }
 
         function openEinnahmen() {
@@ -4394,126 +4430,94 @@
         }
 
 
-        function renderHaushalt() {
+        function datumAlsLokalenTag(datum) {
+            const m = String(datum || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) return null;
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            d.setHours(0,0,0,0);
+            return d;
+        }
 
-            const container = document.getElementById("haushaltListe");
+        function istInLetztenTagen(datum, tage = 7) {
+            const d = datumAlsLokalenTag(datum);
+            if (!d) return false;
+            const heute = new Date();
+            heute.setHours(0,0,0,0);
+            const start = new Date(heute);
+            start.setDate(start.getDate() - (tage - 1));
+            return d >= start && d <= heute;
+        }
+
+        function alleAusgabenAusBereich(typ) {
+            const quelle = typ === "freizeit" ? daten.Freizeit : daten.Haushalt;
+            const liste = [];
+            Object.values(quelle || {}).forEach(arr => {
+                if (Array.isArray(arr)) arr.forEach(e => { if (e) liste.push(e); });
+            });
+            return liste;
+        }
+
+        function renderRecentAusgaben(typ) {
+            const istFreizeit = typ === "freizeit";
+            const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
             if (!container) return;
-
             container.innerHTML = "";
+            const suche = getSearchTerm(istFreizeit ? "freizeitSuche" : "haushaltSuche");
+            const liste = alleAusgabenAusBereich(typ)
+                .filter(e => istInLetztenTagen(e.datum, 7))
+                .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
+                .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
 
-            const data = gruppiereHaushalt();
-            const suche = getSearchTerm("haushaltSuche");
-            Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
-                data[j][m] = data[j][m]
-                    .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
-                    .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
-                if (!data[j][m].length) delete data[j][m];
-            }));
-            Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
-            const jahre = Object.keys(data).sort((a, b) => b - a);
-
-            if (jahre.length === 0) {
-                container.innerHTML = `<p style="opacity:0.7;">Noch keine Haushalt-Einträge eingetragen.</p>`;
-                updateSelectionButton('haushalt');
+            if (!liste.length) {
+                container.innerHTML = `<p style="opacity:0.7;">Keine ${istFreizeit ? 'Freizeit' : 'Haushalt'}-Einträge in den letzten 7 Tagen.</p>`;
+                updateSelectionButton(typ);
                 return;
             }
 
-            jahre.forEach(jahr => {
-
-                const jahrOffen = state.offeneHaushaltJahre[jahr];
-
-                const jahrSumme = Object.values(data[jahr])
-                    .flat()
-                    .reduce((a, b) => a + (parseBetrag(b.betrag) || 0), 0);
-
-                container.appendChild(createItem(`
-            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                <div>
-                    <button class="toggle-btn" onclick="toggleHaushaltJahr('${jahr}')">
-                        ${jahrOffen ? '▲' : '▼'}
-                    </button>
-                    📁 ${jahr}
-                </div>
-                <div>${formatBetrag(jahrSumme)}</div>
-            </div>
-        `));
-
-                if (!jahrOffen) return;
-
-                const monate = Object.keys(data[jahr]).sort((a, b) => b - a);
-
-                monate.forEach(monat => {
-
-                    const key = jahr + "-" + monat;
-                    const monatOffen = state.offeneHaushaltMonate[key];
-
-                    const liste = data[jahr][monat];
-                    const summe = liste.reduce((a, b) => a + (parseBetrag(b.betrag) || 0), 0);
-
-                    container.appendChild(createItem(`
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <div>
-                        <button class="toggle-btn" onclick="toggleHaushaltMonat('${jahr}', '${monat}')">
-                            ${monatOffen ? '▲' : '▼'}
-                        </button>
-                        📂 ${getMonatName(parseInt(monat))}
-                    </div>
-                    <div>${formatBetrag(summe)}</div>
-                </div>
-            `, 20));
-
-                    if (!monatOffen) return;
-
-                    liste.forEach(e => {
-
-                        const isEdit = state.editHaushaltId === e.id;
-                        let html;
-
-                        if (isEdit) {
-                            html = `
+            liste.forEach(e => {
+                const isEdit = istFreizeit ? String(state.editFreizeitId) === String(e.id) : String(state.editHaushaltId) === String(e.id);
+                let html;
+                if (isEdit) {
+                    html = istFreizeit ? `
+                        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                            <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                            <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                            <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
+                            <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
+                        </div>` : `
                         <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
                             <input id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                            <input id="editText-${e.id}" value="${e.text || e.name || ""}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                            <input id="editDatum-${e.id}" type="date" value="${e.datum || ""}">
-
-                            <div style="display:flex; gap:10px;">
-                                <button onclick="saveEditHaushalt(${e.id})">💾 Speichern</button>
-                                <button onclick="cancelEditHaushalt()">❌ Abbrechen</button>
-                            </div>
-                        </div>
-                    `;
-                        } else {
-                            html = `
-                        <div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-                            ${selectionDot('haushalt', e.id)}
-                            <span style="display:flex; flex-direction:column; align-items:flex-start;">
-                                <span>${e.text || e.name || "-"} ${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
-                                <span class="category-badge">${escapeHtml(e.kategorie || "Sonstiges")}</span>
+                            <input id="editText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+                            <input id="editDatum-${e.id}" type="date" value="${e.datum || ''}">
+                            <div style="display:flex; gap:10px;"><button onclick="saveEditHaushalt('${e.id}')">💾 Speichern</button><button onclick="cancelEditHaushalt()">❌ Abbrechen</button></div>
+                        </div>`;
+                } else {
+                    const beschreibung = escapeHtml(e.text || e.name || '');
+                    html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                            ${selectionDot(typ, e.id)}
+                            <span style="display:flex; flex-direction:column; align-items:flex-start; min-width:0;">
+                                <strong>${escapeHtml(e.kategorie || 'Sonstiges')}</strong>
+                                ${beschreibung ? `<span style="opacity:.72; font-size:13px; overflow-wrap:anywhere;">${beschreibung}</span>` : ''}
+                                <span style="opacity:.55; font-size:12px;">${e.datum ? formatDatum(e.datum) : ''}</span>
                             </span>
-                            </div>
-
-                            <div class="actions" style="display:flex; align-items:center; gap:8px;">
-                                ${formatBetrag(e.betrag)}
-
-                                ${!state.multiSelect.haushalt ? `<button onclick="moveAusgabe('haushalt','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="startEditHaushalt(${e.id})">✏️</button><button class="delete" onclick="deleteHaushalt(${e.id})">🗑️</button>` : ''}
-                            </div>
                         </div>
-                    `;
-                        }
-
-                        const item = createItem(html, 40);
-                        item.style.background = "#3a3a3c";
-
-                        container.appendChild(item);
-
-                        if (isEdit) {
-                            setTimeout(() => setupHaushaltEditEnterFlow(e.id), 0);
-                        }
-                    });
-                });
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                            <strong>${formatBetrag(e.betrag)}</strong>
+                            ${!(state.multiSelect?.[typ]) ? `<button onclick="moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button><button class="delete" onclick="${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>` : ''}
+                        </div>
+                    </div>`;
+                }
+                const item = createItem(html);
+                item.style.background = "#3a3a3c";
+                container.appendChild(item);
+                if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
             });
-            updateSelectionButton('haushalt');
+            updateSelectionButton(typ);
+        }
+
+        function renderHaushalt() {
+            renderRecentAusgaben("haushalt");
         }
 
         function deleteAlleHaushalt() {
@@ -4739,12 +4743,17 @@
             renderHaushalt();
         }
 
-        function renderFreizeit() {
-            const container = document.getElementById("freizeitListe");
+        function renderAusgabenArchiv() {
+            const typ = state.ausgabenArchivTyp === "freizeit" ? "freizeit" : "haushalt";
+            const istFreizeit = typ === "freizeit";
+            const titel = document.getElementById("ausgabenArchivTitel");
+            const container = document.getElementById("ausgabenArchivListe");
             if (!container) return;
+            if (titel) titel.textContent = istFreizeit ? "Freizeit · Alle Einträge" : "Haushalt · Alle Einträge";
             container.innerHTML = "";
-            const data = gruppiereFreizeit();
-            const suche = getSearchTerm("freizeitSuche");
+
+            const suche = getSearchTerm("ausgabenArchivSuche");
+            const data = istFreizeit ? gruppiereFreizeit() : gruppiereHaushalt();
             Object.keys(data).forEach(j => Object.keys(data[j]).forEach(m => {
                 data[j][m] = data[j][m]
                     .filter(e => matchesSearch(suche, e.text, e.name, e.kategorie, e.datum, e.betrag))
@@ -4752,54 +4761,57 @@
                 if (!data[j][m].length) delete data[j][m];
             }));
             Object.keys(data).forEach(j => { if (!Object.keys(data[j]).length) delete data[j]; });
-            const jahre = Object.keys(data).sort((a, b) => b - a);
-            if (jahre.length === 0) {
-                container.innerHTML = `<p style="opacity:0.7;">Noch keine Freizeit-Einträge eingetragen.</p>`;
-                updateSelectionButton('freizeit');
+            const jahre = Object.keys(data).sort((a,b) => b-a);
+
+            if (!jahre.length) {
+                container.innerHTML = `<p style="opacity:.7;">Noch keine Einträge vorhanden.</p>`;
                 return;
             }
+
+            const jahresState = istFreizeit ? state.offeneFreizeitJahre : state.offeneHaushaltJahre;
+            const monatsState = istFreizeit ? state.offeneFreizeitMonate : state.offeneHaushaltMonate;
+
             jahre.forEach(jahr => {
-                const jahrOffen = state.offeneFreizeitJahre[jahr];
-                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b)=>a+(parseBetrag(b.betrag)||0),0);
-                container.appendChild(createItem(`
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <div><button class="toggle-btn" onclick="toggleFreizeitJahr('${jahr}')">${jahrOffen ? '▲' : '▼'}</button> 📁 ${jahr}</div>
-                        <div>${formatBetrag(jahrSumme)}</div>
-                    </div>`));
+                const jahrOffen = !!jahresState[jahr];
+                const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b) => a + (parseBetrag(b.betrag)||0), 0);
+                const jahrItem = createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
+                    <div><span class="toggle-btn">${jahrOffen ? '▲' : '▼'}</span> 📁 ${jahr}</div><strong>${formatBetrag(jahrSumme)}</strong>
+                </div>`);
+                jahrItem.onclick = () => { jahresState[jahr] = !jahrOffen; renderAusgabenArchiv(); };
+                container.appendChild(jahrItem);
                 if (!jahrOffen) return;
+
                 Object.keys(data[jahr]).sort((a,b)=>b-a).forEach(monat => {
                     const key = jahr + "-" + monat;
-                    const monatOffen = state.offeneFreizeitMonate[key];
+                    const monatOffen = !!monatsState[key];
                     const liste = data[jahr][monat];
                     const summe = liste.reduce((a,b)=>a+(parseBetrag(b.betrag)||0),0);
-                    container.appendChild(createItem(`
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div><button class="toggle-btn" onclick="toggleFreizeitMonat('${jahr}','${monat}')">${monatOffen ? '▲' : '▼'}</button> 📂 ${getMonatName(parseInt(monat))}</div>
-                            <div>${formatBetrag(summe)}</div>
-                        </div>`,20));
+                    const monatItem = createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
+                        <div><span class="toggle-btn">${monatOffen ? '▲' : '▼'}</span> 📂 ${getMonatName(parseInt(monat))}</div><strong>${formatBetrag(summe)}</strong>
+                    </div>`,20);
+                    monatItem.onclick = () => { monatsState[key] = !monatOffen; renderAusgabenArchiv(); };
+                    container.appendChild(monatItem);
                     if (!monatOffen) return;
+
                     liste.forEach(e => {
-                        const isEdit = String(state.editFreizeitId) === String(e.id);
-                        let html;
-                        if (isEdit) {
-                            html = `<div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                                <input id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
-                                <input id="editFreizeitText-${e.id}" value="${escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                                <input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}">
-                                <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
-                            </div>`;
-                        } else {
-                            html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                                <div style="display:flex; align-items:center; gap:10px; min-width:0;">${selectionDot('freizeit', e.id)}<span style="display:flex; flex-direction:column; align-items:flex-start;"><span>${escapeHtml(e.text || e.name || '-')} ${e.datum ? ' | ' + formatDatum(e.datum) : ''}</span><span class="category-badge">${escapeHtml(e.kategorie || 'Sonstiges')}</span></span></div>
-                                <div class="actions" style="display:flex; align-items:center; gap:8px;">${formatBetrag(e.betrag)}${!state.multiSelect.freizeit ? `<button onclick="moveAusgabe('freizeit','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="startEditFreizeit('${e.id}')">✏️</button><button class="delete" onclick="deleteFreizeit('${e.id}')">🗑️</button>` : ''}</div>
-                            </div>`;
-                        }
-                        const item = createItem(html,40); item.style.background="#3a3a3c"; container.appendChild(item);
-                        if (isEdit) setTimeout(()=>setupFreizeitEditEnterFlow(e.id),0);
+                        const beschreibung = escapeHtml(e.text || e.name || '');
+                        const item = createItem(`<div style="display:flex; justify-content:space-between; width:100%; gap:12px; align-items:center;">
+                            <div style="display:flex; flex-direction:column; min-width:0;">
+                                <strong>${escapeHtml(e.kategorie || 'Sonstiges')}</strong>
+                                ${beschreibung ? `<span style="opacity:.72; font-size:13px; overflow-wrap:anywhere;">${beschreibung}</span>` : ''}
+                                <span style="opacity:.55; font-size:12px;">${e.datum ? formatDatum(e.datum) : ''}</span>
+                            </div>
+                            <strong style="flex-shrink:0;">${formatBetrag(e.betrag)}</strong>
+                        </div>`,40);
+                        item.style.background="#3a3a3c";
+                        container.appendChild(item);
                     });
                 });
             });
-            updateSelectionButton('freizeit');
+        }
+
+        function renderFreizeit() {
+            renderRecentAusgaben("freizeit");
         }
 
         function gruppiereFreizeit() {
