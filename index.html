@@ -1689,6 +1689,9 @@
             offeneVersicherungen: {},
             offeneFixkosten: {},
             offeneEinnahmen: {},
+            offeneHaushaltEintraege: {},
+            offeneFreizeitEintraege: {},
+            offeneReiseEintraege: {},
         };
 
         if (!daten.geloeschteKategorien) {
@@ -2623,14 +2626,35 @@
                         }
 
                         else {
+                            const reiseOffen = !!state.offeneReiseEintraege[String(e.id)];
+                            const reiseAusgewaehlt = (state.selected.reisen || []).includes(String(e.id));
+                            const reiseBeschreibung = escapeHtml(e.text || '');
                             sub.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-                            ${selectionDot('reisen', e.id)}
-                            <span>${e.text || "-"}${e.datum ? " | " + formatDatum(e.datum) : ""}</span>
-                        </div>
-                        <div class="actions">
-                            <span style="font-weight:600; margin-right:5px;">${formatBetrag(e.betrag)}</span>
-                            ${!state.multiSelect.reisen ? `<button onclick="moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="startEditReise(${e.id})">✏️</button><button class="delete" onclick="deleteEintrag('${k}', ${i})">🗑️</button>` : ''}
+                        <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
+                            <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
+                                <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}')` : `toggleReiseDetails('${e.id}')`}"
+                                     style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
+                                    ${state.multiSelect.reisen ? `
+                                        <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? '#0a84ff' : 'transparent'};flex-shrink:0;">
+                                            ${reiseAusgewaehlt ? '✓' : ''}
+                                        </div>` : ''}
+                                    <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                        <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k)}</span>
+                                        <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
+                                    </div>
+                                </div>
+                                ${!state.multiSelect.reisen ? `
+                                    <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                        <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
+                                        <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
+                                        <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
+                                    </div>` : ''}
+                            </div>
+                            ${reiseOffen ? `
+                                <div onclick="toggleReiseDetails('${e.id}')" style="background:#48484a;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                                    ${reiseBeschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${reiseBeschreibung}</span></div>` : ''}
+                                    <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? formatDatum(e.datum) : '-'}</span></div>
+                                </div>` : ''}
                         </div>
                     `;
                         }
@@ -2645,6 +2669,12 @@
 
             renderKategorienUebersicht();
             updateSelectionButton('reisen');
+        }
+
+        function toggleReiseDetails(id) {
+            const key = String(id);
+            state.offeneReiseEintraege[key] = !state.offeneReiseEintraege[key];
+            renderListe();
         }
 
         /* EDIT */
@@ -4479,6 +4509,8 @@
                 return;
             }
 
+            const offenMap = istFreizeit ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+
             liste.forEach(e => {
                 const isEdit = istFreizeit ? String(state.editFreizeitId) === String(e.id) : String(state.editHaushaltId) === String(e.id);
                 let html;
@@ -4498,19 +4530,33 @@
                         </div>`;
                 } else {
                     const beschreibung = escapeHtml(e.text || e.name || '');
-                    html = `<div style="display:flex; justify-content:space-between; width:100%; gap:10px; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-                            ${selectionDot(typ, e.id)}
-                            <span style="display:flex; flex-direction:column; align-items:flex-start; min-width:0;">
-                                <strong>${escapeHtml(e.kategorie || 'Sonstiges')}</strong>
-                                ${beschreibung ? `<span style="opacity:.72; font-size:13px; overflow-wrap:anywhere;">${beschreibung}</span>` : ''}
-                                <span style="opacity:.55; font-size:12px;">${e.datum ? formatDatum(e.datum) : ''}</span>
-                            </span>
+                    const ausgewaehlt = (state.selected?.[typ] || []).includes(String(e.id));
+                    const istOffen = !!offenMap?.[String(e.id)];
+                    html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
+                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
+                            <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
+                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
+                                ${state.multiSelect?.[typ] ? `
+                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? '#0a84ff' : 'transparent'};flex-shrink:0;">
+                                        ${ausgewaehlt ? '✓' : ''}
+                                    </div>` : ''}
+                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
+                                </div>
+                            </div>
+                            ${!state.multiSelect?.[typ] ? `
+                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                                    <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
+                                    <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
+                                </div>` : ''}
                         </div>
-                        <div class="actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                            <strong>${formatBetrag(e.betrag)}</strong>
-                            ${!(state.multiSelect?.[typ]) ? `<button onclick="moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button><button class="delete" onclick="${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>` : ''}
-                        </div>
+                        ${istOffen ? `
+                            <div onclick="toggleAlltagsDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                                ${beschreibung ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Beschreibung</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${beschreibung}</span></div>` : ''}
+                                <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Datum</span><span style="font-weight:600;text-align:right;">${e.datum ? formatDatum(e.datum) : '-'}</span></div>
+                            </div>` : ''}
                     </div>`;
                 }
                 const item = createItem(html);
@@ -4519,6 +4565,13 @@
                 if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
             });
             updateSelectionButton(typ);
+        }
+
+        function toggleAlltagsDetails(typ, id) {
+            const map = typ === 'freizeit' ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            const key = String(id);
+            map[key] = !map[key];
+            renderRecentAusgaben(typ);
         }
 
         function renderHaushalt() {
