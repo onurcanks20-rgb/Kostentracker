@@ -275,9 +275,11 @@
 
         .land-actions {
             position: absolute;
-            top: 12px;
+            top: 50%;
             right: 12px;
+            transform: translateY(-50%);
             display: flex;
+            align-items: center;
             gap: 7px;
         }
 
@@ -1345,6 +1347,7 @@
                 <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="datum" type="date">
                 <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
+                <button onclick="toggleCategoryAdd('reiseAddPanel')" class="btn" style="background:#3a3a3c;margin-top:10px;">Abbrechen</button>
             </div>
 
         </div>
@@ -2364,7 +2367,7 @@
         }
 
         function closeCategoryAddPanels() {
-            ["reisenAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel"].forEach(id => {
+            ["reisenAddPanel","reiseAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -2897,15 +2900,12 @@
                 item.className = "item";
 
                 item.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
-                <button class="toggle-btn" onclick="toggleKategorie('${k}')">
-                    ${state.offeneKategorie === k ? '▲' : '▼'}
-                </button>
-
+            <div onclick="${state.editKategorieName === k ? '' : `toggleKategorie('${k}')`}"
+                 style="display:flex; align-items:center; min-width:0; flex:1; cursor:${state.editKategorieName === k ? 'default' : 'pointer'}; padding:4px 0;">
                 ${state.editKategorieName === k ? `
-                    <input id="editKategorie-${k.replace(/\s+/g, '_')}" value="${k}">
+                    <input id="editKategorie-${k.replace(/\s+/g, '_')}" value="${k}" onclick="event.stopPropagation()">
                 ` : `
-                    <span>${k} – ${formatBetragText(sum)}</span>
+                    <span style="font-weight:600; overflow-wrap:anywhere;">${k} – ${formatBetragText(sum)}</span>
                 `}
             </div>
 
@@ -2914,9 +2914,8 @@
                     <button onclick="saveEditKategorie('${k}')" class="btn btn-icon btn-primary">💾</button>
                     <button onclick="cancelEditKategorie()" class="btn btn-icon btn-cancel">❌</button>
                 ` : `
-                    <button onclick="startEditKategorie('${k}')">✏️</button>
-                    <button onclick="clearKategorie('${k}')">✂️</button>
-                    <button onclick="deleteKategorie('${k}')">🗑️</button>
+                    <button class="edit" onclick="event.stopPropagation(); startEditKategorie('${k}')">✏️</button>
+                    <button class="delete" onclick="event.stopPropagation(); deleteKategorie('${k}')">🗑️</button>
                 `}
             </div>
         `;
@@ -2990,6 +2989,20 @@
 
                         div.appendChild(sub);
                     });
+
+                    if (alleEintraege.length > 0 && !suche) {
+                        const clearWrap = document.createElement("div");
+                        clearWrap.style.marginLeft = "20px";
+                        clearWrap.style.marginTop = "8px";
+                        clearWrap.innerHTML = `
+                            <button class="delete"
+                                    onclick="event.stopPropagation(); clearKategorie('${k}')"
+                                    style="width:100%;padding:11px 14px;border-radius:12px;font-weight:700;">
+                                🗑️ Alle ${escapeHtml(k)}-Ausgaben löschen
+                            </button>
+                        `;
+                        div.appendChild(clearWrap);
+                    }
                 }
             }
 
@@ -3033,7 +3046,7 @@
             if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
             if (!daten.Reisen[aktuellesLand][k]) return;
 
-            if (!confirm("Alle Kosten löschen?")) return;
+            if (!confirm(`Alle Ausgaben aus „${k}“ löschen?`)) return;
 
             daten.Reisen[aktuellesLand][k] = [];
 
