@@ -1281,51 +1281,30 @@
 
         <div class="container">
 
-            <button class="back-btn" onclick="backToReisen()" aria-label="Zurück">
-                <span class="back-icon"></span>
-            </button>
-
-            <h2 id="landTitel"></h2>
+            <div class="category-topbar">
+                <button class="back-btn" onclick="backToReisen()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 id="landTitel"></h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('reiseAddPanel','betrag'); setTimeout(() => applyLetzteReiseKategorie(true), 30)" aria-label="Reiseausgabe hinzufügen">＋</button>
+            </div>
 
             <div id="reiseBudgetCard"></div>
 
-            <div id="quickAdd" class="grid"></div>
-
-            <div id="quickBox" class="hidden">
-
-                <h3 id="quickTitel"></h3>
-
-                <input id="quickBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
-                <input id="quickText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="done">
-
-                <button onclick="saveQuickAdd()" class="btn btn-primary">
-                    Speichern
-                </button>
-
-            </div>
-
-            <button onclick="toggleManual()" class="btn btn-primary">
-                ⚙️ Manuelle Eingabe
-            </button>
-
-            <!-- 🔥 MANUAL (REISEN - sauber getrennt) -->
-            <div id="manualBox" class="hidden">
-
-                <h3>Manuelle Eingabe</h3>
-
-                <div class="row">
-                    <select id="kategorieSelect" onchange="focusBetragSchnell('betrag')"></select>
-                    <button onclick="addKategorie()">+</button>
+            <div id="reiseAddPanel" class="category-add-panel hidden">
+                <h3>Reiseausgabe hinzufügen</h3>
+                <div class="quick-category-grid" id="reiseKategorieGrid">
+                    <button class="quick-category-btn selected" data-category="Essen" onclick="setReiseKategorie('Essen',this)">🍽️ Essen</button>
+                    <button class="quick-category-btn" data-category="Trinken" onclick="setReiseKategorie('Trinken',this)">🥤 Trinken</button>
+                    <button class="quick-category-btn" data-category="Transport" onclick="setReiseKategorie('Transport',this)">🚆 Transport</button>
+                    <button class="quick-category-btn" data-category="Unterkunft" onclick="setReiseKategorie('Unterkunft',this)">🏨 Unterkunft</button>
+                    <button class="quick-category-btn" data-category="Aktivität" onclick="setReiseKategorie('Aktivität',this)">🎯 Aktivität</button>
+                    <button class="quick-category-btn" data-category="Einkauf" onclick="setReiseKategorie('Einkauf',this)">🛒 Einkauf</button>
+                    <button class="quick-category-btn" data-category="Sonstiges" onclick="setReiseKategorie('Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
-
+                <select id="kategorieSelect" class="hidden" aria-hidden="true"></select>
                 <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="datum" type="date">
-
-                <button onclick="addEintrag()" class="btn btn-primary">
-                    Reisen hinzufügen
-                </button>
-
+                <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
             </div>
 
         </div>
@@ -2647,11 +2626,8 @@
             updateDropdown();
             renderListe();
             renderKategorienUebersicht();
-            renderQuickAdd();
-
+            applyLetzteReiseKategorie();
             setupReisenEnterFlow();
-
-            console.log("Reisen Enter Setup läuft");
         }
 
         function reiseGesamtAusgegeben(land) {
@@ -2804,7 +2780,16 @@
                 datum
             });
 
+            const betragInput = document.getElementById("betrag");
+            const textInput = document.getElementById("text");
+            if (betragInput) betragInput.value = "";
+            if (textInput) textInput.value = "";
+
             renderListe();
+            renderKategorienUebersicht();
+            renderReiseBudget();
+            renderLaender();
+            applyLetzteReiseKategorie();
         }
 
         /* Toggle */
@@ -4415,6 +4400,22 @@
 
             // Alltag schneller erfassen: Kategorie antippen -> Betragstastatur sofort bereit.
             if (button) focusBetragSchnell(betragId);
+        }
+
+        function setReiseKategorie(kategorie, button, focusBetrag = true) {
+            const select = document.getElementById("kategorieSelect");
+            if (select) select.value = kategorie;
+            document.querySelectorAll("#reiseKategorieGrid .quick-category-btn").forEach(btn => btn.classList.remove("selected"));
+            button?.classList.add("selected");
+            if (button && focusBetrag) focusBetragSchnell("betrag");
+        }
+
+        function applyLetzteReiseKategorie(focusBetrag = false) {
+            const fallback = "Essen";
+            const kat = getLetzteKategorie("reisen", fallback);
+            const btn = document.querySelector(`#reiseKategorieGrid [data-category="${CSS.escape(kat)}"]`)
+                || document.querySelector(`#reiseKategorieGrid [data-category="${fallback}"]`);
+            setReiseKategorie(btn?.dataset.category || fallback, btn, focusBetrag);
         }
 
         function addHaushalt() {
