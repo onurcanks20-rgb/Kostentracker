@@ -1235,7 +1235,7 @@
                 <h3>Manuelle Eingabe</h3>
 
                 <div class="row">
-                    <select id="kategorieSelect"></select>
+                    <select id="kategorieSelect" onchange="focusBetragSchnell('betrag')"></select>
                     <button onclick="addKategorie()">+</button>
                 </div>
 
@@ -4202,13 +4202,28 @@
             setQuickCategory(prefix, btn?.dataset.category || fallback, btn);
         }
 
+        function focusBetragSchnell(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            setTimeout(() => {
+                el.focus({ preventScroll: true });
+                // Falls bereits ein Betrag steht, kann er direkt überschrieben werden.
+                if (typeof el.select === "function" && el.value) el.select();
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 40);
+        }
+
         function setQuickCategory(bereich, kategorie, button) {
             const inputId = bereich === "haus" ? "hausKategorie" : "freizeitKategorie";
             const gridId = bereich === "haus" ? "hausKategorieGrid" : "freizeitKategorieGrid";
+            const betragId = bereich === "haus" ? "hausBetrag" : "freizeitBetrag";
             const input = document.getElementById(inputId);
             if (input) input.value = kategorie;
             document.querySelectorAll(`#${gridId} .quick-category-btn`).forEach(btn => btn.classList.remove("selected"));
             button?.classList.add("selected");
+
+            // Alltag schneller erfassen: Kategorie antippen -> Betragstastatur sofort bereit.
+            if (button) focusBetragSchnell(betragId);
         }
 
         function addHaushalt() {
@@ -4339,7 +4354,9 @@
             const box = document.getElementById("manualBox");
             if (!box) return;
 
+            const wirdGeoeffnet = box.classList.contains("hidden");
             box.classList.toggle("hidden");
+            if (wirdGeoeffnet) focusBetragSchnell("betrag");
         }
 
         function saveQuickAdd() {
@@ -4381,6 +4398,18 @@
             renderListe();
         }
 
+
+        // Betragsfelder: vorhandenen Wert beim erneuten Antippen direkt markieren.
+        document.addEventListener("focusin", (event) => {
+            const el = event.target;
+            if (!(el instanceof HTMLInputElement)) return;
+            const id = el.id || "";
+            const istBetrag = /betrag/i.test(id) && el.inputMode === "decimal";
+            if (!istBetrag || !el.value) return;
+            setTimeout(() => {
+                try { el.select(); } catch (_) {}
+            }, 0);
+        });
 
         //<!-- ===================== Enter Funktion ===================== -->
         function enterToNext(current, next) {
