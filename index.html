@@ -953,6 +953,34 @@
                 min-height: 19px;
             }
         }
+
+        /* Rueckgaengig-Hinweis nach Loeschen */
+        .undo-toast {
+            position: fixed;
+            left: 14px;
+            right: 14px;
+            bottom: calc(76px + env(safe-area-inset-bottom));
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #2c2c2e;
+            box-shadow: 0 8px 28px rgba(0,0,0,.45);
+            font-size: 14px;
+        }
+        .undo-toast.hidden { display: none; }
+        .undo-toast button {
+            width: auto;
+            margin: 0;
+            padding: 7px 10px;
+            background: #0a84ff;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
 </style>
 </head>
 
@@ -1507,7 +1535,8 @@
             },
             Einstellungen: {
                 gehaltstag: 26,
-                startgehaelter: {}
+                startgehaelter: {},
+                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} }
             },
             geloeschteKategorien: {}
         };
@@ -1571,6 +1600,15 @@
         daten.Einstellungen.gehaltstag = validiereGehaltstag(daten.Einstellungen.gehaltstag);
         if (!daten.Einstellungen.startgehaelter || typeof daten.Einstellungen.startgehaelter !== "object" || Array.isArray(daten.Einstellungen.startgehaelter)) {
             daten.Einstellungen.startgehaelter = {};
+        }
+
+        if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
+            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+        }
+        daten.Einstellungen.letzteKategorien.haushalt ||= "Einkauf";
+        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen";
+        if (!daten.Einstellungen.letzteKategorien.reisen || typeof daten.Einstellungen.letzteKategorien.reisen !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien.reisen)) {
+            daten.Einstellungen.letzteKategorien.reisen = {};
         }
 
         const alteLaufendeKosten = daten["Laufende Kosten"];
@@ -1733,6 +1771,53 @@
         }));
 
 
+
+        let undoDeleteState = null;
+        let undoDeleteTimer = null;
+
+        function cloneDatenForUndo() {
+            try { return structuredClone(daten); }
+            catch (_) { return JSON.parse(JSON.stringify(daten)); }
+        }
+
+        function beginUndoDelete(label = "Eintrag gelöscht") {
+            undoDeleteState = { daten: cloneDatenForUndo(), label };
+        }
+
+        function showUndoDelete(label) {
+            const toast = document.getElementById("undoToast");
+            const text = document.getElementById("undoToastText");
+            if (!toast || !undoDeleteState) return;
+            if (text) text.textContent = label || undoDeleteState.label || "Eintrag gelöscht";
+            toast.classList.remove("hidden");
+            clearTimeout(undoDeleteTimer);
+            undoDeleteTimer = setTimeout(() => {
+                toast.classList.add("hidden");
+                undoDeleteState = null;
+            }, 6000);
+        }
+
+        function undoDelete() {
+            if (!undoDeleteState) return;
+            daten = undoDeleteState.daten;
+            undoDeleteState = null;
+            clearTimeout(undoDeleteTimer);
+            document.getElementById("undoToast")?.classList.add("hidden");
+            speichern();
+            renderHomeUebersicht();
+            renderHaushalt();
+            renderFreizeit();
+            renderLaufendeKosten();
+            renderVersicherungen();
+            renderEinnahmen();
+            renderLaender();
+            if (aktuellesLand && daten.Reisen?.[aktuellesLand]) renderListe();
+            if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) renderAusgabenArchiv();
+        }
+
+        function finishUndoDelete(label) {
+            showUndoDelete(label);
+        }
 
         function speichern() {
             try {
@@ -2206,6 +2291,7 @@
 
             const datum = document.getElementById("hausDatum");
             if (datum && !datum.value) datum.value = heuteISO();
+            applyLetzteAlltagsKategorie("haushalt");
 
             renderHaushalt();
         }
@@ -2217,6 +2303,7 @@
 
             const datum = document.getElementById("freizeitDatum");
             if (datum && !datum.value) datum.value = heuteISO();
+            applyLetzteAlltagsKategorie("freizeit");
 
             renderFreizeit();
             setupFreizeitEnterFlow();
@@ -2448,6 +2535,9 @@
                 opt.innerText = k;
                 select.appendChild(opt);
             });
+
+            const letzte = getLetzteKategorie("reisen", "Essen");
+            if ([...select.options].some(o => o.value === letzte)) select.value = letzte;
         }
 
         /* Kategorie */
@@ -2494,6 +2584,7 @@
                 return;
             }
 
+            merkeLetzteKategorie("reisen", kat);
             addItem(daten.Reisen[aktuellesLand][kat], {
                 id: generateId(),
                 betrag,
@@ -2790,6 +2881,7 @@
             if (!ids.length) return;
             if (!confirm(`${ids.length} ausgewählte ${selectionLabel(type)}-Einträge wirklich löschen?`)) return;
             const set = new Set(ids.map(String));
+            beginUndoDelete(`${ids.length} Einträge gelöscht`);
 
             if (type === 'haushalt') {
                 Object.keys(daten.Haushalt || {}).forEach(m => { if (Array.isArray(daten.Haushalt[m])) daten.Haushalt[m] = daten.Haushalt[m].filter(e => !set.has(String(e.id))); });
@@ -2813,6 +2905,7 @@
             speichern();
             renderForSelection(type);
             renderHomeUebersicht();
+            finishUndoDelete(`${ids.length} Einträge gelöscht`);
         }
 
         function toggleKostenAuswahlModus() {
@@ -2843,6 +2936,7 @@
             if (state.ausgewaehlteKosten.length === 0) return;
 
             if (!confirm("Ausgewählte Fixkosten löschen?")) return;
+            beginUndoDelete(`${state.ausgewaehlteKosten.length} Fixkosten gelöscht`);
 
             daten["Laufende Kosten"].fix =
                 daten["Laufende Kosten"].fix.filter(
@@ -2855,6 +2949,7 @@
             speichern();
             renderLaufendeKosten();
             renderHomeUebersicht();
+            finishUndoDelete("Ausgewählte Fixkosten gelöscht");
         }
 
         function renderLaufendeKosten() {
@@ -3034,6 +3129,7 @@
         function deleteLaufendeKosten(id) {
 
             if (!confirm("Wirklich löschen?")) return;
+            beginUndoDelete("Fixkosten-Eintrag gelöscht");
 
             if (!daten["Laufende Kosten"] || !Array.isArray(daten["Laufende Kosten"].fix)) return;
 
@@ -3047,6 +3143,7 @@
             speichern();
             renderLaufendeKosten();
             renderHomeUebersicht();
+            finishUndoDelete("Fixkosten-Eintrag gelöscht");
         }
 
         function startEditKosten(id) {
@@ -3097,6 +3194,7 @@
         function deleteAlleLaufendeKosten() {
 
             if (!confirm("Alle Fixkosten wirklich löschen?")) return;
+            beginUndoDelete("Alle Fixkosten gelöscht");
 
             // 🛡️ Struktur absichern
             if (!daten["Laufende Kosten"]) {
@@ -3109,6 +3207,7 @@
             state.editKostenId = null;
             renderLaufendeKosten();
             renderHomeUebersicht();
+            finishUndoDelete("Alle Fixkosten gelöscht");
         }
 
         function renderSimple() {
@@ -3176,6 +3275,7 @@
         function deleteEintrag(k, i) {
 
             if (!confirm("Eintrag wirklich löschen?")) return;
+            beginUndoDelete("Reiseausgabe gelöscht");
 
             if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
             if (!daten.Reisen[aktuellesLand][k]) return;
@@ -3184,6 +3284,7 @@
 
             speichern();
             renderListe();
+            finishUndoDelete("Reiseausgabe gelöscht");
         }
 
 
@@ -3537,6 +3638,7 @@
         function deleteVersicherung(id) {
 
             if (!confirm("Versicherung löschen?")) return;
+            beginUndoDelete("Versicherung gelöscht");
 
             if (!Array.isArray(daten.Versicherungen)) {
                 daten.Versicherungen = [];
@@ -3551,6 +3653,7 @@
 
             speichern();
             renderVersicherungen();
+            finishUndoDelete("Versicherung gelöscht");
         }
 
         function toggleVersicherung(id) {
@@ -3833,6 +3936,7 @@
         function deleteAlleVersicherungen() {
 
             if (!confirm("Alle Versicherungen wirklich löschen?")) return;
+            beginUndoDelete("Alle Versicherungen gelöscht");
 
             if (!Array.isArray(daten.Versicherungen)) {
                 daten.Versicherungen = [];
@@ -3842,6 +3946,7 @@
 
             speichern();
             renderVersicherungen();
+            finishUndoDelete("Alle Versicherungen gelöscht");
         }
 
         function renderKategorienUebersicht() {
@@ -3886,6 +3991,7 @@
             }
 
             if (!confirm(land + " wirklich löschen?")) return;
+            beginUndoDelete(`Reise „${land}“ gelöscht`);
 
             if (daten.Reisen && daten.Reisen[land]) {
                 delete daten.Reisen[land];
@@ -3898,6 +4004,7 @@
 
             speichern();
             renderLaender();
+            finishUndoDelete(`Reise „${land}“ gelöscht`);
         }
 
         function clearLand() {
@@ -3905,6 +4012,7 @@
             if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
 
             if (!confirm("Wirklich ALLE Kosten in diesem Land löschen?")) return;
+            beginUndoDelete("Alle Reisekosten gelöscht");
 
             for (let k in daten.Reisen[aktuellesLand]) {
                 if (Array.isArray(daten.Reisen[aktuellesLand][k])) {
@@ -3914,6 +4022,7 @@
 
             speichern();
             renderListe();
+            finishUndoDelete("Alle Reisekosten gelöscht");
         }
 
         function addEinnahme() {
@@ -4024,17 +4133,48 @@
 
         function deleteEinnahme(id) {
             if (!confirm("Einnahme wirklich löschen?")) return;
+            beginUndoDelete("Einnahme gelöscht");
             daten.Einnahmen = (daten.Einnahmen || []).filter(e => String(e.id) !== String(id));
             speichern();
             renderEinnahmen();
+            finishUndoDelete("Einnahme gelöscht");
         }
 
         function deleteAlleEinnahmen() {
             if (!Array.isArray(daten.Einnahmen) || !daten.Einnahmen.length) return;
             if (!confirm("Alle Einnahmen wirklich löschen?")) return;
+            beginUndoDelete("Alle Einnahmen gelöscht");
             daten.Einnahmen = [];
             speichern();
             renderEinnahmen();
+            finishUndoDelete("Alle Einnahmen gelöscht");
+        }
+
+        function getLetzteKategorie(bereich, fallback) {
+            const lk = daten.Einstellungen?.letzteKategorien || {};
+            if (bereich === "reisen") return lk.reisen?.[aktuellesLand] || fallback;
+            return lk[bereich] || fallback;
+        }
+
+        function merkeLetzteKategorie(bereich, kategorie) {
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+            if (bereich === "reisen") {
+                daten.Einstellungen.letzteKategorien.reisen ??= {};
+                if (aktuellesLand) daten.Einstellungen.letzteKategorien.reisen[aktuellesLand] = kategorie;
+            } else {
+                daten.Einstellungen.letzteKategorien[bereich] = kategorie;
+            }
+        }
+
+        function applyLetzteAlltagsKategorie(bereich) {
+            const isHaus = bereich === "haushalt";
+            const prefix = isHaus ? "haus" : "freizeit";
+            const fallback = isHaus ? "Einkauf" : "Essen";
+            const kat = getLetzteKategorie(bereich, fallback);
+            const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
+                || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
+            setQuickCategory(prefix, btn?.dataset.category || fallback, btn);
         }
 
         function setQuickCategory(bereich, kategorie, button) {
@@ -4069,6 +4209,7 @@
                 datum,
                 kategorie
             });
+            merkeLetzteKategorie("haushalt", kategorie);
 
             speichern();
 
@@ -4076,7 +4217,7 @@
             document.getElementById("hausText").value = "";
             document.getElementById("hausBetrag").value = "";
             document.getElementById("hausDatum").value = heuteISO();
-            setQuickCategory("haus", "Einkauf", document.querySelector('#hausKategorieGrid [data-category="Einkauf"]'));
+            applyLetzteAlltagsKategorie("haushalt");
             document.getElementById("hausAddPanel")?.classList.add("hidden");
 
             renderHaushalt();
@@ -4094,12 +4235,13 @@
             let monat = new Date(datum).getMonth() + 1;
             daten.Freizeit[monat] ??= [];
             daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum, kategorie });
+            merkeLetzteKategorie("freizeit", kategorie);
             speichern();
 
             document.getElementById("freizeitText").value = "";
             document.getElementById("freizeitBetrag").value = "";
             document.getElementById("freizeitDatum").value = heuteISO();
-            setQuickCategory("freizeit", "Essen", document.querySelector('#freizeitKategorieGrid [data-category="Essen"]'));
+            applyLetzteAlltagsKategorie("freizeit");
             document.getElementById("freizeitAddPanel")?.classList.add("hidden");
             renderFreizeit();
         }
@@ -4197,6 +4339,7 @@
                 text,
                 datum
             });
+            merkeLetzteKategorie("reisen", quickKategorie);
 
             speichern();
 
@@ -4581,6 +4724,7 @@
         function deleteAlleHaushalt() {
 
             if (!confirm("Alle Haushalt-Einträge wirklich löschen?")) return;
+            beginUndoDelete("Alle Haushalt-Einträge gelöscht");
 
             if (!daten.Haushalt) {
                 daten.Haushalt = {};
@@ -4594,6 +4738,7 @@
 
             speichern();
             renderHaushalt();
+            finishUndoDelete("Alle Haushalt-Einträge gelöscht");
         }
 
         function gruppiereHaushalt() {
@@ -4713,6 +4858,7 @@
         function deleteHaushalt(id) {
 
             if (!confirm("Eintrag löschen?")) return;
+            beginUndoDelete("Haushalt-Eintrag gelöscht");
 
             if (!daten.Haushalt) return;
 
@@ -4732,6 +4878,7 @@
 
             speichern();
             renderHaushalt();
+            finishUndoDelete("Haushalt-Eintrag gelöscht");
         }
 
         function startEditHaushalt(id) {
@@ -4908,15 +5055,17 @@
 
         function deleteFreizeit(id){
             if(!confirm('Eintrag löschen?')) return;
+            beginUndoDelete("Freizeit-Eintrag gelöscht");
             for(const monat in daten.Freizeit){ const liste=daten.Freizeit[monat]; if(!Array.isArray(liste)) continue; const i=liste.findIndex(e=>String(e.id)===String(id)); if(i!==-1){liste.splice(i,1);break;} }
-            speichern(); renderFreizeit();
+            speichern(); renderFreizeit(); finishUndoDelete("Freizeit-Eintrag gelöscht");
         }
 
         function deleteAlleFreizeit(){
             if(!confirm('Alle Freizeit-Einträge wirklich löschen?')) return;
+            beginUndoDelete("Alle Freizeit-Einträge gelöscht");
             daten.Freizeit ??= {};
             for(const monat in daten.Freizeit) if(Array.isArray(daten.Freizeit[monat])) daten.Freizeit[monat]=[];
-            speichern(); renderFreizeit();
+            speichern(); renderFreizeit(); finishUndoDelete("Alle Freizeit-Einträge gelöscht");
         }
 
         function startEditVersicherung(id) {
@@ -5707,6 +5856,12 @@
 
 
     </script>
+
+
+    <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
+        <span id="undoToastText">Eintrag gelöscht</span>
+        <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
+    </div>
 
 </body>
 
