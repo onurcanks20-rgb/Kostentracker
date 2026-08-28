@@ -1121,6 +1121,23 @@
             }
         }
 
+        /* ===== ZENTRALES ARCHIV ===== */
+        .archive-filter-card { background:#2c2c2e; border-radius:18px; padding:14px; margin-bottom:14px; }
+        .archive-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .archive-filter-grid input, .archive-filter-grid select { margin:0; }
+        .archive-year { margin:18px 2px 8px; font-size:22px; font-weight:850; }
+        .archive-month { background:#2c2c2e; border-radius:18px; margin:10px 0; overflow:hidden; }
+        .archive-month-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px; cursor:pointer; }
+        .archive-month-title { font-weight:800; }
+        .archive-month-sum { font-weight:800; white-space:nowrap; }
+        .archive-entry { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:12px 14px; border-top:1px solid rgba(255,255,255,.08); }
+        .archive-entry-main { min-width:0; }
+        .archive-entry-type { font-size:12px; opacity:.62; margin-bottom:3px; }
+        .archive-entry-title { font-weight:750; overflow-wrap:anywhere; }
+        .archive-entry-meta { font-size:12px; opacity:.58; margin-top:4px; overflow-wrap:anywhere; }
+        .archive-entry-amount { font-weight:800; white-space:nowrap; align-self:center; }
+        @media (max-width:420px) { .archive-filter-grid { grid-template-columns:1fr; } }
+
 </style>
 </head>
 
@@ -1265,6 +1282,12 @@
             </div>
 
             <div class="settings-card">
+                <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Archiv</div>
+                <div class="settings-note" style="margin-bottom:12px;">Alle gespeicherten Einträge zentral durchsuchen und nach Zeitraum oder Bereich filtern.</div>
+                <button onclick="openGlobalArchiv()" style="background:#3a3a3c;">📁 Archiv öffnen</button>
+            </div>
+
+            <div class="settings-card">
                 <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Backup</div>
                 <div class="settings-note" style="margin-bottom:12px;">Sichere alle Einträge und Einstellungen in einer Datei. Die Backup-Datei kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</div>
                 <button onclick="exportBackup()">⬇️ Backup erstellen</button>
@@ -1272,6 +1295,37 @@
                 <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
                 <div id="backupStatus" class="settings-note" style="margin-top:8px;"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ===================== ZENTRALES ARCHIV ===================== -->
+    <div id="globalArchivView" class="hidden">
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Archiv</h2>
+                <span style="width:44px;"></span>
+            </div>
+
+            <div class="archive-filter-card">
+                <input id="globalArchivSuche" class="list-search" type="search" placeholder="🔎 Einträge durchsuchen" oninput="renderGlobalArchiv()" style="margin-top:0;">
+                <div class="archive-filter-grid">
+                    <select id="globalArchivBereich" onchange="renderGlobalArchiv()">
+                        <option value="alle">Alle Bereiche</option>
+                        <option value="haushalt">Haushalt</option>
+                        <option value="freizeit">Freizeit</option>
+                        <option value="fixkosten">Fixkosten</option>
+                        <option value="versicherungen">Versicherungen</option>
+                        <option value="einnahmen">Einnahmen</option>
+                        <option value="reisen">Reisen</option>
+                    </select>
+                    <select id="globalArchivJahr" onchange="renderGlobalArchiv()"><option value="alle">Alle Jahre</option></select>
+                    <input id="globalArchivVon" type="date" aria-label="Von" onchange="renderGlobalArchiv()">
+                    <input id="globalArchivBis" type="date" aria-label="Bis" onchange="renderGlobalArchiv()">
+                </div>
+                <button onclick="resetGlobalArchivFilter()" style="background:#3a3a3c; margin-bottom:0;">Filter zurücksetzen</button>
+            </div>
+            <div id="globalArchivListe"></div>
         </div>
     </div>
 
@@ -1905,6 +1959,7 @@
             offeneHaushaltEintraege: {},
             offeneFreizeitEintraege: {},
             offeneReiseEintraege: {},
+            offeneArchivMonate: {},
         };
 
         if (!daten.geloeschteKategorien) {
@@ -1988,6 +2043,7 @@
             renderLaender();
             if (aktuellesLand && daten.Reisen?.[aktuellesLand]) renderListe();
             if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) renderAusgabenArchiv();
+            if (!document.getElementById("globalArchivView")?.classList.contains("hidden")) renderGlobalArchiv();
         }
 
         function finishUndoDelete(label) {
@@ -2263,6 +2319,7 @@
                 "haushaltView",
                 "freizeitView",
                 "ausgabenArchivView",
+                "globalArchivView",
                 "einnahmenView",
                 "kostenView",
                 "versicherungenView",
@@ -2314,6 +2371,126 @@
             const tagInput = document.getElementById("gehaltstagInput");
             if (startInput) startInput.value = getStartgehalt(z) || "";
             if (tagInput) tagInput.value = getGehaltstag();
+        }
+
+        function openGlobalArchiv() {
+            show("globalArchivView");
+            populateGlobalArchivJahre();
+            renderGlobalArchiv();
+        }
+
+        function resetGlobalArchivFilter() {
+            const ids = ["globalArchivSuche", "globalArchivVon", "globalArchivBis"];
+            ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+            const bereich = document.getElementById("globalArchivBereich");
+            const jahr = document.getElementById("globalArchivJahr");
+            if (bereich) bereich.value = "alle";
+            if (jahr) jahr.value = "alle";
+            renderGlobalArchiv();
+        }
+
+        function globalArchivEintraege() {
+            const out = [];
+            const push = (bereich, titel, betrag, datum, meta = "", extra = {}) => {
+                if (!datum) return;
+                const d = parseISODate(datum);
+                if (!d) return;
+                out.push({ bereich, titel: titel || "Eintrag", betrag: parseBetrag(betrag) || 0, datum: isoAusDate(d), meta, ...extra });
+            };
+
+            Object.values(daten.Haushalt || {}).forEach(liste => {
+                if (!Array.isArray(liste)) return;
+                liste.forEach(e => push("haushalt", e.text || e.kategorie || "Haushalt", e.betrag, e.datum, e.kategorie || ""));
+            });
+            Object.values(daten.Freizeit || {}).forEach(liste => {
+                if (!Array.isArray(liste)) return;
+                liste.forEach(e => push("freizeit", e.text || e.kategorie || "Freizeit", e.betrag, e.datum, e.kategorie || ""));
+            });
+            (daten["Laufende Kosten"]?.fix || []).forEach(e => push("fixkosten", e.text || e.name || "Fixkosten", e.betrag, e.datum, "Monatlich"));
+            (daten.Versicherungen || []).forEach(e => push("versicherungen", e.name || "Versicherung", e.betrag, e.datum, e.intervall || ""));
+            (daten.Einnahmen || []).forEach(e => push("einnahmen", e.text || "Einnahme", e.betrag, e.datum, [e.von, e.wiederholung].filter(Boolean).join(" · "), { positiv:true }));
+            Object.entries(daten.Reisen || {}).forEach(([land, reise]) => {
+                if (!reise || typeof reise !== "object") return;
+                Object.entries(reise).forEach(([kategorie, liste]) => {
+                    if (!Array.isArray(liste)) return;
+                    liste.forEach(e => push("reisen", e.text || kategorie || "Reiseausgabe", e.betrag, e.datum, `${land} · ${kategorie}`));
+                });
+            });
+            return out.sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+        }
+
+        function globalArchivBereichLabel(bereich) {
+            return ({ haushalt:"🛒 Haushalt", freizeit:"🎉 Freizeit", fixkosten:"📌 Fixkosten", versicherungen:"🛡️ Versicherungen", einnahmen:"💰 Einnahmen", reisen:"✈️ Reisen" })[bereich] || bereich;
+        }
+
+        function populateGlobalArchivJahre() {
+            const select = document.getElementById("globalArchivJahr");
+            if (!select) return;
+            const aktuell = select.value || "alle";
+            const jahre = [...new Set(globalArchivEintraege().map(e => String(parseISODate(e.datum)?.getFullYear() || "")).filter(Boolean))].sort((a,b)=>b-a);
+            select.innerHTML = '<option value="alle">Alle Jahre</option>' + jahre.map(j => `<option value="${j}">${j}</option>`).join("");
+            select.value = jahre.includes(aktuell) ? aktuell : "alle";
+        }
+
+        function renderGlobalArchiv() {
+            const container = document.getElementById("globalArchivListe");
+            if (!container) return;
+            populateGlobalArchivJahre();
+            const suche = getSearchTerm("globalArchivSuche");
+            const bereich = document.getElementById("globalArchivBereich")?.value || "alle";
+            const jahr = document.getElementById("globalArchivJahr")?.value || "alle";
+            const von = document.getElementById("globalArchivVon")?.value || "";
+            const bis = document.getElementById("globalArchivBis")?.value || "";
+
+            let liste = globalArchivEintraege().filter(e => {
+                if (bereich !== "alle" && e.bereich !== bereich) return false;
+                if (jahr !== "alle" && !e.datum.startsWith(jahr + "-")) return false;
+                if (von && e.datum < von) return false;
+                if (bis && e.datum > bis) return false;
+                if (suche && !matchesSearch(suche, e.titel, e.meta, e.datum, e.betrag, globalArchivBereichLabel(e.bereich))) return false;
+                return true;
+            });
+
+            if (!liste.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">Keine Einträge gefunden</div><div class="empty-state-text">Passe Suche oder Filter an.</div></div>`;
+                return;
+            }
+
+            const gruppen = {};
+            liste.forEach(e => {
+                const d = parseISODate(e.datum);
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                gruppen[y] ??= {};
+                gruppen[y][m] ??= [];
+                gruppen[y][m].push(e);
+            });
+
+            let html = "";
+            Object.keys(gruppen).sort((a,b)=>b-a).forEach(y => {
+                html += `<div class="archive-year">${y}</div>`;
+                Object.keys(gruppen[y]).sort((a,b)=>b-a).forEach(m => {
+                    const key = `${y}-${String(m).padStart(2,"0")}`;
+                    const entries = gruppen[y][m];
+                    const offen = state.offeneArchivMonate[key] !== false;
+                    const ausgaben = entries.filter(e=>!e.positiv).reduce((s,e)=>s+e.betrag,0);
+                    const einnahmen = entries.filter(e=>e.positiv).reduce((s,e)=>s+e.betrag,0);
+                    const sumText = einnahmen > 0 ? `${formatBetrag(ausgaben)} · +${formatBetrag(einnahmen)}` : formatBetrag(ausgaben);
+                    html += `<div class="archive-month"><div class="archive-month-head" onclick="toggleGlobalArchivMonat('${key}')"><div class="archive-month-title">${offen?'▾':'▸'} ${getMonatName(parseInt(m))}</div><div class="archive-month-sum">${sumText}</div></div>`;
+                    if (offen) {
+                        entries.forEach(e => {
+                            html += `<div class="archive-entry"><div class="archive-entry-main"><div class="archive-entry-type">${globalArchivBereichLabel(e.bereich)}</div><div class="archive-entry-title">${escapeHtml(e.titel)}</div><div class="archive-entry-meta">${formatDatum(e.datum)}${e.meta ? ' · '+escapeHtml(e.meta) : ''}</div></div><div class="archive-entry-amount">${e.positiv?'+':''}${formatBetrag(e.betrag)}</div></div>`;
+                        });
+                    }
+                    html += `</div>`;
+                });
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleGlobalArchivMonat(key) {
+            state.offeneArchivMonate[key] = state.offeneArchivMonate[key] === false ? true : false;
+            renderGlobalArchiv();
         }
 
         function openWeekPreview() {
