@@ -2652,6 +2652,23 @@
             if (!sheet || !choices) return;
 
             const laender = Object.keys(daten.Reisen || {}).sort((a, b) => a.localeCompare(b, "de"));
+            const heute = heuteISO();
+            const aktiveReisen = laender.filter(land => {
+                const meta = daten.ReisenMeta?.[land];
+                if (!meta?.von || !meta?.bis) return false;
+                return heute >= meta.von && heute <= meta.bis;
+            });
+
+            // Ist heute genau eine Reise aktiv, wird sie bei der Schnelleingabe
+            // automatisch gewaehlt und die zusaetzliche Laenderauswahl uebersprungen.
+            if (aktiveReisen.length === 1) {
+                aktuellesLand = aktiveReisen[0];
+                updateDropdown();
+                openStartQuickAdd("reiseAddPanel", "betrag");
+                setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                return;
+            }
+
             choices.innerHTML = "";
 
             if (!laender.length) {
