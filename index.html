@@ -193,57 +193,45 @@
             transform: scale(0.98);
         }
 
-        /* Reisen: Länder bewusst ruhiger als normale Aktionsbuttons darstellen */
-        .land-item {
-            background: #2c2c2e;
-            color: white;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,.07);
-            border-left: 4px solid var(--primary);
-            box-shadow: none;
-            min-height: 76px;
-        }
-
+        /* Reisen: kompakte, ruhige Karten mit kleinen Aktionen rechts oben */
         .reise-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 56px 56px;
-            gap: 8px;
-            align-items: stretch;
             margin: 8px 0;
         }
 
-        .reise-row > button {
-            width: 56px;
-            height: auto;
-            min-height: 56px;
-            margin: 0;
-            border-radius: 14px;
+        .land-item {
+            position: relative;
+            display: block;
+            background: #2c2c2e;
+            color: white;
+            border: 1px solid rgba(255,255,255,.07);
+            box-shadow: none;
+            min-height: 92px;
+            padding: 16px 112px 16px 16px;
         }
 
         .land-main {
             display: flex;
             flex-direction: column;
             min-width: 0;
-            gap: 6px;
+            gap: 7px;
             width: 100%;
         }
 
         .land-name {
             display: block;
-            font-weight: 700;
-            font-size: 17px;
-            line-height: 1.18;
+            font-weight: 750;
+            font-size: 18px;
+            line-height: 1.2;
             overflow-wrap: anywhere;
-            word-break: normal;
         }
 
         .land-stats {
             display: flex;
-            flex-wrap: wrap;
-            gap: 4px 10px;
+            flex-direction: column;
+            gap: 3px;
             color: #c7c7cc;
             font-size: 13px;
-            line-height: 1.25;
+            line-height: 1.3;
         }
 
         .land-spent {
@@ -251,15 +239,28 @@
             font-weight: 650;
         }
 
+        .land-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 7px;
+        }
+
+        .land-actions button {
+            width: 42px;
+            height: 42px;
+            min-height: 42px;
+            padding: 0;
+            margin: 0;
+            border-radius: 12px;
+            font-size: 17px;
+        }
+
         @media (max-width: 390px) {
-            .reise-row {
-                grid-template-columns: minmax(0, 1fr) 50px 50px;
-                gap: 7px;
-            }
-            .reise-row > button {
-                width: 50px;
-            }
-            .land-name { font-size: 16px; }
+            .land-item { padding-right: 104px; }
+            .land-name { font-size: 17px; }
+            .land-actions button { width: 39px; height: 39px; min-height: 39px; }
         }
 
         /* 🔥 ACTION BUTTONS */
@@ -2595,14 +2596,18 @@
                 // 🔥 wichtig: verhindert Öffnen
                 delBtn.onclick = (event) => deleteLand(event, land);
 
-                row.appendChild(item);
-                row.appendChild(editBtn);
+                const actions = document.createElement("div");
+                actions.className = "land-actions";
+                actions.appendChild(editBtn);
 
                 if (state.editLandName === land) {
-                    row.appendChild(cancelBtn);
+                    actions.appendChild(cancelBtn);
+                } else {
+                    actions.appendChild(delBtn);
                 }
 
-                row.appendChild(delBtn);
+                item.appendChild(actions);
+                row.appendChild(item);
 
                 if (state.editLandName === land) {
                     setTimeout(() => {
