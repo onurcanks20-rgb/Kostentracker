@@ -1267,13 +1267,30 @@
     <div id="addSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeAddSheet()">
         <div class="add-sheet">
             <h3>Abrechnung hinzufügen</h3>
-            <button class="add-choice" onclick="closeAddSheet(); openHaushalt(); toggleCategoryAdd('hausAddPanel','hausBetrag')">🛒 Haushalt</button>
-            <button class="add-choice" onclick="closeAddSheet(); openFreizeit(); toggleCategoryAdd('freizeitAddPanel','freizeitBetrag')">🎉 Freizeit</button>
-            <button class="add-choice" onclick="closeAddSheet(); openEinnahmen(); toggleCategoryAdd('einnahmenAddPanel','einnahmenText')">💰 Einnahme</button>
-            <button class="add-choice" onclick="closeAddSheet(); openKosten(); toggleCategoryAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
-            <button class="add-choice" onclick="closeAddSheet(); openVersicherungen(); toggleCategoryAdd('versAddPanel','versName')">🛡️ Versicherung</button>
-            <button class="add-choice" onclick="closeAddSheet(); openReisen(); toggleCategoryAdd('reisenAddPanel','landInput')">✈️ Reise</button>
+            <button class="add-choice" onclick="openStartQuickAdd('hausAddPanel','hausBetrag')">🛒 Haushalt</button>
+            <button class="add-choice" onclick="openStartQuickAdd('freizeitAddPanel','freizeitBetrag')">🎉 Freizeit</button>
+            <button class="add-choice" onclick="openStartQuickAdd('einnahmenAddPanel','einnahmenText')">💰 Einnahme</button>
+            <button class="add-choice" onclick="openStartQuickAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
+            <button class="add-choice" onclick="openStartQuickAdd('versAddPanel','versName')">🛡️ Versicherung</button>
+            <button class="add-choice" onclick="openReiseAuswahlFromHome()">✈️ Reise</button>
             <button onclick="closeAddSheet()" style="background:#3a3a3c;">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- ===================== SCHNELLEINGABE AUF START ===================== -->
+    <div id="startQuickAddSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeStartQuickAdd()">
+        <div class="add-sheet" style="max-height:88vh;overflow:auto;">
+            <div id="startQuickAddHost"></div>
+            <button onclick="closeStartQuickAdd()" style="background:#3a3a3c;margin-top:10px;">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- ===================== REISE FÜR AUSGABE AUSWÄHLEN ===================== -->
+    <div id="reiseAuswahlSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeReiseAuswahlSheet()">
+        <div class="add-sheet">
+            <h3>Reise auswählen</h3>
+            <div id="reiseAuswahlChoices"></div>
+            <button onclick="closeReiseAuswahlSheet()" style="background:#3a3a3c;">Abbrechen</button>
         </div>
     </div>
 
@@ -2362,6 +2379,115 @@
             document.getElementById("addSheet")?.classList.add("hidden");
         }
 
+        let startQuickAddContext = null;
+
+        function prepareStartQuickAdd(panelId) {
+            const today = heuteISO();
+            const dateIds = {
+                hausAddPanel: "hausDatum",
+                freizeitAddPanel: "freizeitDatum",
+                einnahmenAddPanel: "einnahmenDatum",
+                kostenAddPanel: "costDatum",
+                versAddPanel: "versDatum",
+                reiseAddPanel: "datum"
+            };
+            const dateEl = document.getElementById(dateIds[panelId]);
+            if (dateEl && !dateEl.value) dateEl.value = today;
+            if (panelId === "versAddPanel") {
+                const monat = document.getElementById("versMonat");
+                if (monat) monat.value = String(getAktuellerMonat());
+            }
+            if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt");
+            if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit");
+            if (panelId === "reiseAddPanel") applyLetzteReiseKategorie(false);
+        }
+
+        function openStartQuickAdd(panelId, focusId) {
+            closeAddSheet();
+            closeStartQuickAdd();
+            const panel = document.getElementById(panelId);
+            const host = document.getElementById("startQuickAddHost");
+            const sheet = document.getElementById("startQuickAddSheet");
+            if (!panel || !host || !sheet) return;
+
+            startQuickAddContext = {
+                panel,
+                parent: panel.parentNode,
+                nextSibling: panel.nextSibling
+            };
+            host.appendChild(panel);
+            panel.classList.remove("hidden");
+            prepareStartQuickAdd(panelId);
+            sheet.classList.remove("hidden");
+
+            setTimeout(() => {
+                setupUniversalAddEnterFlow(panelId);
+                document.getElementById(focusId)?.focus();
+            }, 80);
+        }
+
+        function closeStartQuickAdd() {
+            const sheet = document.getElementById("startQuickAddSheet");
+            if (startQuickAddContext?.panel) {
+                const {panel, parent, nextSibling} = startQuickAddContext;
+                panel.classList.add("hidden");
+                if (parent) {
+                    if (nextSibling && nextSibling.parentNode === parent) parent.insertBefore(panel, nextSibling);
+                    else parent.appendChild(panel);
+                }
+            }
+            startQuickAddContext = null;
+            sheet?.classList.add("hidden");
+        }
+
+        function closeReiseAuswahlSheet() {
+            document.getElementById("reiseAuswahlSheet")?.classList.add("hidden");
+        }
+
+        function openReiseAuswahlFromHome() {
+            closeAddSheet();
+
+            const sheet = document.getElementById("reiseAuswahlSheet");
+            const choices = document.getElementById("reiseAuswahlChoices");
+            if (!sheet || !choices) return;
+
+            const laender = Object.keys(daten.Reisen || {}).sort((a, b) => a.localeCompare(b, "de"));
+            choices.innerHTML = "";
+
+            if (!laender.length) {
+                const info = document.createElement("div");
+                info.style.cssText = "padding:12px 4px 16px;opacity:.72;line-height:1.45;";
+                info.textContent = "Noch keine Reise vorhanden. Lege zuerst eine Reise an.";
+                choices.appendChild(info);
+
+                const neu = document.createElement("button");
+                neu.className = "add-choice";
+                neu.textContent = "＋ Reise anlegen";
+                neu.addEventListener("click", () => {
+                    closeReiseAuswahlSheet();
+                    openReisen();
+                    toggleCategoryAdd("reisenAddPanel", "landInput");
+                });
+                choices.appendChild(neu);
+            } else {
+                laender.forEach(land => {
+                    const btn = document.createElement("button");
+                    btn.className = "add-choice";
+                    btn.textContent = "✈️ " + land;
+                    btn.addEventListener("click", () => {
+                        closeReiseAuswahlSheet();
+                        aktuellesLand = land;
+                        updateDropdown();
+                        openStartQuickAdd("reiseAddPanel", "betrag");
+                        setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                    });
+                    choices.appendChild(btn);
+                });
+            }
+
+            sheet.classList.remove("hidden");
+        }
+
         function focusLater(id) {
             setTimeout(() => document.getElementById(id)?.focus(), 80);
         }
@@ -2834,6 +2960,8 @@
             renderReiseBudget();
             renderLaender();
             applyLetzteReiseKategorie();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
+            renderHomeUebersicht();
         }
 
         /* Toggle */
@@ -3199,6 +3327,7 @@
             speichern();
             renderLaufendeKosten();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
             finishUndoDelete("Ausgewählte Fixkosten gelöscht");
         }
 
@@ -3374,6 +3503,7 @@
 
             renderLaufendeKosten();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function deleteLaufendeKosten(id) {
@@ -3393,6 +3523,7 @@
             speichern();
             renderLaufendeKosten();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
             finishUndoDelete("Fixkosten-Eintrag gelöscht");
         }
 
@@ -3435,6 +3566,7 @@
             state.editKostenId = null;
             renderLaufendeKosten();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function editLaufendeKosten(id) {
@@ -3457,6 +3589,7 @@
             state.editKostenId = null;
             renderLaufendeKosten();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
             finishUndoDelete("Alle Fixkosten gelöscht");
         }
 
@@ -3586,6 +3719,7 @@
 
             renderVersicherungen();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function renderVersicherungen() {
@@ -4267,6 +4401,8 @@
             document.getElementById("einnahmenWiederholung").value = "einmalig";
             document.getElementById("einnahmenAddPanel")?.classList.add("hidden");
             renderEinnahmen();
+            renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function renderEinnahmen() {
@@ -4475,6 +4611,8 @@
             document.getElementById("hausAddPanel")?.classList.add("hidden");
 
             renderHaushalt();
+            renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function addFreizeit() {
@@ -4498,6 +4636,8 @@
             applyLetzteAlltagsKategorie("freizeit");
             document.getElementById("freizeitAddPanel")?.classList.add("hidden");
             renderFreizeit();
+            renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function renderQuickAdd() {
@@ -5411,6 +5551,7 @@
             state.editVersicherungId = null;
             renderVersicherungen();
             renderHomeUebersicht();
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
         }
 
         function startEditReise(id) {
