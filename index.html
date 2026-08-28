@@ -1350,18 +1350,13 @@
         </div>
 
         <div class="container">
-            <h3>Kategorien Übersicht</h3>
-            <div id="kategorienUebersicht"></div>
-        </div>
-
-        <div class="container">
-            <input id="reiseEintragSuche" class="list-search" type="search" placeholder="🔎 Kosten durchsuchen" oninput="renderListe()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('reisen')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedReisen" onclick="deleteSelected('reisen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;">
+                <div>
+                    <h3 style="margin:0 0 4px;">Ausgaben nach Kategorie</h3>
+                    <div style="font-size:13px;opacity:.65;">Kategorie antippen, um die Einträge aufzuklappen.</div>
+                </div>
             </div>
-            <div id="liste"></div>
-            <div class="total" id="gesamt"></div>
+            <div id="kategorienUebersicht"></div>
         </div>
 
         <div class="container">
@@ -2848,7 +2843,7 @@
 
             state.offeneKategorie = (state.offeneKategorie === k ? null : k);
 
-            renderListe();
+            renderKategorienUebersicht();
         }
 
         function getSearchTerm(id) {
@@ -2878,7 +2873,7 @@
 
             if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
 
-            let div = document.getElementById("liste");
+            let div = document.getElementById("kategorienUebersicht");
             if (!div) return;
 
             div.innerHTML = "";
@@ -2998,18 +2993,16 @@
                 }
             }
 
-            document.getElementById("gesamt").innerText =
-                "Gesamt: " + formatBetragText(gesamt);
+            const gesamtEl = document.getElementById("gesamt");
+            if (gesamtEl) gesamtEl.innerText = "Gesamt: " + formatBetragText(gesamt);
             renderReiseBudget();
-
-            renderKategorienUebersicht();
             updateSelectionButton('reisen');
         }
 
         function toggleReiseDetails(id) {
             const key = String(id);
             state.offeneReiseEintraege[key] = !state.offeneReiseEintraege[key];
-            renderListe();
+            renderKategorienUebersicht();
         }
 
         /* EDIT */
@@ -4194,37 +4187,7 @@
         }
 
         function renderKategorienUebersicht() {
-
-            let div = document.getElementById("kategorienUebersicht");
-            if (!div) return;
-
-            div.innerHTML = "";
-
-            if (!aktuellesLand || !daten.Reisen[aktuellesLand]) return;
-
-            for (let k in daten.Reisen[aktuellesLand]) {
-
-                let liste = daten.Reisen[aktuellesLand][k];
-
-                if (!Array.isArray(liste)) continue;
-
-                let sum = liste.reduce((a, b) => {
-                    let betrag = parseBetrag(b.betrag);
-                    return a + (isNaN(betrag) ? 0 : betrag);
-                }, 0);
-
-                let item = document.createElement("div");
-                item.className = "item";
-
-                item.innerHTML = `
-            <span>${k}</span>
-            <span style="font-weight:600;">
-                ${formatBetragText(sum)}
-            </span>
-        `;
-
-                div.appendChild(item);
-            }
+            renderListe();
         }
 
         function deleteLand(event, land) {
