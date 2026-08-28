@@ -506,6 +506,15 @@
         .week-summary-dates { opacity:.62; font-size:12px; margin-top:3px; }
         .week-summary-amount { font-size:28px; font-weight:850; white-space:nowrap; }
         .salary-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 4px 16px; opacity:.82; }
+        .period-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; margin:-2px 0 12px; border-radius:16px; background:rgba(10,132,255,.10); border:1px solid rgba(10,132,255,.22); }
+        .period-card-left { min-width:0; }
+        .period-card-label { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#9ccfff; font-weight:750; }
+        .period-card-dates { margin-top:3px; font-size:14px; font-weight:750; }
+        .period-card-icon { font-size:20px; flex:0 0 auto; }
+        .empty-state { text-align:center; padding:22px 14px; margin:10px 0; border-radius:18px; background:#242426; border:1px dashed rgba(255,255,255,.12); }
+        .empty-state-icon { font-size:28px; line-height:1; margin-bottom:8px; }
+        .empty-state-title { font-size:15px; font-weight:800; }
+        .empty-state-text { margin-top:5px; font-size:12px; line-height:1.4; opacity:.62; }
         .primary-add { font-size:16px; padding:15px; margin:0 0 10px; }
         .overview-link { background:#2c2c2e; }
         .bottom-nav { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); width:min(calc(100% - 24px), 520px); display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:8px; border-radius:20px; background:rgba(28,28,30,.94); backdrop-filter:blur(20px); box-shadow:0 10px 30px rgba(0,0,0,.45); z-index:50; }
@@ -1021,6 +1030,14 @@
                     <div class="calc-row"><span>Noch kommende Abbuchungen</span><span id="homeFaelligGesamt">0.00 €</span></div>
                     <div class="detail-note">Die kommenden Abbuchungen sind im frei verfügbaren Betrag bereits berücksichtigt.</div>
                 </div>
+            </div>
+
+            <div class="period-card" aria-label="Aktueller Gehaltszeitraum">
+                <div class="period-card-left">
+                    <div class="period-card-label">Aktuelle Periode</div>
+                    <div id="homePeriodDates" class="period-card-dates">–</div>
+                </div>
+                <div class="period-card-icon">🗓️</div>
             </div>
 
             <div class="week-summary-card" onclick="openWeekPreview()" role="button" tabindex="0" aria-label="Wochenbudget und Vorschau anzeigen" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openWeekPreview();}">
@@ -3003,7 +3020,7 @@
             daten["Laufende Kosten"].fix ??= [];
 
             if (daten["Laufende Kosten"].fix.length === 0) {
-                div.innerHTML = `<p style="opacity:0.7;">Noch keine Fixkosten eingetragen.</p>`;
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📌</div><div class="empty-state-title">Noch keine Fixkosten</div><div class="empty-state-text">Regelmäßige monatliche Kosten erscheinen hier, sobald du sie anlegst.</div></div>`;
             }
 
             let summe = 0;
@@ -3383,7 +3400,7 @@
             }
 
             if (daten.Versicherungen.length === 0) {
-                div.innerHTML = `<p style="opacity:0.7;">Noch keine Versicherungen eingetragen.</p>`;
+                div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🛡️</div><div class="empty-state-title">Noch keine Versicherungen</div><div class="empty-state-text">Neue Versicherungen und ihre Zahlungsintervalle werden hier gesammelt.</div></div>`;
             }
 
             const suche = getSearchTerm("versicherungenSuche");
@@ -4082,7 +4099,7 @@
                 .sort((a,b) => String(b.datum).localeCompare(String(a.datum))) : [];
 
             if (!liste.length) {
-                container.innerHTML = `<p style="opacity:0.7;">Noch keine Einnahmen eingetragen.</p>`;
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
                 if (total) total.innerHTML = "";
                 updateSelectionButton('einnahmen');
                 return;
@@ -4734,7 +4751,7 @@
                 .sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
 
             if (!liste.length) {
-                container.innerHTML = `<p style="opacity:0.7;">Keine ${istFreizeit ? 'Freizeit' : 'Haushalt'}-Einträge in den letzten 7 Tagen.</p>`;
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">Keine Ausgaben in den letzten 7 Tagen</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
                 updateSelectionButton(typ);
                 return;
             }
@@ -5057,7 +5074,7 @@
             const jahre = Object.keys(data).sort((a,b) => b-a);
 
             if (!jahre.length) {
-                container.innerHTML = `<p style="opacity:.7;">Noch keine Einträge vorhanden.</p>`;
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-title">Noch keine Einträge</div><div class="empty-state-text">Hier ist aktuell noch nichts gespeichert.</div></div>`;
                 return;
             }
 
@@ -5749,6 +5766,9 @@
             const nextSalary = document.getElementById("homeNextSalary");
             if (nextSalary) nextSalary.innerText = formatDatum(isoAusDate(zeitraum.naechstesGehalt));
 
+            const periodDates = document.getElementById("homePeriodDates");
+            if (periodDates) periodDates.innerText = `${formatKurzDatum(zeitraum.start)} – ${formatKurzDatum(zeitraum.ende)}`;
+
             const details = document.getElementById("freiDetails");
             const toggle = document.getElementById("freiDetailsToggle");
             if (details) details.classList.toggle("hidden", !state.freiDetailsOffen);
@@ -5821,7 +5841,7 @@
 
             if (laufendListeEl) {
                 if (laufendeImGehalt.length === 0) {
-                    laufendListeEl.innerHTML = `<small class="home-summary-small">Keine laufenden Kosten in diesem Gehaltsmonat.</small>`;
+                    laufendListeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📌</div><div class="empty-state-title">Keine Fixkosten in dieser Periode</div><div class="empty-state-text">Für den aktuellen Gehaltszeitraum ist hier nichts eingeplant.</div></div>`;
                 } else {
                     laufendListeEl.innerHTML = `
                     <small class="home-summary-small">Laufende Kosten</small>
@@ -5843,7 +5863,7 @@
 
             if (versListeEl) {
                 if (versicherungenImGehalt.length === 0) {
-                    versListeEl.innerHTML = `<small class="home-summary-small">Keine Versicherungen in diesem Gehaltsmonat.</small>`;
+                    versListeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🛡️</div><div class="empty-state-title">Keine Versicherungen in dieser Periode</div><div class="empty-state-text">Im aktuellen Gehaltszeitraum ist keine Versicherungszahlung fällig.</div></div>`;
                 } else {
                     versListeEl.innerHTML = `
                     <small class="home-summary-small">Versicherungen</small>
@@ -5891,7 +5911,7 @@
 
             if (faelligListeEl) {
                 if (faellig.alle.length === 0) {
-                    faelligListeEl.innerHTML = `<div class="home-empty">Bis zum nächsten Gehalt ist nichts mehr fällig.</div>`;
+                    faelligListeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Alles berücksichtigt</div><div class="empty-state-text">Bis zum nächsten Gehalt ist aktuell nichts mehr fällig.</div></div>`;
                 } else {
                     faelligListeEl.innerHTML = faellig.alle.map(e => `
                     <div class="home-due-item">
