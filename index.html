@@ -193,13 +193,73 @@
             transform: scale(0.98);
         }
 
-        /* 🔥 LAND STYLE */
+        /* Reisen: Länder bewusst ruhiger als normale Aktionsbuttons darstellen */
         .land-item {
-            background: var(--primary);
+            background: #2c2c2e;
             color: white;
             font-weight: 600;
+            border: 1px solid rgba(255,255,255,.07);
+            border-left: 4px solid var(--primary);
+            box-shadow: none;
+            min-height: 76px;
+        }
 
-            box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+        .reise-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 56px 56px;
+            gap: 8px;
+            align-items: stretch;
+            margin: 8px 0;
+        }
+
+        .reise-row > button {
+            width: 56px;
+            height: auto;
+            min-height: 56px;
+            margin: 0;
+            border-radius: 14px;
+        }
+
+        .land-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .land-name {
+            display: block;
+            font-weight: 700;
+            font-size: 17px;
+            line-height: 1.18;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .land-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 10px;
+            color: #c7c7cc;
+            font-size: 13px;
+            line-height: 1.25;
+        }
+
+        .land-spent {
+            color: #fff;
+            font-weight: 650;
+        }
+
+        @media (max-width: 390px) {
+            .reise-row {
+                grid-template-columns: minmax(0, 1fr) 50px 50px;
+                gap: 7px;
+            }
+            .reise-row > button {
+                width: 50px;
+            }
+            .land-name { font-size: 16px; }
         }
 
         /* 🔥 ACTION BUTTONS */
@@ -1020,6 +1080,7 @@
                 <button id="freiDetailsToggle" class="link-button" onclick="toggleFreiDetails()">Details anzeigen ›</button>
 
                 <div id="freiDetails" class="compact-details hidden">
+                    <div class="calc-row"><span>Aktuelle Periode</span><span id="homePeriodDates">–</span></div>
                     <div class="calc-row"><span>Startgehalt</span><span id="homeBudgetStart">0.00 €</span></div>
                     <div class="calc-row"><span>Einnahmen</span><span id="homeBudgetEinnahmen">+0.00 €</span></div>
                     <div class="calc-row"><span>Fixkosten</span><span id="homeBudgetLaufend">0.00 €</span></div>
@@ -1032,13 +1093,6 @@
                 </div>
             </div>
 
-            <div class="period-card" aria-label="Aktueller Gehaltszeitraum">
-                <div class="period-card-left">
-                    <div class="period-card-label">Aktuelle Periode</div>
-                    <div id="homePeriodDates" class="period-card-dates">–</div>
-                </div>
-                <div class="period-card-icon">🗓️</div>
-            </div>
 
             <div class="week-summary-card" onclick="openWeekPreview()" role="button" tabindex="0" aria-label="Wochenbudget und Vorschau anzeigen" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openWeekPreview();}">
                 <div class="week-summary-head">
@@ -1207,8 +1261,13 @@
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
                 <h3>Reise hinzufügen</h3>
-                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="done">
-                <button onclick="addLand()" class="btn btn-primary">Land hinzufügen</button>
+                <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next">
+                <input id="landBudget" type="text" inputmode="decimal" placeholder="Budget (optional)" enterkeyhint="next">
+                <div class="row">
+                    <input id="landVon" type="date" aria-label="Reisebeginn">
+                    <input id="landBis" type="date" aria-label="Reiseende">
+                </div>
+                <button onclick="addLand()" class="btn btn-primary">Reise hinzufügen</button>
             </div>
 
             <input id="reisenSuche" class="list-search" type="search" placeholder="🔎 Reisen durchsuchen" oninput="renderLaender()">
@@ -1226,6 +1285,8 @@
             </button>
 
             <h2 id="landTitel"></h2>
+
+            <div id="reiseBudgetCard"></div>
 
             <div id="quickAdd" class="grid"></div>
 
@@ -1568,6 +1629,7 @@
         /* DATEN */
         const STANDARD_DATEN = {
             Reisen: {},
+            ReisenMeta: {},
             Versicherungen: [],
             Haushalt: {},
             Freizeit: {},
@@ -1604,6 +1666,18 @@
         if (!daten.Reisen || typeof daten.Reisen !== "object" || Array.isArray(daten.Reisen)) {
             daten.Reisen = {};
         }
+        if (!daten.ReisenMeta || typeof daten.ReisenMeta !== "object" || Array.isArray(daten.ReisenMeta)) {
+            daten.ReisenMeta = {};
+        }
+        Object.keys(daten.Reisen).forEach(land => {
+            if (!daten.ReisenMeta[land] || typeof daten.ReisenMeta[land] !== "object") {
+                daten.ReisenMeta[land] = { budget: 0, von: "", bis: "" };
+            } else {
+                daten.ReisenMeta[land].budget = parseBetrag(daten.ReisenMeta[land].budget) || 0;
+                daten.ReisenMeta[land].von ||= "";
+                daten.ReisenMeta[land].bis ||= "";
+            }
+        });
 
         if (!Array.isArray(daten.Versicherungen)) {
             daten.Versicherungen = [];
@@ -1758,6 +1832,7 @@
             editKategorieName: null,
             editLandName: null,
             editReiseId: null,
+            reiseBudgetEdit: false,
             editKostenId: null,
             homeKostenOffen: false,
             homeFaelligOffen: false,
@@ -2397,21 +2472,35 @@
             if (!name) return;
 
             name = name.charAt(0).toUpperCase() + name.slice(1);
-
-            if (!daten.Reisen[name]) {
-                daten.Reisen[name] = {
-                    Essen: [],
-                    Trinken: [],
-                    Transport: [],
-                    Unterkunft: [],
-                    Aktivität: [],
-                    Einkauf: [],
-                    Sonstiges: []
-                };
+            const budget = parseBetrag(document.getElementById("landBudget")?.value) || 0;
+            const von = document.getElementById("landVon")?.value || "";
+            const bis = document.getElementById("landBis")?.value || "";
+            if (von && bis && bis < von) {
+                alert("Das Enddatum darf nicht vor dem Startdatum liegen.");
+                return;
             }
+
+            if (daten.Reisen[name]) {
+                alert("Diese Reise existiert bereits.");
+                return;
+            }
+            daten.Reisen[name] = {
+                Essen: [],
+                Trinken: [],
+                Transport: [],
+                Unterkunft: [],
+                Aktivität: [],
+                Einkauf: [],
+                Sonstiges: []
+            };
+            daten.ReisenMeta ||= {};
+            daten.ReisenMeta[name] = { budget, von, bis };
 
             speichern();
             document.getElementById("landInput").value = "";
+            if (document.getElementById("landBudget")) document.getElementById("landBudget").value = "";
+            if (document.getElementById("landVon")) document.getElementById("landVon").value = "";
+            if (document.getElementById("landBis")) document.getElementById("landBis").value = "";
             document.getElementById("reisenAddPanel")?.classList.add("hidden");
             renderLaender();
         }
@@ -2436,24 +2525,27 @@
                 }
 
                 let row = document.createElement("div");
-                row.className = "row";
+                row.className = "reise-row";
 
                 let item = document.createElement("div");
                 item.className = "item land-item";
                 item.style.flex = "1";
 
+                const meta = daten.ReisenMeta?.[land] || { budget: 0, von: "", bis: "" };
+                const budget = parseBetrag(meta.budget) || 0;
+                const uebrig = budget - sum;
                 item.innerHTML = `
-            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-
+            <div class="land-main">
                 ${state.editLandName === land
-                        ? `<input id="editLand-${safeId(land)}" value="${land}">`
-                        : `<span>${land}</span>`
-                    }
-
-                <span style="font-weight:600;">
-                    ${formatBetrag(sum)}
-                </span>
-
+                    ? `<input id="editLand-${safeId(land)}" value="${land}">`
+                    : `<span class="land-name">${escapeHtml(land)}</span>`
+                }
+                <div class="land-stats">
+                    <span class="land-spent">Ausgegeben: ${formatBetrag(sum)}</span>
+                    ${budget > 0
+                        ? `<span>Übrig: ${formatBetrag(uebrig)} von ${formatBetrag(budget)}</span>`
+                        : `<span>Kein Budget festgelegt</span>`}
+                </div>
             </div>
         `;
 
@@ -2535,12 +2627,14 @@
             // 🔥 WICHTIG: alten Zustand sauber zurücksetzen
             state.editLandName = null;
             state.editReiseId = null;
+            state.reiseBudgetEdit = false;
 
             aktuellesLand = l;
 
             show("land");
 
             document.getElementById("landTitel").innerText = l;
+            renderReiseBudget();
 
             document.getElementById("datum").value =
                 new Date().toISOString().split('T')[0];
@@ -2553,6 +2647,77 @@
             setupReisenEnterFlow();
 
             console.log("Reisen Enter Setup läuft");
+        }
+
+        function reiseGesamtAusgegeben(land) {
+            if (!land || !daten.Reisen?.[land]) return 0;
+            return Object.values(daten.Reisen[land]).reduce((sum, liste) => {
+                if (!Array.isArray(liste)) return sum;
+                return sum + liste.reduce((s, e) => s + (parseBetrag(e.betrag) || 0), 0);
+            }, 0);
+        }
+
+        function renderReiseBudget() {
+            const box = document.getElementById("reiseBudgetCard");
+            if (!box || !aktuellesLand) return;
+            daten.ReisenMeta ||= {};
+            const meta = daten.ReisenMeta[aktuellesLand] || { budget: 0, von: "", bis: "" };
+            const budget = parseBetrag(meta.budget) || 0;
+            const ausgegeben = reiseGesamtAusgegeben(aktuellesLand);
+            const uebrig = budget - ausgegeben;
+            const zeitraum = meta.von || meta.bis
+                ? `${meta.von ? formatDatum(meta.von) : "…"} – ${meta.bis ? formatDatum(meta.bis) : "…"}`
+                : "Kein Zeitraum festgelegt";
+
+            if (state.reiseBudgetEdit) {
+                box.innerHTML = `
+                    <div class="item" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:700;">Reise planen</div>
+                        <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? formatInputBetrag(budget) : ""}" placeholder="Budget" enterkeyhint="next">
+                        <div class="row">
+                            <input id="reiseVonEdit" type="date" value="${meta.von || ""}">
+                            <input id="reiseBisEdit" type="date" value="${meta.bis || ""}">
+                        </div>
+                        <div class="row">
+                            <button onclick="saveReiseBudget()" class="btn btn-primary">Speichern</button>
+                            <button onclick="state.reiseBudgetEdit=false;renderReiseBudget()" style="background:#3a3a3c;">Abbrechen</button>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            box.innerHTML = `
+                <div class="item" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                        <div style="font-weight:700;">Reisebudget</div>
+                        <button onclick="state.reiseBudgetEdit=true;renderReiseBudget()" class="edit" title="Budget bearbeiten">✏️</button>
+                    </div>
+                    ${budget > 0 ? `
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+                            <div><div style="font-size:12px;opacity:.65;">Budget</div><strong>${formatBetrag(budget)}</strong></div>
+                            <div><div style="font-size:12px;opacity:.65;">Ausgegeben</div><strong>${formatBetrag(ausgegeben)}</strong></div>
+                            <div><div style="font-size:12px;opacity:.65;">Übrig</div><strong>${formatBetrag(uebrig)}</strong></div>
+                        </div>` : `
+                        <div style="opacity:.7;">Noch kein Budget festgelegt.</div>`}
+                    <div style="font-size:13px;opacity:.72;">🗓️ ${zeitraum}</div>
+                </div>`;
+        }
+
+        function saveReiseBudget() {
+            if (!aktuellesLand) return;
+            const budget = parseBetrag(document.getElementById("reiseBudgetEdit")?.value) || 0;
+            const von = document.getElementById("reiseVonEdit")?.value || "";
+            const bis = document.getElementById("reiseBisEdit")?.value || "";
+            if (von && bis && bis < von) {
+                alert("Das Enddatum darf nicht vor dem Startdatum liegen.");
+                return;
+            }
+            daten.ReisenMeta ||= {};
+            daten.ReisenMeta[aktuellesLand] = { budget, von, bis };
+            state.reiseBudgetEdit = false;
+            speichern();
+            renderReiseBudget();
+            renderLaender();
         }
 
         function backToReisen() {
@@ -2799,6 +2964,7 @@
 
             document.getElementById("gesamt").innerText =
                 "Gesamt: " + formatBetragText(gesamt);
+            renderReiseBudget();
 
             renderKategorienUebersicht();
             updateSelectionButton('reisen');
@@ -4038,6 +4204,9 @@
             if (daten.Reisen && daten.Reisen[land]) {
                 delete daten.Reisen[land];
             }
+            if (daten.ReisenMeta?.[land]) {
+                delete daten.ReisenMeta[land];
+            }
 
             // 🔥 auch gelöschte Kategorien entfernen
             if (daten.geloeschteKategorien && daten.geloeschteKategorien[land]) {
@@ -4512,19 +4681,8 @@
         }
 
         function setupLandEnter() {
-
-            const input = document.getElementById("landInput");
-            if (!input) return;
-
-            input.onkeydown = (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    addLand();
-                    setTimeout(() => input.focus(), 10);
-                }
-            };
-
-            input.focus();
+            const first = setupEnterSequence(["landInput", "landBudget", "landVon", "landBis"], () => addLand());
+            if (first) document.getElementById(first)?.focus();
         }
 
         function setupLandEditEnterFlow(name) {
@@ -5446,6 +5604,11 @@
 
             reisen[newName] = reisen[oldName];
             delete reisen[oldName];
+            daten.ReisenMeta ||= {};
+            if (daten.ReisenMeta[oldName]) {
+                daten.ReisenMeta[newName] = daten.ReisenMeta[oldName];
+                delete daten.ReisenMeta[oldName];
+            }
 
             if (!daten.geloeschteKategorien) {
                 daten.geloeschteKategorien = {};
