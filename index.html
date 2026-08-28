@@ -518,6 +518,17 @@
         .overview-card-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
         .overview-card-title { font-weight:750; }
         .overview-card-sub { opacity:.65; font-size:12px; margin-top:4px; }
+
+        .bereich-week-info {
+            background:#2c2c2e;
+            border-radius:18px;
+            padding:14px;
+            margin:0 0 12px;
+        }
+        .bereich-week-info-top { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+        .bereich-week-info-label { font-size:13px; opacity:.68; text-transform:uppercase; letter-spacing:.04em; }
+        .bereich-week-info-amount { font-size:22px; font-weight:800; white-space:nowrap; }
+        .bereich-week-info-breakdown { margin-top:8px; font-size:13px; opacity:.72; line-height:1.45; }
         .category-topbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
         .category-topbar h2 { flex:1; margin:0; }
         .category-add-btn {
@@ -1350,6 +1361,13 @@
         </div>
 
         <div class="container">
+            <div class="bereich-week-info">
+                <div class="bereich-week-info-top">
+                    <span class="bereich-week-info-label">Diese Woche</span>
+                    <span id="haushaltWeekTotal" class="bereich-week-info-amount">0,00 €</span>
+                </div>
+                <div id="haushaltWeekBreakdown" class="bereich-week-info-breakdown">Noch keine Ausgaben diese Woche.</div>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
                 <h3 style="margin:0;">Letzte 7 Tage</h3>
                 <button onclick="openAusgabenArchiv('haushalt')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
@@ -1395,6 +1413,13 @@
         </div>
 
         <div class="container">
+            <div class="bereich-week-info">
+                <div class="bereich-week-info-top">
+                    <span class="bereich-week-info-label">Diese Woche</span>
+                    <span id="freizeitWeekTotal" class="bereich-week-info-amount">0,00 €</span>
+                </div>
+                <div id="freizeitWeekBreakdown" class="bereich-week-info-breakdown">Noch keine Ausgaben diese Woche.</div>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
                 <h3 style="margin:0;">Letzte 7 Tage</h3>
                 <button onclick="openAusgabenArchiv('freizeit')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
@@ -4635,6 +4660,39 @@
             return liste;
         }
 
+
+        function renderBereichWocheninfo(typ) {
+            const istFreizeit = typ === "freizeit";
+            const totalEl = document.getElementById(istFreizeit ? "freizeitWeekTotal" : "haushaltWeekTotal");
+            const breakdownEl = document.getElementById(istFreizeit ? "freizeitWeekBreakdown" : "haushaltWeekBreakdown");
+            if (!totalEl || !breakdownEl) return;
+
+            const heute = startOfToday();
+            const montag = montagDerWoche(heute);
+            const liste = alleAusgabenAusBereich(typ).filter(e => {
+                const d = datumAlsLokalenTag(e.datum);
+                return d && d >= montag && d <= heute;
+            });
+
+            const gesamt = liste.reduce((sum, e) => sum + (Number(e.betrag) || 0), 0);
+            totalEl.innerHTML = formatBetrag(gesamt);
+
+            if (!liste.length) {
+                breakdownEl.textContent = "Noch keine Ausgaben diese Woche.";
+                return;
+            }
+
+            const gruppen = {};
+            liste.forEach(e => {
+                const kat = e.kategorie || "Sonstiges";
+                gruppen[kat] = (gruppen[kat] || 0) + (Number(e.betrag) || 0);
+            });
+            const teile = Object.entries(gruppen)
+                .sort((a,b) => b[1] - a[1])
+                .map(([kat, betrag]) => `${kat}: ${formatBetrag(betrag)}`);
+            breakdownEl.innerHTML = teile.join(" · ");
+        }
+
         function renderRecentAusgaben(typ) {
             const istFreizeit = typ === "freizeit";
             const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
@@ -4718,6 +4776,7 @@
         }
 
         function renderHaushalt() {
+            renderBereichWocheninfo("haushalt");
             renderRecentAusgaben("haushalt");
         }
 
@@ -5016,6 +5075,7 @@
         }
 
         function renderFreizeit() {
+            renderBereichWocheninfo("freizeit");
             renderRecentAusgaben("freizeit");
         }
 
