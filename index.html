@@ -104,6 +104,40 @@
             margin: 0;
         }
 
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .date-field {
+            min-width: 0;
+        }
+
+        .date-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #b8b8bd;
+            margin: 0 0 6px 4px;
+        }
+
+        .date-field input[type="date"] {
+            margin: 0;
+            min-height: 50px;
+            font-size: 15px;
+            padding: 12px;
+        }
+
+        @media (max-width: 420px) {
+            .date-range {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
         /* 🔥 BUTTONS */
         button {
             width: 100%;
@@ -1264,9 +1298,15 @@
                 <h3>Reise hinzufügen</h3>
                 <input id="landInput" autocapitalize="words" placeholder="Neues Land" enterkeyhint="next">
                 <input id="landBudget" type="text" inputmode="decimal" placeholder="Budget (optional)" enterkeyhint="next">
-                <div class="row">
-                    <input id="landVon" type="date" aria-label="Reisebeginn">
-                    <input id="landBis" type="date" aria-label="Reiseende">
+                <div class="date-range">
+                    <div class="date-field">
+                        <label for="landVon">Von</label>
+                        <input id="landVon" type="date" aria-label="Reisebeginn">
+                    </div>
+                    <div class="date-field">
+                        <label for="landBis">Bis</label>
+                        <input id="landBis" type="date" aria-label="Reiseende">
+                    </div>
                 </div>
                 <button onclick="addLand()" class="btn btn-primary">Reise hinzufügen</button>
             </div>
@@ -2655,9 +2695,15 @@
                     <div class="item" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
                         <div style="font-weight:700;">Reise planen</div>
                         <input id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? formatInputBetrag(budget) : ""}" placeholder="Budget" enterkeyhint="next">
-                        <div class="row">
-                            <input id="reiseVonEdit" type="date" value="${meta.von || ""}">
-                            <input id="reiseBisEdit" type="date" value="${meta.bis || ""}">
+                        <div class="date-range">
+                            <div class="date-field">
+                                <label for="reiseVonEdit">Von</label>
+                                <input id="reiseVonEdit" type="date" value="${meta.von || ""}">
+                            </div>
+                            <div class="date-field">
+                                <label for="reiseBisEdit">Bis</label>
+                                <input id="reiseBisEdit" type="date" value="${meta.bis || ""}">
+                            </div>
                         </div>
                         <div class="row">
                             <button onclick="saveReiseBudget()" class="btn btn-primary">Speichern</button>
