@@ -3363,18 +3363,44 @@
             let summe = 0;
 
             const suche = getSearchTerm("fixkostenSuche");
+            const gehaltszeitraum = getGehaltszeitraum();
+
+            // Fixkosten werden in der Reihenfolge ihres Abbuchungstermins innerhalb
+            // des aktuellen Gehaltszeitraums sortiert. Beispiel bei Gehalt am 28.:
+            // 28. -> 01. -> 04. -> 14. -> 27.
+            const terminImGehaltszeitraum = (k) => {
+                const basisDatum = k.datum || datumAusTagAktuellerMonat(k.tag);
+                const tag = tagAusDatum(basisDatum);
+                const startDatum = parseISODate(basisDatum);
+
+                let termin = datumMitSicheremTag(
+                    gehaltszeitraum.start.getFullYear(),
+                    gehaltszeitraum.start.getMonth(),
+                    tag
+                );
+
+                if (termin < gehaltszeitraum.start) {
+                    termin = datumMitSicheremTag(termin.getFullYear(), termin.getMonth() + 1, tag);
+                }
+
+                // Bei neuen Fixkosten darf die Sortierung keinen Termin vor der
+                // ersten tatsächlichen Abbuchung vortäuschen.
+                if (startDatum && termin < startDatum) {
+                    termin = new Date(startDatum);
+                }
+
+                return termin;
+            };
+
             const sortierteFixkosten = [...daten["Laufende Kosten"].fix]
                 .filter(k => matchesSearch(suche, k.text, k.name, k.info, k.datum, k.tag, k.betrag))
                 .sort((a, b) => {
-                const datumA = a.datum || datumAusTagAktuellerMonat(a.tag);
-                const datumB = b.datum || datumAusTagAktuellerMonat(b.tag);
-                const tagA = tagAusDatum(datumA);
-                const tagB = tagAusDatum(datumB);
-
-                // Primär nach monatlichem Abbuchungstag sortieren, bei gleichem Tag nach Startdatum.
-                if (tagA !== tagB) return tagA - tagB;
-                return String(datumA).localeCompare(String(datumB));
-            });
+                    const terminA = terminImGehaltszeitraum(a);
+                    const terminB = terminImGehaltszeitraum(b);
+                    const diff = terminA - terminB;
+                    if (diff !== 0) return diff;
+                    return String(a.datum || '').localeCompare(String(b.datum || ''));
+                });
 
             sortierteFixkosten.forEach(k => {
 
@@ -3425,7 +3451,10 @@
                                 ` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                     <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
-                                    <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
+                                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
+                                        <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
+                                        <span style="font-size:14px;opacity:.72;">· am ${String(tag).padStart(2, "0")}.</span>
+                                    </div>
                                 </div>
                             </div>
                             ${!state.multiSelect.fixkosten ? `
