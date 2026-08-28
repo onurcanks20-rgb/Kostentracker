@@ -5299,7 +5299,7 @@
 
                 if (!Array.isArray(liste)) continue;
 
-                let index = liste.findIndex(e => e.id === id);
+                let index = liste.findIndex(e => String(e.id) === String(id));
 
                 if (index !== -1) {
                     liste.splice(index, 1);
