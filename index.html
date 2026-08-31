@@ -1280,7 +1280,7 @@
             </div>
             <div class="overview-card" onclick="openSparenInvestieren()">
                 <div class="overview-card-top"><span class="overview-card-title">📈 Sparen & Investieren</span><strong id="overviewSparenInvestieren">0.00 €</strong></div>
-                <div id="overviewSparenInvestierenSub" class="overview-card-sub">ETF geschützt · Rücklage als Sparpuffer</div>
+                <div id="overviewSparenInvestierenSub" class="overview-card-sub">Investieren geschützt · Rücklage als Sparpuffer</div>
             </div>
 
             <div class="section-label">Separat</div>
@@ -1460,17 +1460,17 @@
             <div class="category-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2>Sparen & Investieren</h2>
-                <button class="category-add-btn" onclick="toggleCategoryAdd('sparenInvestierenAddPanel','sparenInvestierenText')" aria-label="Sparbetrag hinzufügen">＋</button>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('sparenInvestierenAddPanel','sparenInvestierenBetrag')" aria-label="Sparbetrag hinzufügen">＋</button>
             </div>
 
             <div id="sparenInvestierenAddPanel" class="category-add-panel hidden">
                 <h3>Betrag festlegen</h3>
                 <select id="sparenInvestierenTyp">
-                    <option value="investieren">📈 Investieren / ETF</option>
+                    <option value="investieren">📈 Investieren</option>
                     <option value="sparen">💰 Rücklage / Sparen</option>
                 </select>
-                <input id="sparenInvestierenText" autocapitalize="words" placeholder="Bezeichnung, z. B. ETF oder Rücklage" enterkeyhint="next">
                 <input id="sparenInvestierenBetrag" type="text" inputmode="decimal" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+                <input id="sparenInvestierenText" autocapitalize="words" placeholder="Beschreibung (optional)" enterkeyhint="next">
                 <label for="sparenInvestierenDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Gültig ab</label>
                 <input id="sparenInvestierenDatum" type="date">
                 <div class="info-text">Der Betrag wird ab dieser Gehaltsperiode bei jedem neuen Gehaltszeitraum berücksichtigt. Investitionen bleiben geschützt. Rücklagen dienen als Puffer, wenn dein Frei verfügbar aufgebraucht ist.</div>
@@ -1983,7 +1983,7 @@
             ...e,
             id: e.id || generateId(),
             typ: e.typ === "sparen" ? "sparen" : "investieren",
-            text: e.text || (e.typ === "sparen" ? "Rücklage" : "ETF"),
+            text: (e.text && !["Sparen", "Investieren"].includes(String(e.text).trim())) ? String(e.text).trim() : "",
             betrag: parseBetrag(e.betrag) || 0,
             datum: e.datum || heuteISO()
         }));
@@ -2134,6 +2134,8 @@
             editReiseId: null,
             reiseBudgetEdit: false,
             editKostenId: null,
+            editGeplanteAusgabeId: null,
+            editSparenInvestierenId: null,
             homeKostenOffen: false,
             homeFaelligOffen: false,
             freiDetailsOffen: false,
@@ -2562,7 +2564,7 @@
             renderSparenInvestieren();
             if (direktHinzufuegen) {
                 document.getElementById("sparenInvestierenAddPanel")?.classList.remove("hidden");
-                setTimeout(() => document.getElementById("sparenInvestierenText")?.focus(), 80);
+                setTimeout(() => document.getElementById("sparenInvestierenBetrag")?.focus(), 80);
             }
         }
 
@@ -3463,15 +3465,15 @@
 
         function addSparenInvestieren() {
             const typ = document.getElementById("sparenInvestierenTyp")?.value === "sparen" ? "sparen" : "investieren";
-            const text = formatText(document.getElementById("sparenInvestierenText")?.value);
             const betrag = parseBetrag(document.getElementById("sparenInvestierenBetrag")?.value);
+            const text = (document.getElementById("sparenInvestierenText")?.value || "").trim();
             const datum = document.getElementById("sparenInvestierenDatum")?.value || heuteISO();
-            if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
+            if (isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             daten["Sparen & Investieren"] ??= [];
             daten["Sparen & Investieren"].push({ id: generateId(), typ, text, betrag, datum });
             speichern();
-            document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenBetrag").value = "";
+            document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
             renderSparenInvestieren();
             renderUebersicht();
@@ -3489,21 +3491,36 @@
             finishUndoDelete("Spar-/Investment-Eintrag gelöscht");
         }
 
-        function editSparenInvestieren(id) {
+        function startEditSparenInvestieren(id) {
+            state.editSparenInvestierenId = id;
+            renderSparenInvestieren();
+            setTimeout(() => document.getElementById(`editSparenBetrag-${id}`)?.focus(), 40);
+        }
+
+        function cancelEditSparenInvestieren() {
+            state.editSparenInvestierenId = null;
+            renderSparenInvestieren();
+        }
+
+        function saveEditSparenInvestieren(id) {
             const e = (daten["Sparen & Investieren"] || []).find(x => String(x.id) === String(id));
             if (!e) return;
-            const text = prompt("Bezeichnung:", e.text || "");
-            if (text === null) return;
-            const betragRaw = prompt("Betrag pro Gehaltsperiode:", formatInputBetrag(e.betrag));
-            if (betragRaw === null) return;
-            const betrag = parseBetrag(betragRaw);
-            if (isNaN(betrag) || betrag <= 0) return;
-            e.text = formatText(text) || e.text;
+            const typ = document.getElementById(`editSparenTyp-${id}`)?.value === "sparen" ? "sparen" : "investieren";
+            const betrag = parseBetrag(document.getElementById(`editSparenBetrag-${id}`)?.value);
+            const text = (document.getElementById(`editSparenText-${id}`)?.value || "").trim();
+            const datum = document.getElementById(`editSparenDatum-${id}`)?.value || "";
+            if (isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
+            e.typ = typ;
+            e.text = text;
             e.betrag = betrag;
+            e.datum = datum;
+            state.editSparenInvestierenId = null;
             speichern();
             renderSparenInvestieren();
             renderUebersicht();
         }
+
+        function editSparenInvestieren(id) { startEditSparenInvestieren(id); }
 
         function renderSparenInvestieren() {
             const listeEl = document.getElementById("sparenInvestierenListe");
@@ -3515,23 +3532,43 @@
                 <div class="bereich-week-info-top"><span class="bereich-week-info-label">Diese Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(status.investieren + status.gespart)}</span></div>
                 <div class="bereich-week-info-breakdown">📈 Investiert: ${formatBetrag(status.investieren)} · 💰 Gespart: ${formatBetrag(status.gespart)} von ${formatBetrag(status.sparenPlan)}${status.sparVerbrauch > 0 ? ` · ${formatBetrag(status.sparVerbrauch)} als Puffer genutzt` : ""}</div>`;
 
-            const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(a.typ).localeCompare(String(b.typ)) || String(a.text).localeCompare(String(b.text), "de"));
+            const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(a.typ).localeCompare(String(b.typ)) || String(a.datum || "").localeCompare(String(b.datum || "")));
             if (!items.length) {
-                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen ETF-/Investmentbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
+                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen Investitionsbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
                 return;
             }
-            listeEl.innerHTML = items.map(e => `
-                <div class="item" style="align-items:center;">
-                    <div style="min-width:0;flex:1;">
-                        <div style="font-weight:750;">${e.typ === "sparen" ? "💰" : "📈"} ${escapeHtml(e.text || (e.typ === "sparen" ? "Rücklage" : "Investment"))}</div>
-                        <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)}</div>
-                        <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)} / Gehaltsperiode</div>
-                    </div>
-                    <div class="actions" style="display:flex;gap:5px;">
-                        <button class="edit" onclick="event.stopPropagation();editSparenInvestieren('${String(e.id)}')">✏️</button>
-                        <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')">🗑️</button>
-                    </div>
-                </div>`).join("");
+            listeEl.innerHTML = items.map(e => {
+                const isEdit = String(state.editSparenInvestierenId) === String(e.id);
+                if (isEdit) return `
+                    <div class="item" style="align-items:stretch;">
+                        <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+                            <select id="editSparenTyp-${e.id}">
+                                <option value="investieren" ${e.typ === "investieren" ? "selected" : ""}>📈 Investieren</option>
+                                <option value="sparen" ${e.typ === "sparen" ? "selected" : ""}>💰 Rücklage / Sparen</option>
+                            </select>
+                            <input id="editSparenBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+                            <input id="editSparenText-${e.id}" autocapitalize="words" value="${escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
+                            <input id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
+                            <div style="display:flex;gap:10px;">
+                                <button onclick="saveEditSparenInvestieren('${e.id}')">💾 Speichern</button>
+                                <button onclick="cancelEditSparenInvestieren()" style="background:#3a3a3c;">❌ Abbrechen</button>
+                            </div>
+                        </div>
+                    </div>`;
+                return `
+                    <div class="item" style="align-items:center;">
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
+                            <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)}</div>
+                            ${e.text ? `<div class="info-text" style="margin-top:3px;">${escapeHtml(e.text)}</div>` : ""}
+                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)} / Gehaltsperiode</div>
+                        </div>
+                        <div class="actions" style="display:flex;gap:5px;">
+                            <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')">✏️</button>
+                            <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')">🗑️</button>
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
         function geplanteAusgabenImZeitraum(von, bis) {
@@ -3587,25 +3624,76 @@
             finishUndoDelete("Geplante Ausgabe gelöscht");
         }
 
-        function editGeplanteAusgabe(id) {
+        function startEditGeplanteAusgabe(id) {
+            state.editGeplanteAusgabeId = id;
+            renderGeplanteAusgaben();
+            setTimeout(() => document.getElementById(`editGeplantText-${id}`)?.focus(), 40);
+        }
+
+        function cancelEditGeplanteAusgabe() {
+            state.editGeplanteAusgabeId = null;
+            renderGeplanteAusgaben();
+        }
+
+        function editGeplantKategorienFuer(bereich, land = "") {
+            if (bereich === "freizeit") return ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+            if (bereich === "reisen") {
+                const reise = daten.Reisen?.[land] || {};
+                const kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
+                return (kategorien.length ? kategorien : ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"]).sort((a,b)=>a.localeCompare(b,"de"));
+            }
+            return ["Einkauf", "Tanken", "Drogerie", "Sonstiges"];
+        }
+
+        function updateEditGeplantBereichUI(id, setzeStandardBudget = false) {
+            const bereich = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
+            const reiseWrap = document.getElementById(`editGeplantReiseWrap-${id}`);
+            const reiseSelect = document.getElementById(`editGeplantReise-${id}`);
+            const budgetSelect = document.getElementById(`editGeplantBudget-${id}`);
+            if (reiseWrap) reiseWrap.classList.toggle("hidden", bereich !== "reisen");
+            if (bereich === "reisen" && reiseSelect) {
+                const vorher = reiseSelect.value;
+                const laender = Object.keys(daten.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
+                reiseSelect.innerHTML = laender.length ? laender.map(land => `<option value="${escapeHtml(land)}">${escapeHtml(land)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`;
+                if (laender.includes(vorher)) reiseSelect.value = vorher;
+            }
+            if (setzeStandardBudget && budgetSelect) budgetSelect.value = bereich === "reisen" ? "nein" : "ja";
+            updateEditGeplantKategorieSelect(id);
+        }
+
+        function updateEditGeplantKategorieSelect(id) {
+            const bereich = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
+            const land = document.getElementById(`editGeplantReise-${id}`)?.value || "";
+            const select = document.getElementById(`editGeplantKategorie-${id}`);
+            if (!select) return;
+            const vorher = select.value;
+            const kategorien = editGeplantKategorienFuer(bereich, land);
+            select.innerHTML = kategorien.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+            if (kategorien.includes(vorher)) select.value = vorher;
+        }
+
+        function saveEditGeplanteAusgabe(id) {
             const e = (daten["Geplante Ausgaben"] || []).find(x => String(x.id) === String(id));
             if (!e) return;
-            const text = prompt("Beschreibung:", e.text || "");
-            if (text === null) return;
-            const betragRaw = prompt("Betrag:", formatInputBetrag(e.betrag));
-            if (betragRaw === null) return;
-            const betrag = parseBetrag(betragRaw);
-            if (isNaN(betrag) || betrag <= 0) return;
-            const datum = prompt("Datum (JJJJ-MM-TT):", e.datum || heuteISO());
-            if (datum === null || !parseISODate(datum)) return;
-            e.text = formatText(text) || e.text;
-            e.betrag = betrag;
-            e.datum = datum;
+            const text = formatText(document.getElementById(`editGeplantText-${id}`)?.value);
+            const betrag = parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
+            const datum = document.getElementById(`editGeplantDatum-${id}`)?.value || "";
+            const bereichRaw = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
+            const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
+            const land = bereich === "reisen" ? (document.getElementById(`editGeplantReise-${id}`)?.value || "") : "";
+            const kategorie = document.getElementById(`editGeplantKategorie-${id}`)?.value || "Sonstiges";
+            const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
+            if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
+            if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
+            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam });
+            state.editGeplanteAusgabeId = null;
             speichern();
             verarbeiteFaelligeGeplanteAusgaben();
             renderGeplanteAusgaben();
             renderUebersicht();
         }
+
+        function editGeplanteAusgabe(id) { startEditGeplanteAusgabe(id); }
 
         function verarbeiteFaelligeGeplanteAusgaben() {
             daten["Geplante Ausgaben"] ??= [];
@@ -3670,33 +3758,69 @@
             const listeEl = document.getElementById("geplantListe");
             const sumEl = document.getElementById("geplantZusammenfassung");
             if (!listeEl) return;
-            const items = [...(daten["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
             const z = getGehaltszeitraum();
-            const periodItems = geplanteAusgabenImZeitraum(z.start, z.ende);
-            const periodSum = periodItems.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
-            const reserviertSum = periodItems.filter(e => e.budgetWirksam !== false).reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
-            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Geplant in dieser Periode</span><span class="bereich-week-info-amount">${formatBetrag(periodSum)}</span></div><div class="bereich-week-info-breakdown">Davon ${formatBetrag(reserviertSum)} vom Frei verfügbar reserviert.</div>`;
-
+            const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
+            const items = [...(daten["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
             if (!items.length) {
-                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere Ausgaben vorab und entscheide selbst, ob sie dein Frei verfügbar reservieren sollen.</div></div>`;
+                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere oder kommende Ausgaben vorab. Am Folgetag werden sie automatisch in den gewählten Bereich übernommen.</div></div>`;
                 return;
             }
-            listeEl.innerHTML = items.map(e => `
-                <div class="item" style="align-items:center;">
-                    <div style="min-width:0;flex:1;">
-                        <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                        <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${e.bereich === "reisen" ? `Reise: ${escapeHtml(e.land || "–")}` : (e.bereich === "freizeit" ? "Freizeit" : "Haushalt")} · ${escapeHtml(e.kategorie || "Sonstiges")}</div>
-                        <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Vom Frei verfügbar reserviert" : "🧾 Ohne Einfluss auf Frei verfügbar"}</div>
-                        <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
-                    </div>
-                    <div class="actions" style="display:flex;gap:5px;">
-                        <button class="edit" onclick="event.stopPropagation();editGeplanteAusgabe('${String(e.id)}')">✏️</button>
-                        <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')">🗑️</button>
-                    </div>
-                </div>`).join("");
+            listeEl.innerHTML = items.map(e => {
+                const isEdit = String(state.editGeplanteAusgabeId) === String(e.id);
+                if (isEdit) {
+                    const bereich = ["haushalt","freizeit","reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+                    const laender = Object.keys(daten.Reisen || {}).sort((a,b)=>a.localeCompare(b,"de"));
+                    const land = bereich === "reisen" && laender.includes(e.land) ? e.land : (laender[0] || "");
+                    const kategorien = editGeplantKategorienFuer(bereich, land);
+                    const kategorie = kategorien.includes(e.kategorie) ? e.kategorie : (kategorien[0] || "Sonstiges");
+                    return `
+                        <div class="item" style="align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+                                <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+                                <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+                                <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <select id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
+                                    <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
+                                    <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
+                                    <option value="reisen" ${bereich === "reisen" ? "selected" : ""}>Reisen</option>
+                                </select>
+                                <div id="editGeplantReiseWrap-${e.id}" class="${bereich === "reisen" ? "" : "hidden"}">
+                                    <select id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
+                                        ${laender.length ? laender.map(l => `<option value="${escapeHtml(l)}" ${l === land ? "selected" : ""}>${escapeHtml(l)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`}
+                                    </select>
+                                </div>
+                                <select id="editGeplantKategorie-${e.id}">
+                                    ${kategorien.map(k => `<option value="${escapeHtml(k)}" ${k === kategorie ? "selected" : ""}>${escapeHtml(k)}</option>`).join("")}
+                                </select>
+                                <select id="editGeplantBudget-${e.id}">
+                                    <option value="ja" ${e.budgetWirksam !== false ? "selected" : ""}>Ja, vom Frei verfügbar abziehen</option>
+                                    <option value="nein" ${e.budgetWirksam === false ? "selected" : ""}>Nein, nur vormerken</option>
+                                </select>
+                                <div style="display:flex;gap:10px;">
+                                    <button onclick="saveEditGeplanteAusgabe('${e.id}')">💾 Speichern</button>
+                                    <button onclick="cancelEditGeplanteAusgabe()" style="background:#3a3a3c;">❌ Abbrechen</button>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                const ziel = e.bereich === "reisen" ? `✈️ ${escapeHtml(e.land || "Reise")} · ${escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${escapeHtml(e.kategorie || "Sonstiges")}`;
+                return `
+                    <div class="item" style="align-items:center;">
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
+                            <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
+                            <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
+                        </div>
+                        <div class="actions" style="display:flex;gap:5px;">
+                            <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
+                            <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')">🗑️</button>
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
-        /* LÄNDER */
         function addLand() {
             let name = document.getElementById("landInput").value.trim();
             if (!name) return;
