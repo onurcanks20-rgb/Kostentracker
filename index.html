@@ -1155,6 +1155,28 @@
         .archive-entry-amount { font-weight:800; white-space:nowrap; align-self:center; }
         @media (max-width:420px) { .archive-filter-grid { grid-template-columns:1fr; } }
 
+        /* ===== SCHNELLEINGABE FAVORITEN ===== */
+        .quick-fav-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+        .quick-fav-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; background:#242426; border-radius:14px; padding:10px 10px 10px 12px; }
+        .quick-fav-toggle { display:flex; align-items:center; gap:10px; min-width:0; font-weight:650; }
+        .quick-fav-toggle input { width:22px; height:22px; margin:0; flex:0 0 22px; accent-color:var(--primary); }
+        .quick-fav-label { min-width:0; overflow-wrap:anywhere; }
+        .quick-fav-actions { display:flex; gap:6px; }
+        .quick-fav-actions button { width:38px; height:38px; min-height:38px; padding:0; margin:0; border-radius:10px; background:#3a3a3c; font-size:16px; }
+        .quick-fav-actions button:disabled { opacity:.28; }
+        .quick-fav-card { padding:12px 14px; }
+        .settings-collapse-btn {
+            width:100%; margin:0; padding:8px 2px; background:transparent;
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+            border-radius:12px; text-align:left; font-size:16px; font-weight:750;
+        }
+        .settings-collapse-chevron {
+            flex:0 0 auto; font-size:22px; line-height:1; opacity:.72;
+            transition:transform .18s ease;
+        }
+        .settings-collapse-btn[aria-expanded="true"] .settings-collapse-chevron { transform:rotate(180deg); }
+        .quick-add-empty { padding:16px 8px; text-align:center; opacity:.7; line-height:1.45; }
+
 </style>
 </head>
 
@@ -1179,6 +1201,10 @@
                     <div class="calc-row"><span>Einnahmen</span><span id="homeBudgetEinnahmen">+0.00 €</span></div>
                     <div class="calc-row"><span>Fixkosten</span><span id="homeBudgetLaufend">0.00 €</span></div>
                     <div class="calc-row"><span>Versicherungen</span><span id="homeBudgetVers">0.00 €</span></div>
+                    <div class="calc-row"><span>Geplante Ausgaben</span><span id="homeBudgetGeplant">0.00 €</span></div>
+                    <div class="calc-row"><span>Investieren</span><span id="homeBudgetInvestieren">0.00 €</span></div>
+                    <div class="calc-row"><span>Sparen vorgesehen</span><span id="homeBudgetSparenPlan">0.00 €</span></div>
+                    <div class="calc-row"><span>Gespart aktuell</span><span id="homeBudgetGespart">0.00 €</span></div>
                     <div class="calc-row"><span>Haushalt bisher</span><span id="homeBudgetHaushalt">0.00 €</span></div>
                     <div class="calc-row"><span>Freizeit bisher</span><span id="homeBudgetFreizeit">0.00 €</span></div>
                     <div class="calc-row total"><span>Frei verfügbar</span><span id="homeBudgetVerfuegbarDetail">0.00 €</span></div>
@@ -1201,6 +1227,11 @@
             <div class="salary-row">
                 <span>Nächstes Gehalt</span>
                 <strong id="homeNextSalary">–</strong>
+            </div>
+
+            <div class="salary-row" style="margin-top:-6px;">
+                <span>Gespart</span>
+                <strong id="homeGespart">0,00 €</strong>
             </div>
 
             <button class="primary-add" onclick="openAddSheet()">＋ Abrechnung hinzufügen</button>
@@ -1242,6 +1273,14 @@
             <div class="overview-card" onclick="openEinnahmen()">
                 <div class="overview-card-top"><span class="overview-card-title">💰 Einnahmen</span><strong id="overviewEinnahmen">+0.00 €</strong></div>
                 <div class="overview-card-sub">Zusätzliche Geldeingänge im Gehaltszeitraum</div>
+            </div>
+            <div class="overview-card" onclick="openGeplanteAusgaben()">
+                <div class="overview-card-top"><span class="overview-card-title">🗓️ Geplante Ausgaben</span><strong id="overviewGeplant">0.00 €</strong></div>
+                <div class="overview-card-sub">Für den aktuellen Gehaltszeitraum reserviert</div>
+            </div>
+            <div class="overview-card" onclick="openSparenInvestieren()">
+                <div class="overview-card-top"><span class="overview-card-title">📈 Sparen & Investieren</span><strong id="overviewSparenInvestieren">0.00 €</strong></div>
+                <div id="overviewSparenInvestierenSub" class="overview-card-sub">ETF geschützt · Rücklage als Sparpuffer</div>
             </div>
 
             <div class="section-label">Separat</div>
@@ -1296,6 +1335,17 @@
                 <input id="gehaltstagInput" type="number" min="1" max="31" value="26">
                 <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
                 <div class="settings-note">Fällt der Gehaltstag auf Samstag oder Sonntag, verwendet die App automatisch den folgenden Montag.</div>
+            </div>
+
+            <div class="settings-card quick-fav-card">
+                <button id="quickAddSettingsToggle" class="settings-collapse-btn" type="button" onclick="toggleQuickAddSettingsPanel()" aria-expanded="false">
+                    <span>⚡ Schnelleingabe anpassen</span>
+                    <span id="quickAddSettingsChevron" class="settings-collapse-chevron">⌄</span>
+                </button>
+                <div id="quickAddSettingsPanel" class="hidden">
+                    <div class="settings-note" style="margin-top:10px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
+                    <div id="quickAddSettingsList" class="quick-fav-list"></div>
+                </div>
             </div>
 
             <div class="settings-card">
@@ -1362,7 +1412,7 @@
     <div id="weekPreviewSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeWeekPreview()">
         <div class="add-sheet">
             <h3>Wochenbudget</h3>
-            <div class="week-preview-note">Diese Woche ist fest. Auch die Vorschau der kommenden Wochen bleibt bis Sonntag unverändert. Am nächsten Wochenstart wird mit dem tatsächlichen Rest neu berechnet.</div>
+            <div class="week-preview-note">Diese Woche ist fest. Die kommenden Wochen bleiben unverändert, solange diese Woche nicht ins Minus rutscht. Ein Minus wird sofort auf die restlichen Wochen verteilt. Am nächsten Wochenstart wird wieder mit dem tatsächlichen Rest neu berechnet.</div>
             <div id="weekPreviewList" class="week-preview-list"></div>
             <div class="week-preview-total"><span>Noch frei bis Gehalt</span><span id="weekPreviewTotal">0,00 €</span></div>
             <button onclick="closeWeekPreview()" style="background:#3a3a3c; margin-top:14px;">Schließen</button>
@@ -1373,12 +1423,7 @@
     <div id="addSheet" class="sheet-backdrop hidden" onclick="if(event.target===this) closeAddSheet()">
         <div class="add-sheet">
             <h3>Abrechnung hinzufügen</h3>
-            <button class="add-choice" onclick="openStartQuickAdd('hausAddPanel','hausBetrag')">🛒 Haushalt</button>
-            <button class="add-choice" onclick="openStartQuickAdd('freizeitAddPanel','freizeitBetrag')">🎉 Freizeit</button>
-            <button class="add-choice" onclick="openStartQuickAdd('einnahmenAddPanel','einnahmenText')">💰 Einnahme</button>
-            <button class="add-choice" onclick="openStartQuickAdd('kostenAddPanel','costText')">📌 Fixkosten</button>
-            <button class="add-choice" onclick="openStartQuickAdd('versAddPanel','versName')">🛡️ Versicherung</button>
-            <button class="add-choice" onclick="openReiseAuswahlFromHome()">✈️ Reise</button>
+            <div id="quickAddChoices"></div>
             <button onclick="closeAddSheet()" style="background:#3a3a3c;">Abbrechen</button>
         </div>
     </div>
@@ -1406,6 +1451,79 @@
             <h3 id="moveSheetTitle">Eintrag verschieben</h3>
             <div id="moveSheetChoices"></div>
             <button onclick="closeMoveSheet()" style="background:#3a3a3c;">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- ===================== SPAREN & INVESTIEREN ===================== -->
+    <div id="sparenInvestierenView" class="hidden">
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Sparen & Investieren</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('sparenInvestierenAddPanel','sparenInvestierenText')" aria-label="Sparbetrag hinzufügen">＋</button>
+            </div>
+
+            <div id="sparenInvestierenAddPanel" class="category-add-panel hidden">
+                <h3>Betrag festlegen</h3>
+                <select id="sparenInvestierenTyp">
+                    <option value="investieren">📈 Investieren / ETF</option>
+                    <option value="sparen">💰 Rücklage / Sparen</option>
+                </select>
+                <input id="sparenInvestierenText" autocapitalize="words" placeholder="Bezeichnung, z. B. ETF oder Rücklage" enterkeyhint="next">
+                <input id="sparenInvestierenBetrag" type="text" inputmode="decimal" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+                <label for="sparenInvestierenDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Gültig ab</label>
+                <input id="sparenInvestierenDatum" type="date">
+                <div class="info-text">Der Betrag wird ab dieser Gehaltsperiode bei jedem neuen Gehaltszeitraum berücksichtigt. Investitionen bleiben geschützt. Rücklagen dienen als Puffer, wenn dein Frei verfügbar aufgebraucht ist.</div>
+                <button onclick="addSparenInvestieren()" class="btn btn-primary">Speichern</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="sparenInvestierenZusammenfassung" class="bereich-week-info"></div>
+            <div id="sparenInvestierenListe"></div>
+        </div>
+    </div>
+
+    <!-- ===================== GEPLANTE AUSGABEN ===================== -->
+    <div id="geplanteAusgabenView" class="hidden">
+        <div class="container">
+            <div class="category-topbar">
+                <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2>Geplante Ausgaben</h2>
+                <button class="category-add-btn" onclick="toggleCategoryAdd('geplantAddPanel','geplantText')" aria-label="Geplante Ausgabe hinzufügen">＋</button>
+            </div>
+
+            <div id="geplantAddPanel" class="category-add-panel hidden">
+                <h3>Ausgabe planen</h3>
+                <input id="geplantText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+                <input id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
+                <label for="geplantDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Geplantes Datum</label>
+                <input id="geplantDatum" type="date">
+                <label for="geplantBereich" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Später buchen nach</label>
+                <select id="geplantBereich" onchange="updateGeplantBereichUI(true)">
+                    <option value="haushalt">Haushalt</option>
+                    <option value="freizeit">Freizeit</option>
+                    <option value="reisen">Reisen</option>
+                </select>
+                <div id="geplantReiseWrap" class="hidden">
+                    <label for="geplantReise" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Reise</label>
+                    <select id="geplantReise" onchange="updateGeplantKategorieSelect()"></select>
+                </div>
+                <label for="geplantKategorie" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Kategorie</label>
+                <select id="geplantKategorie"></select>
+                <label for="geplantBudgetWirksam" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Vom Frei verfügbar abziehen?</label>
+                <select id="geplantBudgetWirksam">
+                    <option value="ja">Ja, Betrag reservieren</option>
+                    <option value="nein">Nein, nur vormerken</option>
+                </select>
+                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen.</div>
+                <button onclick="addGeplanteAusgabe()" class="btn btn-primary">Planen</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="geplantZusammenfassung" class="bereich-week-info"></div>
+            <div id="geplantListe"></div>
         </div>
     </div>
 
@@ -1775,12 +1893,15 @@
             Haushalt: {},
             Freizeit: {},
             Einnahmen: [],
+            "Geplante Ausgaben": [],
+            "Sparen & Investieren": [],
             "Laufende Kosten": {
                 fix: []
             },
             Einstellungen: {
                 gehaltstag: 26,
                 startgehaelter: {},
+                quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} }
             },
             geloeschteKategorien: {}
@@ -1836,6 +1957,37 @@
             daten.Einnahmen = [];
         }
 
+        if (!Array.isArray(daten["Geplante Ausgaben"])) {
+            daten["Geplante Ausgaben"] = [];
+        }
+        daten["Geplante Ausgaben"] = daten["Geplante Ausgaben"].map(e => {
+            const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+            return {
+                ...e,
+                id: e.id || generateId(),
+                text: e.text || "Geplante Ausgabe",
+                betrag: parseBetrag(e.betrag) || 0,
+                datum: e.datum || heuteISO(),
+                bereich,
+                land: bereich === "reisen" ? (e.land || "") : "",
+                kategorie: e.kategorie || "Sonstiges",
+                // Bestehende geplante Haushalt/Freizeit-Ausgaben waren immer budgetwirksam.
+                budgetWirksam: typeof e.budgetWirksam === "boolean" ? e.budgetWirksam : bereich !== "reisen"
+            };
+        });
+
+        if (!Array.isArray(daten["Sparen & Investieren"])) {
+            daten["Sparen & Investieren"] = [];
+        }
+        daten["Sparen & Investieren"] = daten["Sparen & Investieren"].map(e => ({
+            ...e,
+            id: e.id || generateId(),
+            typ: e.typ === "sparen" ? "sparen" : "investieren",
+            text: e.text || (e.typ === "sparen" ? "Rücklage" : "ETF"),
+            betrag: parseBetrag(e.betrag) || 0,
+            datum: e.datum || heuteISO()
+        }));
+
         daten.Einnahmen = daten.Einnahmen.map(e => ({
             ...e,
             id: e.id || generateId(),
@@ -1857,6 +2009,13 @@
         daten.Einstellungen.gehaltstag = validiereGehaltstag(daten.Einstellungen.gehaltstag);
         if (!daten.Einstellungen.startgehaelter || typeof daten.Einstellungen.startgehaelter !== "object" || Array.isArray(daten.Einstellungen.startgehaelter)) {
             daten.Einstellungen.startgehaelter = {};
+        }
+        const QUICK_ADD_DEFAULT = ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"];
+        if (!Array.isArray(daten.Einstellungen.quickAddFavoriten)) {
+            daten.Einstellungen.quickAddFavoriten = [...QUICK_ADD_DEFAULT];
+        } else {
+            const gueltig = new Set(QUICK_ADD_DEFAULT);
+            daten.Einstellungen.quickAddFavoriten = daten.Einstellungen.quickAddFavoriten.filter((key, index, arr) => gueltig.has(key) && arr.indexOf(key) === index);
         }
 
         if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
@@ -2073,6 +2232,8 @@
             if (aktuellesLand && daten.Reisen?.[aktuellesLand]) renderListe();
             if (!document.getElementById("ausgabenArchivView")?.classList.contains("hidden")) renderAusgabenArchiv();
             if (!document.getElementById("globalArchivView")?.classList.contains("hidden")) renderGlobalArchiv();
+            if (!document.getElementById("geplanteAusgabenView")?.classList.contains("hidden")) renderGeplanteAusgaben();
+            if (!document.getElementById("sparenInvestierenView")?.classList.contains("hidden")) renderSparenInvestieren();
         }
 
         function finishUndoDelete(label) {
@@ -2349,6 +2510,8 @@
                 "freizeitView",
                 "ausgabenArchivView",
                 "globalArchivView",
+                "geplanteAusgabenView",
+                "sparenInvestierenView",
                 "einnahmenView",
                 "kostenView",
                 "versicherungenView",
@@ -2379,14 +2542,43 @@
         }
 
         function goHome() {
+            verarbeiteFaelligeGeplanteAusgaben();
             show("home");
             renderHomeUebersicht();
         }
 
 
         function openUebersicht() {
+            verarbeiteFaelligeGeplanteAusgaben();
             show("uebersichtView");
             renderUebersicht();
+        }
+
+        function openSparenInvestieren(direktHinzufuegen = false) {
+            closeAddSheet();
+            show("sparenInvestierenView");
+            const datum = document.getElementById("sparenInvestierenDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+            renderSparenInvestieren();
+            if (direktHinzufuegen) {
+                document.getElementById("sparenInvestierenAddPanel")?.classList.remove("hidden");
+                setTimeout(() => document.getElementById("sparenInvestierenText")?.focus(), 80);
+            }
+        }
+
+        function openGeplanteAusgaben(direktHinzufuegen = false) {
+            closeAddSheet();
+            verarbeiteFaelligeGeplanteAusgaben();
+            show("geplanteAusgabenView");
+            const datum = document.getElementById("geplantDatum");
+            if (datum && !datum.value) datum.value = heuteISO();
+            updateGeplantKategorieSelect();
+            updateGeplantBereichUI(false);
+            renderGeplanteAusgaben();
+            if (direktHinzufuegen) {
+                document.getElementById("geplantAddPanel")?.classList.remove("hidden");
+                setTimeout(() => document.getElementById("geplantText")?.focus(), 80);
+            }
         }
 
         function openGrafik() {
@@ -2400,6 +2592,7 @@
             const tagInput = document.getElementById("gehaltstagInput");
             if (startInput) startInput.value = getStartgehalt(z) || "";
             if (tagInput) tagInput.value = getGehaltstag();
+            renderQuickAddSettings();
         }
 
         function openGlobalArchiv() {
@@ -2749,8 +2942,11 @@
             const laufendSum = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
             const versSum = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
             const einnahmenSum = einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const geplantSum = geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const sparStatus = berechneSparBudgetStatus(zeitraum);
+            const sparenInvestierenGesamt = sparStatus.investieren + sparStatus.sparenPlan;
             const alltagGesamt = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const freiJetzt = start + einnahmenSum - laufendSum - versSum - alltagGesamt;
+            const freiJetzt = sparStatus.frei;
 
             const heute = startOfToday();
             const kalenderMontag = montagDerWoche(heute);
@@ -2759,7 +2955,7 @@
             const wochenEnde = kalenderSonntag > zeitraum.ende ? new Date(zeitraum.ende) : kalenderSonntag;
 
             const alltagVorWoche = alltagImZeitraum(zeitraum.start, addDays(wochenStart, -1)).reduce((s,e)=>s+e.betrag,0);
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche;
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - sparenInvestierenGesamt;
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
             const wochenBudgetStart = verfuegbarZuWochenbeginn * (tageInAktuellerWoche / verbleibendeTageAbWochenstart);
@@ -2775,17 +2971,19 @@
                 current: true
             }];
 
-            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest.
-            // Grundlage ist ausschliesslich der Stand zu Wochenbeginn. Ausgaben aus
-            // Haushalt/Freizeit in dieser Woche veraendern daher nur "Diese Woche".
-            // Erst am naechsten Montag wird mit dem dann tatsaechlich verbliebenen Geld
-            // neu verteilt.
+            // Vorschau fuer kommende Wochen bleibt waehrend der laufenden Woche fest,
+            // solange das aktuelle Wochenbudget nicht ins Minus rutscht.
+            // Sobald dieseWocheUebrig negativ ist, wird genau dieser Fehlbetrag sofort
+            // auf die verbleibenden Wochen verteilt. Positive Restbetraege werden dagegen
+            // weiterhin erst am naechsten Montag neu verteilt.
             let futureStart = addDays(kalenderSonntag, 1);
             if (futureStart < zeitraum.start) futureStart = new Date(zeitraum.start);
             if (futureStart <= zeitraum.ende) {
                 const futureSegments = wochenSegmente(futureStart, zeitraum.ende);
                 const futureDays = Math.max(1, Math.round((zeitraum.ende - futureStart) / 86400000) + 1);
-                const fuerFolgewochenZuWochenbeginn = Math.max(0, verfuegbarZuWochenbeginn - wochenBudgetStart);
+                const fuerFolgewochenZuWochenbeginn = verfuegbarZuWochenbeginn - wochenBudgetStart;
+                const wochenMinus = Math.min(0, dieseWocheUebrig);
+                const fuerFolgewochenAktuell = fuerFolgewochenZuWochenbeginn + wochenMinus;
 
                 futureSegments.forEach((seg, idx) => {
                     const days = Math.max(1, Math.round((seg.ende - seg.start) / 86400000) + 1);
@@ -2793,7 +2991,7 @@
                         label: idx === 0 ? "Nächste Woche · Vorschau" : `Woche ${idx + 2} · Vorschau`,
                         start: seg.start,
                         ende: seg.ende,
-                        betrag: fuerFolgewochenZuWochenbeginn * (days / futureDays),
+                        betrag: fuerFolgewochenAktuell * (days / futureDays),
                         current: false
                     });
                 });
@@ -2816,7 +3014,117 @@
             document.getElementById("weekPreviewSheet")?.classList.add("hidden");
         }
 
+        const QUICK_ADD_OPTIONEN = {
+            haushalt: { label: "🛒 Haushalt", action: () => openStartQuickAdd("hausAddPanel", "hausBetrag") },
+            freizeit: { label: "🎉 Freizeit", action: () => openStartQuickAdd("freizeitAddPanel", "freizeitBetrag") },
+            einnahmen: { label: "💰 Einnahme", action: () => openStartQuickAdd("einnahmenAddPanel", "einnahmenText") },
+            fixkosten: { label: "📌 Fixkosten", action: () => openStartQuickAdd("kostenAddPanel", "costText") },
+            versicherungen: { label: "🛡️ Versicherung", action: () => openStartQuickAdd("versAddPanel", "versName") },
+            geplant: { label: "🗓️ Geplante Ausgabe", action: () => openGeplanteAusgaben(true) },
+            sparen: { label: "📈 Sparen & Investieren", action: () => openSparenInvestieren(true) },
+            reisen: { label: "✈️ Reise", action: () => openReiseAuswahlFromHome() }
+        };
+
+        function getQuickAddFavoriten() {
+            daten.Einstellungen ??= {};
+            if (!Array.isArray(daten.Einstellungen.quickAddFavoriten)) daten.Einstellungen.quickAddFavoriten = [...QUICK_ADD_DEFAULT];
+            return daten.Einstellungen.quickAddFavoriten;
+        }
+
+        function renderQuickAddMenu() {
+            const host = document.getElementById("quickAddChoices");
+            if (!host) return;
+            host.innerHTML = "";
+            const favoriten = getQuickAddFavoriten().filter(key => QUICK_ADD_OPTIONEN[key]);
+            if (!favoriten.length) {
+                host.innerHTML = '<div class="quick-add-empty">Keine Favoriten ausgewählt.<br>Du kannst sie unter Einstellungen → Schnelleingabe festlegen.</div>';
+                return;
+            }
+            favoriten.forEach(key => {
+                const option = QUICK_ADD_OPTIONEN[key];
+                const btn = document.createElement("button");
+                btn.className = "add-choice";
+                btn.textContent = option.label;
+                btn.addEventListener("click", option.action);
+                host.appendChild(btn);
+            });
+        }
+
+        function toggleQuickAddSettingsPanel(forceOpen) {
+            const panel = document.getElementById("quickAddSettingsPanel");
+            const btn = document.getElementById("quickAddSettingsToggle");
+            if (!panel || !btn) return;
+            const sollOeffnen = typeof forceOpen === "boolean" ? forceOpen : panel.classList.contains("hidden");
+            panel.classList.toggle("hidden", !sollOeffnen);
+            btn.setAttribute("aria-expanded", sollOeffnen ? "true" : "false");
+            if (sollOeffnen) renderQuickAddSettings();
+        }
+
+        function renderQuickAddSettings() {
+            const host = document.getElementById("quickAddSettingsList");
+            if (!host) return;
+            const aktiv = getQuickAddFavoriten();
+            const reihenfolge = [...aktiv, ...QUICK_ADD_DEFAULT.filter(key => !aktiv.includes(key))];
+            host.innerHTML = "";
+            reihenfolge.forEach((key, index) => {
+                const option = QUICK_ADD_OPTIONEN[key];
+                if (!option) return;
+                const row = document.createElement("div");
+                row.className = "quick-fav-row";
+
+                const label = document.createElement("label");
+                label.className = "quick-fav-toggle";
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.checked = aktiv.includes(key);
+                cb.addEventListener("change", () => toggleQuickAddFavorit(key, cb.checked));
+                const text = document.createElement("span");
+                text.className = "quick-fav-label";
+                text.textContent = option.label;
+                label.append(cb, text);
+
+                const actions = document.createElement("div");
+                actions.className = "quick-fav-actions";
+                const up = document.createElement("button");
+                up.type = "button"; up.textContent = "↑"; up.setAttribute("aria-label", "Nach oben");
+                up.disabled = !aktiv.includes(key) || index === 0;
+                up.addEventListener("click", () => moveQuickAddOption(key, -1));
+                const down = document.createElement("button");
+                down.type = "button"; down.textContent = "↓"; down.setAttribute("aria-label", "Nach unten");
+                down.disabled = !aktiv.includes(key) || index === aktiv.length - 1;
+                down.addEventListener("click", () => moveQuickAddOption(key, 1));
+                actions.append(up, down);
+                row.append(label, actions);
+                host.appendChild(row);
+            });
+        }
+
+        function toggleQuickAddFavorit(key, aktivieren) {
+            const aktuell = getQuickAddFavoriten();
+            if (aktivieren) {
+                if (!aktuell.includes(key)) aktuell.push(key);
+            } else {
+                daten.Einstellungen.quickAddFavoriten = aktuell.filter(x => x !== key);
+            }
+            speichern();
+            renderQuickAddSettings();
+        }
+
+        function moveQuickAddOption(key, richtung) {
+            const aktiv = getQuickAddFavoriten();
+            const alle = [...aktiv, ...QUICK_ADD_DEFAULT.filter(x => !aktiv.includes(x))];
+            const index = alle.indexOf(key);
+            const neu = index + richtung;
+            if (index < 0 || neu < 0 || neu >= alle.length) return;
+            [alle[index], alle[neu]] = [alle[neu], alle[index]];
+            const aktivSet = new Set(aktiv);
+            daten.Einstellungen.quickAddFavoriten = alle.filter(x => aktivSet.has(x));
+            speichern();
+            renderQuickAddSettings();
+        }
+
         function openAddSheet() {
+            renderQuickAddMenu();
             document.getElementById("addSheet")?.classList.remove("hidden");
         }
 
@@ -2955,7 +3263,7 @@
         }
 
         function closeCategoryAddPanels() {
-            ["reisenAddPanel","reiseAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel"].forEach(id => {
+            ["reisenAddPanel","reiseAddPanel","versAddPanel","hausAddPanel","freizeitAddPanel","einnahmenAddPanel","kostenAddPanel","geplantAddPanel","sparenInvestierenAddPanel"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
         }
@@ -3070,6 +3378,322 @@
             ["versicherungenView", "haushaltView", "freizeitView", "einnahmenView", "kostenView"].forEach(id => {
                 document.getElementById(id)?.classList.add("hidden");
             });
+        }
+
+        function updateGeplantBereichUI(setzeStandardBudget = false) {
+            const bereich = document.getElementById("geplantBereich")?.value || "haushalt";
+            const reiseWrap = document.getElementById("geplantReiseWrap");
+            const reiseSelect = document.getElementById("geplantReise");
+            const budgetSelect = document.getElementById("geplantBudgetWirksam");
+            const hinweis = document.getElementById("geplantBudgetHinweis");
+
+            if (reiseWrap) reiseWrap.classList.toggle("hidden", bereich !== "reisen");
+            if (bereich === "reisen" && reiseSelect) {
+                const vorher = reiseSelect.value;
+                const laender = Object.keys(daten.Reisen || {}).sort((a,b) => a.localeCompare(b, "de"));
+                reiseSelect.innerHTML = laender.length
+                    ? laender.map(land => `<option value="${escapeHtml(land)}">${escapeHtml(land)}</option>`).join("")
+                    : `<option value="">Keine Reise vorhanden</option>`;
+                if (laender.includes(vorher)) reiseSelect.value = vorher;
+            }
+
+            if (setzeStandardBudget && budgetSelect) {
+                budgetSelect.value = bereich === "reisen" ? "nein" : "ja";
+            }
+            if (hinweis) {
+                hinweis.textContent = bereich === "reisen"
+                    ? "Reisen sind standardmäßig nicht Teil deines Alltagsbudgets. Du kannst die Reservierung oben trotzdem bewusst aktivieren. Ab dem Folgetag wird die Ausgabe automatisch in die gewählte Reise übernommen."
+                    : "Bei „Ja“ wird der Betrag im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen.";
+            }
+            updateGeplantKategorieSelect();
+        }
+
+        function updateGeplantKategorieSelect() {
+            const bereich = document.getElementById("geplantBereich")?.value || "haushalt";
+            const select = document.getElementById("geplantKategorie");
+            if (!select) return;
+            let kategorien;
+            if (bereich === "freizeit") {
+                kategorien = ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+            } else if (bereich === "reisen") {
+                const land = document.getElementById("geplantReise")?.value || "";
+                const reise = daten.Reisen?.[land] || {};
+                kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
+                if (!kategorien.length) kategorien = ["Essen", "Trinken", "Transport", "Unterkunft", "Aktivität", "Einkauf", "Sonstiges"];
+                kategorien.sort((a,b) => a.localeCompare(b, "de"));
+            } else {
+                kategorien = ["Einkauf", "Tanken", "Drogerie", "Sonstiges"];
+            }
+            const vorher = select.value;
+            select.innerHTML = kategorien.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+            if (kategorien.includes(vorher)) select.value = vorher;
+        }
+
+        function sparenInvestierenAktivImZeitraum(von, bis) {
+            return (daten["Sparen & Investieren"] || []).filter(e => {
+                const d = parseISODate(e.datum);
+                return d && d <= bis;
+            }).map(e => ({ ...e, betrag: parseBetrag(e.betrag) || 0 }));
+        }
+
+        function sparenInvestierenSummen(zeitraum) {
+            const aktiv = sparenInvestierenAktivImZeitraum(zeitraum.start, zeitraum.ende);
+            const investieren = aktiv.filter(e => e.typ === "investieren").reduce((s,e)=>s+e.betrag,0);
+            const sparenPlan = aktiv.filter(e => e.typ === "sparen").reduce((s,e)=>s+e.betrag,0);
+            return { aktiv, investieren, sparenPlan, gesamt: investieren + sparenPlan };
+        }
+
+        function berechneSparBudgetStatus(zeitraum) {
+            const start = getStartgehalt(zeitraum);
+            const einnahmen = einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const fix = laufendeKostenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const vers = versicherungsZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const geplant = geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const alltag = alltagImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const si = sparenInvestierenSummen(zeitraum);
+            const rohFrei = start + einnahmen - fix - vers - geplant - si.investieren - si.sparenPlan - alltag;
+            // Frei verfügbar zeigt die echte Über- oder Unterschreitung des Alltagsbudgets.
+            // Die Rücklage läuft parallel dagegen: -100 € frei bedeutet bei 300 € Rücklage noch 200 € gespart.
+            // Wird stärker überzogen als die Rücklage groß ist, darf auch "Gespart" negativ werden.
+            const sparVerbrauch = Math.max(0, -rohFrei);
+            const gespart = si.sparenPlan - sparVerbrauch;
+            const frei = rohFrei;
+            return { ...si, gespart, sparVerbrauch, frei, rohFrei };
+        }
+
+        function addSparenInvestieren() {
+            const typ = document.getElementById("sparenInvestierenTyp")?.value === "sparen" ? "sparen" : "investieren";
+            const text = formatText(document.getElementById("sparenInvestierenText")?.value);
+            const betrag = parseBetrag(document.getElementById("sparenInvestierenBetrag")?.value);
+            const datum = document.getElementById("sparenInvestierenDatum")?.value || heuteISO();
+            if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
+            daten["Sparen & Investieren"] ??= [];
+            daten["Sparen & Investieren"].push({ id: generateId(), typ, text, betrag, datum });
+            speichern();
+            document.getElementById("sparenInvestierenText").value = "";
+            document.getElementById("sparenInvestierenBetrag").value = "";
+            document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
+            renderSparenInvestieren();
+            renderUebersicht();
+        }
+
+        function deleteSparenInvestieren(id) {
+            const liste = daten["Sparen & Investieren"] || [];
+            const idx = liste.findIndex(e => String(e.id) === String(id));
+            if (idx < 0) return;
+            beginUndoDelete("Spar-/Investment-Eintrag gelöscht");
+            liste.splice(idx, 1);
+            speichern();
+            renderSparenInvestieren();
+            renderUebersicht();
+            finishUndoDelete("Spar-/Investment-Eintrag gelöscht");
+        }
+
+        function editSparenInvestieren(id) {
+            const e = (daten["Sparen & Investieren"] || []).find(x => String(x.id) === String(id));
+            if (!e) return;
+            const text = prompt("Bezeichnung:", e.text || "");
+            if (text === null) return;
+            const betragRaw = prompt("Betrag pro Gehaltsperiode:", formatInputBetrag(e.betrag));
+            if (betragRaw === null) return;
+            const betrag = parseBetrag(betragRaw);
+            if (isNaN(betrag) || betrag <= 0) return;
+            e.text = formatText(text) || e.text;
+            e.betrag = betrag;
+            speichern();
+            renderSparenInvestieren();
+            renderUebersicht();
+        }
+
+        function renderSparenInvestieren() {
+            const listeEl = document.getElementById("sparenInvestierenListe");
+            const sumEl = document.getElementById("sparenInvestierenZusammenfassung");
+            if (!listeEl) return;
+            const z = getGehaltszeitraum();
+            const status = berechneSparBudgetStatus(z);
+            if (sumEl) sumEl.innerHTML = `
+                <div class="bereich-week-info-top"><span class="bereich-week-info-label">Diese Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(status.investieren + status.gespart)}</span></div>
+                <div class="bereich-week-info-breakdown">📈 Investiert: ${formatBetrag(status.investieren)} · 💰 Gespart: ${formatBetrag(status.gespart)} von ${formatBetrag(status.sparenPlan)}${status.sparVerbrauch > 0 ? ` · ${formatBetrag(status.sparVerbrauch)} als Puffer genutzt` : ""}</div>`;
+
+            const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(a.typ).localeCompare(String(b.typ)) || String(a.text).localeCompare(String(b.text), "de"));
+            if (!items.length) {
+                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen ETF-/Investmentbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
+                return;
+            }
+            listeEl.innerHTML = items.map(e => `
+                <div class="item" style="align-items:center;">
+                    <div style="min-width:0;flex:1;">
+                        <div style="font-weight:750;">${e.typ === "sparen" ? "💰" : "📈"} ${escapeHtml(e.text || (e.typ === "sparen" ? "Rücklage" : "Investment"))}</div>
+                        <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)}</div>
+                        <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)} / Gehaltsperiode</div>
+                    </div>
+                    <div class="actions" style="display:flex;gap:5px;">
+                        <button class="edit" onclick="event.stopPropagation();editSparenInvestieren('${String(e.id)}')">✏️</button>
+                        <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')">🗑️</button>
+                    </div>
+                </div>`).join("");
+        }
+
+        function geplanteAusgabenImZeitraum(von, bis) {
+            return (daten["Geplante Ausgaben"] || []).filter(e => {
+                const d = parseISODate(e.datum);
+                return d && d >= von && d <= bis;
+            }).map(e => ({ ...e, betrag: parseBetrag(e.betrag) || 0 }));
+        }
+
+        function geplanteReservierungenImZeitraum(von, bis) {
+            return geplanteAusgabenImZeitraum(von, bis).filter(e => e.budgetWirksam !== false);
+        }
+
+        function addGeplanteAusgabe() {
+            const text = formatText(document.getElementById("geplantText")?.value);
+            const betrag = parseBetrag(document.getElementById("geplantBetrag")?.value);
+            const datum = document.getElementById("geplantDatum")?.value || "";
+            const bereichRaw = document.getElementById("geplantBereich")?.value || "haushalt";
+            const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
+            const land = bereich === "reisen" ? (document.getElementById("geplantReise")?.value || "") : "";
+            const kategorie = document.getElementById("geplantKategorie")?.value || "Sonstiges";
+            const budgetWirksam = document.getElementById("geplantBudgetWirksam")?.value !== "nein";
+            if (!text || !datum || isNaN(betrag) || betrag <= 0) return;
+            if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) {
+                alert("Bitte wähle zuerst eine vorhandene Reise aus.");
+                return;
+            }
+
+            daten["Geplante Ausgaben"] ??= [];
+            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam });
+            speichern();
+            document.getElementById("geplantText").value = "";
+            document.getElementById("geplantBetrag").value = "";
+            document.getElementById("geplantDatum").value = heuteISO();
+            if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
+            if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
+            updateGeplantBereichUI(false);
+            document.getElementById("geplantAddPanel")?.classList.add("hidden");
+            verarbeiteFaelligeGeplanteAusgaben();
+            renderGeplanteAusgaben();
+            renderUebersicht();
+        }
+
+        function deleteGeplanteAusgabe(id) {
+            const liste = daten["Geplante Ausgaben"] || [];
+            const idx = liste.findIndex(e => String(e.id) === String(id));
+            if (idx < 0) return;
+            beginUndoDelete("Geplante Ausgabe gelöscht");
+            liste.splice(idx, 1);
+            speichern();
+            renderGeplanteAusgaben();
+            renderUebersicht();
+            finishUndoDelete("Geplante Ausgabe gelöscht");
+        }
+
+        function editGeplanteAusgabe(id) {
+            const e = (daten["Geplante Ausgaben"] || []).find(x => String(x.id) === String(id));
+            if (!e) return;
+            const text = prompt("Beschreibung:", e.text || "");
+            if (text === null) return;
+            const betragRaw = prompt("Betrag:", formatInputBetrag(e.betrag));
+            if (betragRaw === null) return;
+            const betrag = parseBetrag(betragRaw);
+            if (isNaN(betrag) || betrag <= 0) return;
+            const datum = prompt("Datum (JJJJ-MM-TT):", e.datum || heuteISO());
+            if (datum === null || !parseISODate(datum)) return;
+            e.text = formatText(text) || e.text;
+            e.betrag = betrag;
+            e.datum = datum;
+            speichern();
+            verarbeiteFaelligeGeplanteAusgaben();
+            renderGeplanteAusgaben();
+            renderUebersicht();
+        }
+
+        function verarbeiteFaelligeGeplanteAusgaben() {
+            daten["Geplante Ausgaben"] ??= [];
+            const heute = heuteISO();
+            const offen = [];
+            let geaendert = false;
+
+            daten["Geplante Ausgaben"].forEach(e => {
+                if (!e?.datum || e.datum >= heute) {
+                    offen.push(e);
+                    return;
+                }
+                const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+                const d = parseISODate(e.datum);
+                if (!d) { offen.push(e); return; }
+
+                if (bereich === "reisen") {
+                    const land = e.land || "";
+                    const reise = daten.Reisen?.[land];
+                    if (!reise) { offen.push(e); return; }
+                    const kategorie = e.kategorie || "Sonstiges";
+                    reise[kategorie] ??= [];
+                    const exists = reise[kategorie].some(x => String(x.geplantId || "") === String(e.id));
+                    if (!exists) {
+                        reise[kategorie].push({
+                            id: generateId(),
+                            geplantId: e.id,
+                            ausGeplant: true,
+                            text: e.text || kategorie || "Geplante Ausgabe",
+                            betrag: parseBetrag(e.betrag) || 0,
+                            datum: e.datum
+                        });
+                    }
+                } else {
+                    const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
+                    const monat = d.getMonth() + 1;
+                    store[monat] ??= [];
+                    const exists = store[monat].some(x => String(x.geplantId || "") === String(e.id));
+                    if (!exists) {
+                        store[monat].push({
+                            id: generateId(),
+                            geplantId: e.id,
+                            ausGeplant: true,
+                            text: e.text || e.kategorie || "Geplante Ausgabe",
+                            betrag: parseBetrag(e.betrag) || 0,
+                            datum: e.datum,
+                            kategorie: e.kategorie || "Sonstiges"
+                        });
+                    }
+                }
+                geaendert = true;
+            });
+
+            if (geaendert) {
+                daten["Geplante Ausgaben"] = offen;
+                try { localStorage.setItem("kostenApp", JSON.stringify(daten)); } catch (_) {}
+            }
+            return geaendert;
+        }
+
+        function renderGeplanteAusgaben() {
+            const listeEl = document.getElementById("geplantListe");
+            const sumEl = document.getElementById("geplantZusammenfassung");
+            if (!listeEl) return;
+            const items = [...(daten["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
+            const z = getGehaltszeitraum();
+            const periodItems = geplanteAusgabenImZeitraum(z.start, z.ende);
+            const periodSum = periodItems.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            const reserviertSum = periodItems.filter(e => e.budgetWirksam !== false).reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Geplant in dieser Periode</span><span class="bereich-week-info-amount">${formatBetrag(periodSum)}</span></div><div class="bereich-week-info-breakdown">Davon ${formatBetrag(reserviertSum)} vom Frei verfügbar reserviert.</div>`;
+
+            if (!items.length) {
+                listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere Ausgaben vorab und entscheide selbst, ob sie dein Frei verfügbar reservieren sollen.</div></div>`;
+                return;
+            }
+            listeEl.innerHTML = items.map(e => `
+                <div class="item" style="align-items:center;">
+                    <div style="min-width:0;flex:1;">
+                        <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
+                        <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${e.bereich === "reisen" ? `Reise: ${escapeHtml(e.land || "–")}` : (e.bereich === "freizeit" ? "Freizeit" : "Haushalt")} · ${escapeHtml(e.kategorie || "Sonstiges")}</div>
+                        <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Vom Frei verfügbar reserviert" : "🧾 Ohne Einfluss auf Frei verfügbar"}</div>
+                        <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
+                    </div>
+                    <div class="actions" style="display:flex;gap:5px;">
+                        <button class="edit" onclick="event.stopPropagation();editGeplanteAusgabe('${String(e.id)}')">✏️</button>
+                        <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')">🗑️</button>
+                    </div>
+                </div>`).join("");
         }
 
         /* LÄNDER */
@@ -6536,7 +7160,13 @@
             const laufendSum = laufende.reduce((s,e)=>s+e.betrag,0);
             const versSum = vers.reduce((s,e)=>s+e.betrag,0);
             const einnahmenSum = einnahmenZahlungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
-            const verfuegbar = start + einnahmenSum - haushaltSum - freizeitSum - laufendSum - versSum;
+            const geplantSum = geplanteReservierungenImZeitraum(zeitraum.start, zeitraum.ende).reduce((s,e)=>s+e.betrag,0);
+            const sparStatus = berechneSparBudgetStatus(zeitraum);
+            const investierenSum = sparStatus.investieren;
+            const sparenPlanSum = sparStatus.sparenPlan;
+            const gespartAktuell = sparStatus.gespart;
+            const sparenInvestierenGesamt = investierenSum + sparenPlanSum;
+            const verfuegbar = sparStatus.frei;
 
             const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val); };
             set("homeBudgetStart", start);
@@ -6547,15 +7177,21 @@
             set("homeBudgetFreizeit", freizeitSum);
             set("homeBudgetLaufend", laufendSum);
             set("homeBudgetVers", versSum);
+            set("homeBudgetGeplant", geplantSum);
+            set("homeBudgetInvestieren", investierenSum);
+            set("homeBudgetSparenPlan", sparenPlanSum);
+            set("homeBudgetGespart", gespartAktuell);
+            set("homeGespart", gespartAktuell);
             set("homeBudgetVerfuegbar", verfuegbar);
             set("homeBudgetVerfuegbarDetail", verfuegbar);
 
             const heute = startOfToday();
 
             // Wochenbudget-Logik:
-            // - Montag bis Sonntag bleibt das Wochenbudget unveraendert.
-            // - Ausgaben der aktuellen Woche werden nur vom Wochenbudget abgezogen.
-            // - Erst mit Beginn einer neuen Woche wird aus dem dann verbleibenden Geld neu gerechnet.
+            // - Montag bis Sonntag bleibt das Startbudget der aktuellen Woche unveraendert.
+            // - Ausgaben der aktuellen Woche werden vom Wochenbudget abgezogen.
+            // - Sobald die aktuelle Woche ins Minus rutscht, wird dieses Minus in der Vorschau
+            //   sofort auf die kommenden Wochen verteilt. Positive Reste werden erst Montag neu verteilt.
             // - Angebrochene Wochen bis zum Gehalt werden nach ihren tatsaechlichen Tagen gewichtet.
             const kalenderMontag = montagDerWoche(heute);
             const kalenderSonntag = addDays(kalenderMontag, 6);
@@ -6567,7 +7203,7 @@
                 .reduce((s, e) => s + e.betrag, 0);
 
             // Das Geld, das zu Beginn dieser Woche noch fuer Alltag zur Verfuegung stand.
-            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche;
+            const verfuegbarZuWochenbeginn = start + einnahmenSum - laufendSum - versSum - alltagVorWoche - geplantSum - sparenInvestierenGesamt;
 
             const tageInAktuellerWoche = Math.max(1, Math.round((wochenEnde - wochenStart) / 86400000) + 1);
             const verbleibendeTageAbWochenstart = Math.max(1, Math.round((zeitraum.ende - wochenStart) / 86400000) + 1);
@@ -6621,8 +7257,13 @@
             const f = laufendeKostenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const v = versicherungsZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
             const ei = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const gp = geplanteAusgabenImZeitraum(z.start, z.ende).reduce((s,e)=>s+e.betrag,0);
+            const sparStatus = berechneSparBudgetStatus(z);
             const set=(id,val)=>{const el=document.getElementById(id); if(el) el.innerHTML=formatBetrag(val);};
-            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewReisen",reisenGesamt());
+            set("overviewHaushalt",h); set("overviewFreizeit",fr); set("overviewFixkosten",f); set("overviewVersicherungen",v); set("overviewGeplant",gp); set("overviewReisen",reisenGesamt());
+            set("overviewSparenInvestieren", sparStatus.investieren + sparStatus.gespart);
+            const siSub = document.getElementById("overviewSparenInvestierenSub");
+            if (siSub) siSub.innerHTML = `Investiert ${formatBetrag(sparStatus.investieren)} · Gespart ${formatBetrag(sparStatus.gespart)} von ${formatBetrag(sparStatus.sparenPlan)}`;
             const einnahmenEl = document.getElementById("overviewEinnahmen");
             if (einnahmenEl) einnahmenEl.innerHTML = "+" + formatBetrag(ei);
         }
@@ -6784,6 +7425,7 @@
             el.addEventListener(event, handler);
         }
 
+        verarbeiteFaelligeGeplanteAusgaben();
         renderHomeUebersicht();
 
 
