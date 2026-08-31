@@ -1481,6 +1481,7 @@
         <div class="container">
             <div id="sparenInvestierenZusammenfassung" class="bereich-week-info"></div>
             <div id="sparenInvestierenListe"></div>
+            <button id="sparenInvestierenDeleteAllBtn" onclick="deleteAlleSparenInvestieren()" style="background:red;margin-top:14px;">🗑️ Alles löschen</button>
         </div>
     </div>
 
@@ -1524,6 +1525,7 @@
         <div class="container">
             <div id="geplantZusammenfassung" class="bereich-week-info"></div>
             <div id="geplantListe"></div>
+            <button id="geplantDeleteAllBtn" onclick="deleteAlleGeplanteAusgaben()" style="background:red;margin-top:14px;">🗑️ Alles löschen</button>
         </div>
     </div>
 
@@ -1604,7 +1606,7 @@
         </div>
 
         <div class="container">
-            <button onclick="clearLand()" style="background:red;">
+            <button id="reiseDeleteAllBtn" onclick="clearLand()" style="background:red;">
                 🗑️ Alle Kosten löschen
             </button>
         </div>
@@ -1666,7 +1668,7 @@
             <div id="versicherungenFooter"></div>
         </div>
         <div class="container">
-            <button onclick="deleteAlleVersicherungen()" style="background:red;">🗑️ Alle Versicherungen löschen</button>
+            <button id="versicherungenDeleteAllBtn" onclick="deleteAlleVersicherungen()" style="background:red;">🗑️ Alle Versicherungen löschen</button>
         </div>
 
     </div>
@@ -1718,7 +1720,7 @@
         </div>
 
         <div class="container">
-            <button onclick="deleteAlleHaushalt()" style="background:red;">🗑️ Alle Haushalt-Einträge löschen</button>
+            <button id="haushaltDeleteAllBtn" onclick="deleteAlleHaushalt()" style="background:red;">🗑️ Alle Haushalt-Einträge löschen</button>
         </div>
 
     </div>
@@ -1770,7 +1772,7 @@
         </div>
 
         <div class="container">
-            <button onclick="deleteAlleFreizeit()" style="background:red;">🗑️ Alle Freizeit-Einträge löschen</button>
+            <button id="freizeitDeleteAllBtn" onclick="deleteAlleFreizeit()" style="background:red;">🗑️ Alle Freizeit-Einträge löschen</button>
         </div>
 
     </div>
@@ -1824,7 +1826,7 @@
         </div>
 
         <div class="container">
-            <button onclick="deleteAlleEinnahmen()" style="background:red;">🗑️ Alle Einnahmen löschen</button>
+            <button id="einnahmenDeleteAllBtn" onclick="deleteAlleEinnahmen()" style="background:red;">🗑️ Alle Einnahmen löschen</button>
         </div>
     </div>
 
@@ -1867,7 +1869,7 @@
         </div>
 
         <div class="container">
-            <button onclick="deleteAlleLaufendeKosten()" style="background:red;">
+            <button id="fixkostenDeleteAllBtn" onclick="deleteAlleLaufendeKosten()" style="background:red;">
                 🗑️ Alle Fixkosten löschen
             </button>
         </div>
@@ -3491,6 +3493,20 @@
             finishUndoDelete("Spar-/Investment-Eintrag gelöscht");
         }
 
+        function deleteAlleSparenInvestieren() {
+            const liste = daten["Sparen & Investieren"] || [];
+            if (!liste.length) return;
+            if (!confirm("Alle Spar- und Investment-Einträge wirklich löschen?")) return;
+            beginUndoDelete("Alle Spar- und Investment-Einträge gelöscht");
+            daten["Sparen & Investieren"] = [];
+            state.editSparenInvestierenId = null;
+            speichern();
+            renderSparenInvestieren();
+            renderUebersicht();
+            renderHomeUebersicht();
+            finishUndoDelete("Alle Spar- und Investment-Einträge gelöscht");
+        }
+
         function startEditSparenInvestieren(id) {
             state.editSparenInvestierenId = id;
             renderSparenInvestieren();
@@ -3533,6 +3549,7 @@
                 <div class="bereich-week-info-breakdown">📈 Investiert: ${formatBetrag(status.investieren)} · 💰 Gespart: ${formatBetrag(status.gespart)} von ${formatBetrag(status.sparenPlan)}${status.sparVerbrauch > 0 ? ` · ${formatBetrag(status.sparVerbrauch)} als Puffer genutzt` : ""}</div>`;
 
             const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(a.typ).localeCompare(String(b.typ)) || String(a.datum || "").localeCompare(String(b.datum || "")));
+            document.getElementById("sparenInvestierenDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen Investitionsbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
                 return;
@@ -3622,6 +3639,20 @@
             renderGeplanteAusgaben();
             renderUebersicht();
             finishUndoDelete("Geplante Ausgabe gelöscht");
+        }
+
+        function deleteAlleGeplanteAusgaben() {
+            const liste = daten["Geplante Ausgaben"] || [];
+            if (!liste.length) return;
+            if (!confirm("Alle geplanten Ausgaben wirklich löschen?")) return;
+            beginUndoDelete("Alle geplanten Ausgaben gelöscht");
+            daten["Geplante Ausgaben"] = [];
+            state.editGeplanteAusgabeId = null;
+            speichern();
+            renderGeplanteAusgaben();
+            renderUebersicht();
+            renderHomeUebersicht();
+            finishUndoDelete("Alle geplanten Ausgaben gelöscht");
         }
 
         function startEditGeplanteAusgabe(id) {
@@ -3762,6 +3793,7 @@
             const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
             if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
             const items = [...(daten["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
+            document.getElementById("geplantDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere oder kommende Ausgaben vorab. Am Folgetag werden sie automatisch in den gewählten Bereich übernommen.</div></div>`;
                 return;
@@ -4219,6 +4251,9 @@
 
             div.innerHTML = "";
 
+            const hatReiseAusgaben = Object.values(daten.Reisen[aktuellesLand] || {}).some(liste => Array.isArray(liste) && liste.length > 0);
+            document.getElementById("reiseDeleteAllBtn")?.classList.toggle("hidden", !hatReiseAusgaben);
+
             let gesamt = 0;
             const suche = getSearchTerm("reiseEintragSuche");
 
@@ -4565,6 +4600,7 @@
 
             daten["Laufende Kosten"] ??= { fix: [] };
             daten["Laufende Kosten"].fix ??= [];
+            document.getElementById("fixkostenDeleteAllBtn")?.classList.toggle("hidden", daten["Laufende Kosten"].fix.length === 0);
 
             if (daten["Laufende Kosten"].fix.length === 0) {
                 div.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📌</div><div class="empty-state-title">Noch keine Fixkosten</div><div class="empty-state-text">Regelmäßige monatliche Kosten erscheinen hier, sobald du sie anlegst.</div></div>`;
@@ -4975,6 +5011,7 @@
             if (!Array.isArray(daten.Versicherungen)) {
                 daten.Versicherungen = [];
             }
+            document.getElementById("versicherungenDeleteAllBtn")?.classList.toggle("hidden", daten.Versicherungen.length === 0);
 
             if (!state.offeneVersicherungen) {
                 state.offeneVersicherungen = {};
@@ -5650,9 +5687,11 @@
             if (!container) return;
             container.innerHTML = "";
             const suche = getSearchTerm("einnahmenSuche");
-            const liste = Array.isArray(daten.Einnahmen) ? [...daten.Einnahmen]
+            const alleEinnahmen = Array.isArray(daten.Einnahmen) ? daten.Einnahmen : [];
+            document.getElementById("einnahmenDeleteAllBtn")?.classList.toggle("hidden", alleEinnahmen.length === 0);
+            const liste = [...alleEinnahmen]
                 .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag))
-                .sort((a,b) => String(b.datum).localeCompare(String(a.datum))) : [];
+                .sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
 
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
@@ -6387,6 +6426,8 @@
         }
 
         function renderHaushalt() {
+            const hatEintraege = Object.values(daten.Haushalt || {}).some(liste => Array.isArray(liste) && liste.length > 0);
+            document.getElementById("haushaltDeleteAllBtn")?.classList.toggle("hidden", !hatEintraege);
             renderBereichWocheninfo("haushalt");
             renderRecentAusgaben("haushalt");
         }
@@ -6686,6 +6727,8 @@
         }
 
         function renderFreizeit() {
+            const hatEintraege = Object.values(daten.Freizeit || {}).some(liste => Array.isArray(liste) && liste.length > 0);
+            document.getElementById("freizeitDeleteAllBtn")?.classList.toggle("hidden", !hatEintraege);
             renderBereichWocheninfo("freizeit");
             renderRecentAusgaben("freizeit");
         }
