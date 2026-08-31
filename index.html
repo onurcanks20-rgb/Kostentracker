@@ -1176,6 +1176,19 @@
         }
         .settings-collapse-btn[aria-expanded="true"] .settings-collapse-chevron { transform:rotate(180deg); }
         .quick-add-empty { padding:16px 8px; text-align:center; opacity:.7; line-height:1.45; }
+        .reminder-control { margin-top:8px; padding:10px; border-radius:14px; background:#2c2c2e; }
+        .reminder-toggle { width:100%; margin:0; background:#3a3a3c; display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left; }
+        .reminder-toggle.on { background:#0a84ff; }
+        .reminder-days { margin-top:10px; }
+        .warning-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .warning-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+        .warning-cat { display:flex; align-items:center; gap:8px; background:#2c2c2e; border-radius:12px; padding:10px; font-size:14px; }
+        .warning-cat input { width:auto; margin:0; }
+        .home-warning-card { background:#2c2c2e; border-radius:18px; padding:14px; margin-top:10px; }
+        .home-warning-head { display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; }
+        .home-warning-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+        .home-warning-item { display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:12px; background:#3a3a3c; }
+        .home-warning-item small { display:block; opacity:.65; margin-top:3px; }
 
 </style>
 </head>
@@ -1233,6 +1246,7 @@
                 <span>Gespart</span>
                 <strong id="homeGespart">0,00 €</strong>
             </div>
+            <div id="homeWarnings" class="hidden"></div>
 
             <button class="primary-add" onclick="openAddSheet()">＋ Abrechnung hinzufügen</button>
         </div>
@@ -1345,6 +1359,22 @@
                 <div id="quickAddSettingsPanel" class="hidden">
                     <div class="settings-note" style="margin-top:10px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
                     <div id="quickAddSettingsList" class="quick-fav-list"></div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div style="font-weight:750;font-size:16px;margin-bottom:10px;">🔔 Große Ausgaben & Erinnerungen</div>
+                <label for="warnungenAktiv">Automatische Warnungen</label>
+                <select id="warnungenAktiv" onchange="saveWarnSettings()"><option value="an">An</option><option value="aus">Aus</option></select>
+                <div id="warnGlobalFields">
+                    <div class="warning-settings-grid">
+                        <div><label for="warnSchwelle">Ab Betrag</label><input id="warnSchwelle" type="text" inputmode="decimal" placeholder="100"></div>
+                        <div><label for="warnTage">Warnzeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
+                    </div>
+                    <div class="settings-note">Automatische Hinweise nutzen Schwellwert und Warnzeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</div>
+                    <div style="font-weight:700;margin-top:12px;">Automatisch berücksichtigen</div>
+                    <div id="warnKategorieGrid" class="warning-cat-grid"></div>
+                    <button onclick="saveWarnSettings()" style="margin-top:12px;">Warnungen speichern</button>
                 </div>
             </div>
 
@@ -1904,7 +1934,8 @@
                 gehaltstag: 26,
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
-                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} }
+                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
+                warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
             geloeschteKategorien: {}
         };
@@ -1974,7 +2005,8 @@
                 land: bereich === "reisen" ? (e.land || "") : "",
                 kategorie: e.kategorie || "Sonstiges",
                 // Bestehende geplante Haushalt/Freizeit-Ausgaben waren immer budgetwirksam.
-                budgetWirksam: typeof e.budgetWirksam === "boolean" ? e.budgetWirksam : bereich !== "reisen"
+                budgetWirksam: typeof e.budgetWirksam === "boolean" ? e.budgetWirksam : bereich !== "reisen",
+                warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
             };
         });
 
@@ -1987,7 +2019,8 @@
             typ: e.typ === "sparen" ? "sparen" : "investieren",
             text: (e.text && !["Sparen", "Investieren"].includes(String(e.text).trim())) ? String(e.text).trim() : "",
             betrag: parseBetrag(e.betrag) || 0,
-            datum: e.datum || heuteISO()
+            datum: e.datum || heuteISO(),
+            warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
         }));
 
         daten.Einnahmen = daten.Einnahmen.map(e => ({
@@ -1997,7 +2030,7 @@
             betrag: parseBetrag(e.betrag) || 0,
             datum: e.datum || heuteISO(),
             wiederholung: e.wiederholung === "monatlich" ? "monatlich" : "einmalig",
-            von: e.von || ""
+            von: e.von || "", warnung: !!e.warnung, warnTage: Math.max(0, parseInt(e.warnTage,10) || 14)
         }));
 
         if (!daten.geloeschteKategorien || typeof daten.geloeschteKategorien !== "object" || Array.isArray(daten.geloeschteKategorien)) {
@@ -2007,6 +2040,9 @@
         if (!daten.Einstellungen || typeof daten.Einstellungen !== "object" || Array.isArray(daten.Einstellungen)) {
             daten.Einstellungen = {};
         }
+        const standardWarnungen = structuredClone(STANDARD_DATEN.Einstellungen.warnungen);
+        if (!daten.Einstellungen.warnungen || typeof daten.Einstellungen.warnungen !== "object") daten.Einstellungen.warnungen = standardWarnungen;
+        daten.Einstellungen.warnungen = { ...standardWarnungen, ...daten.Einstellungen.warnungen, kategorien:{...standardWarnungen.kategorien,...(daten.Einstellungen.warnungen.kategorien||{})} };
 
         daten.Einstellungen.gehaltstag = validiereGehaltstag(daten.Einstellungen.gehaltstag);
         if (!daten.Einstellungen.startgehaelter || typeof daten.Einstellungen.startgehaelter !== "object" || Array.isArray(daten.Einstellungen.startgehaelter)) {
@@ -2093,6 +2129,13 @@
                 if (e.kategorie === "Snacks") e.kategorie = "Essen";
             });
         });
+        const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=Math.max(0,parseInt(e.warnTage,10)||14); };
+        Object.values(daten.Haushalt).forEach(l=>Array.isArray(l)&&l.forEach(normalizeReminder));
+        Object.values(daten.Freizeit).forEach(l=>Array.isArray(l)&&l.forEach(normalizeReminder));
+        daten.Versicherungen.forEach(normalizeReminder);
+        daten["Laufende Kosten"].fix.forEach(normalizeReminder);
+        Object.values(daten.Reisen).forEach(r=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(normalizeReminder)));
+
         for (const land of Object.keys(daten.Reisen || {})) {
             const reise = daten.Reisen[land];
             if (!reise || typeof reise !== "object") continue;
@@ -2139,6 +2182,7 @@
             editGeplanteAusgabeId: null,
             editSparenInvestierenId: null,
             homeKostenOffen: false,
+            homeWarnungenOffen: false,
             homeFaelligOffen: false,
             freiDetailsOffen: false,
             kostenAuswahlModus: false,
@@ -2243,6 +2287,23 @@
         function finishUndoDelete(label) {
             showUndoDelete(label);
         }
+
+        const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["einnahmen","Einnahmen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
+        function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
+        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><strong>${on?'An':'Aus'}</strong></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
+        function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); days?.classList.toggle('hidden',!on); const st=btn.querySelector('strong'); if(st)st.textContent=on?'An':'Aus'; }
+        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');days?.classList.add('hidden');const st=btn?.querySelector('strong');if(st)st.textContent='Aus';if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
+        function resetAddReminderForPanel(panelId){const map={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'};if(map[panelId])resetReminderControl(`add:${map[panelId]}`);}
+        function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
+        function findReminderEntry(type,id){ const sid=String(id); if(type==='sparen')return(daten['Sparen & Investieren']||[]).find(e=>String(e.id)===sid); if(type==='geplant')return(daten['Geplante Ausgaben']||[]).find(e=>String(e.id)===sid); if(type==='fixkosten')return(daten['Laufende Kosten']?.fix||[]).find(e=>String(e.id)===sid); if(type==='versicherungen')return(daten.Versicherungen||[]).find(e=>String(e.id)===sid); if(type==='einnahmen')return(daten.Einnahmen||[]).find(e=>String(e.id)===sid); if(type==='haushalt'){for(const l of Object.values(daten.Haushalt||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='freizeit'){for(const l of Object.values(daten.Freizeit||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='reisen'){for(const r of Object.values(daten.Reisen||{}))for(const l of Object.values(r||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} return null; }
+        function decorateReminderControls(){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); document.querySelectorAll('input[type="date"][id^="edit"]').forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
+        function renderWarnSettings(){ const w=getWarnSettings(),a=document.getElementById('warnungenAktiv');if(a)a.value=w.aktiv===false?'aus':'an';const s=document.getElementById('warnSchwelle');if(s)s.value=formatInputBetrag(w.schwelle??100);const t=document.getElementById('warnTage');if(t)t.value=Math.max(0,parseInt(w.tage,10)||14);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',w.aktiv===false);const g=document.getElementById('warnKategorieGrid');if(g)g.innerHTML=WARN_KATEGORIEN.map(([k,l])=>`<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join(''); }
+        function saveWarnSettings(doSave=true){ const w=getWarnSettings();w.aktiv=document.getElementById('warnungenAktiv')?.value!=='aus';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
+        function daysBetween(a,b){return Math.round((b-a)/86400000);}
+        function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14);if(!(manual&&days<=own)&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
+        function toggleHomeWarnings(){state.homeWarnungenOffen=!state.homeWarnungenOffen;renderHomeWarnings();}
+        function renderHomeWarnings(){const h=document.getElementById('homeWarnings');if(!h)return;const rows=collectUpcomingWarnings();h.classList.toggle('hidden',!rows.length);if(!rows.length){h.innerHTML='';return;}const f=rows[0],rest=rows.length-1;h.innerHTML=`<div class="home-warning-card"><div class="home-warning-head" onclick="toggleHomeWarnings()"><div><strong>🔔 Bevorstehende ${rows.length===1?'Erinnerung':'Erinnerungen'}</strong><div style="margin-top:4px;">${escapeHtml(f.name)} · ${formatBetrag(f.betrag)} · ${formatKurzDatum(f.datum)}</div>${rest?`<small style="opacity:.65;">+ ${rest} weitere</small>`:''}</div><span>${state.homeWarnungenOffen?'▲':'▼'}</span></div>${state.homeWarnungenOffen?`<div class="home-warning-list">${rows.map(r=>`<div class="home-warning-item"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.label)} · in ${daysBetween(startOfToday(),r.datum)} Tag(en)${r.manual?' · manuell':''}</small></div><div style="text-align:right"><strong>${formatBetrag(r.betrag)}</strong><small>${formatKurzDatum(r.datum)}</small></div></div>`).join('')}</div>`:''}</div>`;}
+        document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{decorateReminderControls();renderWarnSettings();renderHomeWarnings();},0);new MutationObserver(()=>decorateReminderControls()).observe(document.body,{childList:true,subtree:true});});
 
         function speichern() {
             try {
@@ -2591,6 +2652,7 @@
 
         function openSettings() {
             show("settingsView");
+            renderWarnSettings();
             const z = getGehaltszeitraum();
             const startInput = document.getElementById("startgehaltInput");
             const tagInput = document.getElementById("gehaltstagInput");
@@ -3279,6 +3341,7 @@
             closeCategoryAddPanels();
             if (wirdGeoeffnet) {
                 panel.classList.remove("hidden");
+                resetAddReminderForPanel(panelId);
                 setTimeout(() => {
                     const firstId = setupUniversalAddEnterFlow(panelId) || focusId;
                     document.getElementById(firstId)?.focus();
@@ -3472,7 +3535,7 @@
             const datum = document.getElementById("sparenInvestierenDatum")?.value || heuteISO();
             if (isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             daten["Sparen & Investieren"] ??= [];
-            daten["Sparen & Investieren"].push({ id: generateId(), typ, text, betrag, datum });
+            daten["Sparen & Investieren"].push({ id: generateId(), typ, text, betrag, datum, ...readReminderControl("add:sparen") });
             speichern();
             document.getElementById("sparenInvestierenBetrag").value = "";
             document.getElementById("sparenInvestierenText").value = "";
@@ -3530,6 +3593,7 @@
             e.text = text;
             e.betrag = betrag;
             e.datum = datum;
+            Object.assign(e, readReminderControl(`edit:sparen:${id}`));
             state.editSparenInvestierenId = null;
             speichern();
             renderSparenInvestieren();
@@ -3615,7 +3679,7 @@
             }
 
             daten["Geplante Ausgaben"] ??= [];
-            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam });
+            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
             speichern();
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
@@ -3716,7 +3780,7 @@
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
             if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam });
+            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
             state.editGeplanteAusgabeId = null;
             speichern();
             verarbeiteFaelligeGeplanteAusgaben();
@@ -4189,7 +4253,8 @@
                 id: generateId(),
                 betrag,
                 text,
-                datum
+                datum,
+                ...readReminderControl("add:reisen")
             });
 
             const betragInput = document.getElementById("betrag");
@@ -4764,7 +4829,8 @@
                 betrag,
                 info,
                 datum,
-                tag
+                tag,
+                ...readReminderControl("add:fixkosten")
             });
 
             speichern();
@@ -4836,6 +4902,7 @@
             item.info = info;
             item.datum = datum;
             item.tag = tagAusDatum(datum);
+            Object.assign(item, readReminderControl(`edit:fixkosten:${id}`));
 
             speichern();
             state.editKostenId = null;
@@ -4975,7 +5042,8 @@
                 anbieter,
                 versicherungsnummer,
                 intervall,
-                monat
+                monat,
+                ...readReminderControl("add:versicherungen")
             });
 
             speichern();
@@ -5667,7 +5735,7 @@
 
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
             daten.Einnahmen ??= [];
-            daten.Einnahmen.push({ id: generateId(), text, betrag, von, datum, wiederholung });
+            daten.Einnahmen.push({ id: generateId(), text, betrag, von, datum, wiederholung, ...readReminderControl("add:einnahmen") });
             speichern();
 
             document.getElementById("einnahmenText").value = "";
@@ -5762,7 +5830,7 @@
             const datum = document.getElementById(`editEinnahmenDatum-${id}`)?.value;
             const wiederholung = document.getElementById(`editEinnahmenWiederholung-${id}`)?.value === "monatlich" ? "monatlich" : "einmalig";
             if (!text || isNaN(betrag) || betrag <= 0 || !datum) return;
-            daten.Einnahmen[index] = { ...daten.Einnahmen[index], text, betrag, von, datum, wiederholung };
+            daten.Einnahmen[index] = { ...daten.Einnahmen[index], text, betrag, von, datum, wiederholung, ...readReminderControl(`edit:einnahmen:${id}`) };
             state.editEinnahmeId = null;
             speichern();
             renderEinnahmen();
@@ -5875,7 +5943,8 @@
                 text,
                 betrag,
                 datum,
-                kategorie
+                kategorie,
+                ...readReminderControl("add:haushalt")
             });
             merkeLetzteKategorie("haushalt", kategorie);
 
@@ -5904,7 +5973,7 @@
 
             let monat = new Date(datum).getMonth() + 1;
             daten.Freizeit[monat] ??= [];
-            daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum, kategorie });
+            daten.Freizeit[monat].push({ id: generateId(), text, betrag, datum, kategorie, ...readReminderControl("add:freizeit") });
             merkeLetzteKategorie("freizeit", kategorie);
             speichern();
 
@@ -6624,7 +6693,8 @@
                 text: formatText(text),
                 betrag,
                 datum,
-                kategorie: existingKategorie
+                kategorie: existingKategorie,
+                ...readReminderControl(`edit:haushalt:${id}`)
             };
 
             for (let monat in daten.Haushalt) {
@@ -6763,7 +6833,7 @@
             if(!found) return;
             daten.Freizeit[oldMonat].splice(oldIndex,1);
             const neuerMonat=new Date(datum).getMonth()+1; daten.Freizeit[neuerMonat]??=[];
-            daten.Freizeit[neuerMonat].push({id:found.id,text:formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges"});
+            daten.Freizeit[neuerMonat].push({...found,id:found.id,text:formatText(text),betrag,datum,kategorie:found.kategorie || "Sonstiges",...readReminderControl(`edit:freizeit:${id}`)});
             state.editFreizeitId=null; speichern(); renderFreizeit();
         }
 
@@ -6827,6 +6897,7 @@
             v.versicherungsnummer = nummer || "";
             v.intervall = intervall;
             v.monat = monat;
+            Object.assign(v, readReminderControl(`edit:versicherungen:${id}`));
 
             speichern();
 
@@ -6878,6 +6949,7 @@
                     eintrag.text = text;
                     eintrag.betrag = betrag;
                     eintrag.datum = datum;
+                    Object.assign(eintrag, readReminderControl(`edit:reisen:${id}`));
 
                     break;
                 }
@@ -7128,6 +7200,7 @@
                     faellig.push({
                         typ: "laufend",
                         typLabel: "Fixkosten",
+                        sourceId: k.id,
                         name: k.text || k.name || "Fixkosten",
                         betrag,
                         datum: new Date(datum)
@@ -7168,6 +7241,7 @@
                     faellig.push({
                         typ: "versicherung",
                         typLabel: "Versicherung",
+                        sourceId: v.id,
                         name: v.name || "Versicherung",
                         betrag,
                         datum: new Date(datum)
@@ -7439,6 +7513,7 @@
 
             const zeitraum = getGehaltszeitraum();
             renderBudgetUndWochen(zeitraum);
+            renderHomeWarnings();
 
             // Kosten im aktuellen Gehaltsmonat:
             // Beispiel bei Gehaltstag 26: 26.04. bis 25.05.
