@@ -1190,6 +1190,69 @@
         .home-warning-item { display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:12px; background:#3a3a3c; }
         .home-warning-item small { display:block; opacity:.65; margin-top:3px; }
 
+
+        /* ===== DYNAMISCHE GRAFIK ===== */
+        .grafik-filter-card { padding:14px; }
+        .grafik-filter-title { font-weight:800; font-size:16px; margin-bottom:10px; }
+        .grafik-range-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .grafik-filter-field { margin-top:10px; }
+        .grafik-filter-field input, .grafik-filter-field select, #grafikCategory { margin:0; background:#3a3a3c; color:#fff; color-scheme:dark; }
+        .grafik-chart-card { padding:16px; overflow:hidden; }
+        .grafik-chart-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+        .grafik-chart-title { font-weight:850; font-size:18px; }
+        .grafik-chart-subtitle { font-size:12px; opacity:.62; margin-top:3px; }
+        .grafik-total { white-space:nowrap; font-size:18px; }
+        .grafik-chart { min-height:230px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+        .grafik-donut { width:190px; height:190px; border-radius:50%; position:relative; box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
+        .grafik-donut-center { position:absolute; inset:35px; border-radius:50%; background:#1c1c1e; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px; }
+        .grafik-donut-center span { font-size:11px; opacity:.58; }
+        .grafik-donut-center strong { font-size:22px; margin-top:3px; }
+        .grafik-legend { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+        .grafik-legend-item { display:grid; grid-template-columns:10px minmax(0,1fr) auto; align-items:center; gap:7px; background:#242426; padding:10px; border-radius:13px; min-width:0; }
+        .grafik-dot { width:9px; height:9px; border-radius:50%; }
+        .grafik-legend-name { font-size:12px; opacity:.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .grafik-legend-value { font-size:12px; font-weight:800; white-space:nowrap; }
+        .grafik-svg { width:100%; height:230px; overflow:visible; }
+        .grafik-axis-label { fill:#8e8e93; font-size:10px; }
+        .grafik-grid-line { stroke:rgba(255,255,255,.08); stroke-width:1; }
+        .grafik-bar { fill:#0a84ff; }
+        .grafik-line { fill:none; stroke:#0a84ff; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+        .grafik-point { fill:#64d2ff; stroke:#1c1c1e; stroke-width:2; }
+        .grafik-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .grafik-stat { background:#2c2c2e; border-radius:18px; padding:13px 14px; min-width:0; }
+        .grafik-stat-label { font-size:12px; opacity:.62; }
+        .grafik-stat-value { font-size:19px; font-weight:850; margin-top:4px; overflow-wrap:anywhere; }
+        .grafik-empty { text-align:center; opacity:.65; padding:38px 14px; line-height:1.45; }
+        .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; }
+        .grafik-compare-toggle.on { background:#0a84ff; }
+        .grafik-compare-periods { display:grid; grid-template-columns:1fr; gap:10px; margin-top:12px; }
+        .grafik-compare-period { background:#242426; border-radius:15px; padding:12px; }
+        .grafik-compare-period-title { font-size:13px; font-weight:800; margin-bottom:8px; }
+        .grafik-compare-swap { display:flex; justify-content:center; margin:-2px 0; }
+        .grafik-compare-swap button { width:46px; height:46px; min-height:46px; margin:0; padding:0; border-radius:50%; background:#3a3a3c; font-size:22px; line-height:1; box-shadow:0 3px 12px rgba(0,0,0,.22); }
+        .grafik-compare-swap button:active { transform:scale(.94) rotate(180deg); }
+        .grafik-compare-period .date-range { margin:0; }
+        .grafik-compare-select { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+        .grafik-compare-group { background:#242426; border-radius:15px; overflow:hidden; }
+        .grafik-compare-group-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; cursor:pointer; }
+        .grafik-compare-group-title { font-weight:750; }
+        .grafik-compare-group-count { opacity:.58; font-size:12px; }
+        .grafik-compare-options { padding:0 10px 10px; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+        .grafik-compare-options.hidden { display:none; }
+        .grafik-compare-option { display:flex; align-items:center; gap:8px; min-width:0; padding:9px; border-radius:11px; background:#303033; font-size:13px; }
+        .grafik-compare-option input { width:19px; height:19px; margin:0; flex:0 0 19px; accent-color:#0a84ff; }
+        .grafik-compare-option span { min-width:0; overflow-wrap:anywhere; }
+        .grafik-compare-help { font-size:12px; opacity:.62; line-height:1.4; margin-top:8px; }
+        .grafik-compare-legend { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px; font-size:12px; opacity:.82; }
+        .grafik-compare-legend span { display:flex; align-items:center; gap:6px; }
+        .grafik-compare-swatch { width:10px; height:10px; border-radius:3px; display:inline-block; }
+        @media (max-width:390px) {
+            .grafik-legend { grid-template-columns:1fr; }
+            .grafik-chart { min-height:215px; }
+            .grafik-total { font-size:16px; }
+            .grafik-compare-options { grid-template-columns:1fr; }
+        }
+
 </style>
 </head>
 
@@ -1319,11 +1382,82 @@
                 <button class="icon-btn" onclick="openSettings()" aria-label="Einstellungen">⚙️</button>
             </div>
 
-            <div class="overview-card" style="text-align:center; padding:32px 18px; cursor:default;">
-                <div style="font-size:42px; margin-bottom:12px;">📊</div>
-                <div class="overview-card-title" style="margin-bottom:8px;">Grafikbereich</div>
-                <div class="overview-card-sub">Welche Auswertung hier angezeigt wird, legen wir später fest.</div>
+            <div class="settings-card grafik-filter-card">
+                <div class="grafik-filter-title">Zeitraum</div>
+                <div id="grafikNormalRangeControls">
+                    <div class="grafik-range-tabs">
+                        <button id="grafikRangeMonth" class="quick-category-btn selected" onclick="grafikSetRange('month',this)">Monat</button>
+                        <button id="grafikRangeSalary" class="quick-category-btn" onclick="grafikSetRange('salary',this)">Gehalt</button>
+                        <button id="grafikRangeCustom" class="quick-category-btn" onclick="grafikSetRange('custom',this)">Frei</button>
+                    </div>
+                    <div id="grafikRangeMonthBox" class="grafik-filter-field"><input id="grafikMonth" type="month" onchange="renderGrafik()"></div>
+                    <div id="grafikRangeSalaryBox" class="grafik-filter-field hidden"><select id="grafikSalaryPeriod" onchange="renderGrafik()"></select></div>
+                    <div id="grafikRangeCustomBox" class="grafik-filter-field hidden">
+                        <div class="date-range grafik-date-range">
+                            <div class="date-field"><label>Von</label><input id="grafikVon" type="date" onchange="renderGrafik()"></div>
+                            <div class="date-field"><label>Bis</label><input id="grafikBis" type="date" onchange="renderGrafik()"></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="grafikCompareToggle" class="grafik-compare-toggle" type="button" onclick="grafikToggleCompare()">⇄ Vergleichsmodus</button>
+                <div id="grafikComparePeriods" class="grafik-compare-periods hidden">
+                    <div class="grafik-compare-period">
+                        <div class="grafik-compare-period-title">Zeitraum A</div>
+                        <div class="date-range">
+                            <div class="date-field"><label>Von</label><input id="grafikCompareAVon" type="date" onchange="renderGrafik()"></div>
+                            <div class="date-field"><label>Bis</label><input id="grafikCompareABis" type="date" onchange="renderGrafik()"></div>
+                        </div>
+                    </div>
+                    <div class="grafik-compare-swap">
+                        <button type="button" onclick="grafikSwapComparePeriods()" aria-label="Zeitraum A und B tauschen" title="Zeiträume tauschen">⇄</button>
+                    </div>
+                    <div class="grafik-compare-period">
+                        <div class="grafik-compare-period-title">Zeitraum B</div>
+                        <div class="date-range">
+                            <div class="date-field"><label>Von</label><input id="grafikCompareBVon" type="date" onchange="renderGrafik()"></div>
+                            <div class="date-field"><label>Bis</label><input id="grafikCompareBBis" type="date" onchange="renderGrafik()"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <div id="grafikNormalCategoryCard" class="settings-card grafik-filter-card">
+                <div class="grafik-filter-title">Kategorie</div>
+                <select id="grafikCategory" onchange="grafikCategoryChanged()">
+                    <option value="all">Alle Kategorien</option>
+                    <option value="haushalt">Haushalt</option>
+                    <option value="freizeit">Freizeit</option>
+                    <option value="fixkosten">Fixkosten</option>
+                    <option value="versicherungen">Versicherungen</option>
+                    <option value="einnahmen">Einnahmen</option>
+                    <option value="reisen">Reisen</option>
+                    <option value="geplant">Geplante Ausgaben</option>
+                    <option value="sparen">Sparen &amp; Investieren</option>
+                </select>
+                <div id="grafikSubcategoryWrap" class="hidden grafik-filter-field">
+                    <select id="grafikSubcategory" onchange="renderGrafik()"></select>
+                </div>
+            </div>
+
+            <div id="grafikCompareCategoryCard" class="settings-card grafik-filter-card hidden">
+                <div class="grafik-filter-title">Was möchtest du vergleichen?</div>
+                <div class="grafik-compare-help">Kategorien und Unterkategorien lassen sich frei kombinieren, z. B. Haushalt · Tanken zusammen mit Freizeit · Aktivität.</div>
+                <div id="grafikCompareSelection" class="grafik-compare-select"></div>
+            </div>
+
+            <div id="grafikChartCard" class="settings-card grafik-chart-card">
+                <div class="grafik-chart-head">
+                    <div>
+                        <div id="grafikTitle" class="grafik-chart-title">Ausgaben</div>
+                        <div id="grafikSubtitle" class="grafik-chart-subtitle">–</div>
+                    </div>
+                    <strong id="grafikTotal" class="grafik-total">0,00 €</strong>
+                </div>
+                <div id="grafikChart" class="grafik-chart"></div>
+                <div id="grafikLegend" class="grafik-legend"></div>
+            </div>
+
+            <div id="grafikStats" class="grafik-stats"></div>
         </div>
         <div class="bottom-nav">
             <button onclick="goHome()"><span class="nav-icon">🏠</span>Start</button>
@@ -2648,6 +2782,8 @@
 
         function openGrafik() {
             show("grafikView");
+            initGrafik();
+            renderGrafik();
         }
 
         function openSettings() {
@@ -7671,7 +7807,347 @@
         renderHomeUebersicht();
 
 
-    </script>
+    
+        let grafikRangeType = "month";
+        let grafikCompareMode = false;
+        const grafikCompareSelection = new Set(["haushalt|all","freizeit|all","fixkosten|all","versicherungen|all","einnahmen|all","reisen|all","geplant|all","sparen|all"]);
+        const GRAFIK_COLORS = ["#0a84ff", "#64d2ff", "#ff9f0a", "#bf5af2", "#30d158", "#ff453a", "#ffd60a", "#5e5ce6", "#ff375f"];
+        const GRAFIK_LABELS = {
+            all:"Alle Kategorien", haushalt:"Haushalt", freizeit:"Freizeit", fixkosten:"Fixkosten",
+            versicherungen:"Versicherungen", einnahmen:"Einnahmen", reisen:"Reisen",
+            geplant:"Geplante Ausgaben", sparen:"Sparen & Investieren"
+        };
+
+        function grafikSetRange(type, button){
+            grafikRangeType = type;
+            ["grafikRangeMonth","grafikRangeSalary","grafikRangeCustom"].forEach(id=>document.getElementById(id)?.classList.remove("selected"));
+            button?.classList.add("selected");
+            document.getElementById("grafikRangeMonthBox")?.classList.toggle("hidden",type!=="month");
+            document.getElementById("grafikRangeSalaryBox")?.classList.toggle("hidden",type!=="salary");
+            document.getElementById("grafikRangeCustomBox")?.classList.toggle("hidden",type!=="custom");
+            renderGrafik();
+        }
+
+        function grafikSalaryPeriodForDate(ref){
+            const tag=getGehaltstag();
+            const gehaltDieser=berechneterGehaltstag(ref.getFullYear(),ref.getMonth(),tag);
+            let start,next;
+            if(ref>=gehaltDieser){ start=gehaltDieser; next=berechneterGehaltstag(ref.getFullYear(),ref.getMonth()+1,tag); }
+            else { start=berechneterGehaltstag(ref.getFullYear(),ref.getMonth()-1,tag); next=gehaltDieser; }
+            return {start:new Date(start), ende:addDays(next,-1), naechstesGehalt:new Date(next)};
+        }
+
+        function grafikPopulateSalaryPeriods(){
+            const select=document.getElementById("grafikSalaryPeriod"); if(!select)return;
+            const previous=select.value;
+            const current=grafikSalaryPeriodForDate(startOfToday());
+            const rows=[];
+            let cursor=new Date(current.start);
+            for(let i=0;i<18;i++){
+                const z=grafikSalaryPeriodForDate(cursor);
+                rows.push(z);
+                cursor=addDays(z.start,-1);
+            }
+            select.innerHTML=rows.map((z,i)=>`<option value="${isoAusDate(z.start)}|${isoAusDate(z.ende)}">${i===0?"Aktuell · ":""}${formatDatum(isoAusDate(z.start))} – ${formatDatum(isoAusDate(z.ende))}</option>`).join("");
+            if([...select.options].some(o=>o.value===previous))select.value=previous;
+        }
+
+        function initGrafik(){
+            const month=document.getElementById("grafikMonth");
+            const von=document.getElementById("grafikVon"), bis=document.getElementById("grafikBis");
+            const today=startOfToday();
+            if(month&&!month.value)month.value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}`;
+            if(von&&!von.value)von.value=isoAusDate(new Date(today.getFullYear(),today.getMonth(),1));
+            if(bis&&!bis.value)bis.value=isoAusDate(today);
+            grafikPopulateSalaryPeriods();
+            grafikCategoryChanged(false);
+            grafikInitCompareDates();
+            grafikRenderCompareSelection();
+        }
+
+        function grafikGetRange(){
+            if(grafikRangeType==="salary"){
+                const raw=document.getElementById("grafikSalaryPeriod")?.value||""; const [a,b]=raw.split("|");
+                const start=parseISODate(a), ende=parseISODate(b); if(start&&ende)return {start,ende,label:`${formatDatum(a)} – ${formatDatum(b)}`};
+            }
+            if(grafikRangeType==="custom"){
+                let start=parseISODate(document.getElementById("grafikVon")?.value), ende=parseISODate(document.getElementById("grafikBis")?.value);
+                if(start&&ende&&start>ende)[start,ende]=[ende,start];
+                if(start&&ende)return {start,ende,label:`${formatDatum(isoAusDate(start))} – ${formatDatum(isoAusDate(ende))}`};
+            }
+            const raw=document.getElementById("grafikMonth")?.value||""; const m=raw.match(/^(\d{4})-(\d{2})$/);
+            const now=startOfToday(), y=m?+m[1]:now.getFullYear(), mi=m?+m[2]-1:now.getMonth();
+            const start=new Date(y,mi,1), ende=new Date(y,mi+1,0);
+            return {start,ende,label:start.toLocaleDateString("de-DE",{month:"long",year:"numeric"})};
+        }
+
+        function grafikDays(a,b){ return Math.max(1,Math.round((b-a)/86400000)+1); }
+        function grafikEntry(name,value,sub="",date=null){return {name,value:parseBetrag(value)||0,sub,date};}
+
+        function grafikTravelEntries(von,bis){
+            const out=[];
+            Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.entries(r||{}).forEach(([kat,list])=>{
+                if(!Array.isArray(list))return;
+                list.forEach(e=>{const d=parseISODate(e.datum); if(d&&d>=von&&d<=bis)out.push(grafikEntry(land,e.betrag,kat,d));});
+            }));
+            return out;
+        }
+
+        function grafikSavingsEntries(von,bis){
+            const out=[]; let ref=new Date(von); const seen=new Set();
+            while(ref<=bis){
+                const z=grafikSalaryPeriodForDate(ref), key=isoAusDate(z.start); if(seen.has(key)){ref=addDays(ref,1);continue;} seen.add(key);
+                (daten["Sparen & Investieren"]||[]).forEach(e=>{
+                    const valid=parseISODate(e.datum); if(valid&&valid<=z.ende&&z.start<=bis&&z.ende>=von)out.push(grafikEntry(e.typ==="sparen"?"Sparen":"Investieren",e.betrag,e.typ,z.start));
+                });
+                ref=addDays(z.ende,1);
+            }
+            return out;
+        }
+
+        function grafikEntries(category,von,bis){
+            if(category==="haushalt")return haushaltImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
+            if(category==="freizeit")return freizeitImZeitraum(von,bis).map(e=>grafikEntry(e.kategorie||"Sonstiges",e.betrag,e.kategorie||"Sonstiges",e.datumObj));
+            if(category==="fixkosten")return laufendeKostenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Fixkosten",e.betrag,e.name||"Fixkosten",e.datum));
+            if(category==="versicherungen")return versicherungsZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.name||"Versicherung",e.betrag,e.name||"Versicherung",e.datum));
+            if(category==="einnahmen")return einnahmenZahlungenImZeitraum(von,bis).map(e=>grafikEntry(e.text||"Einnahme",e.betrag,e.text||"Einnahme",e.datumObj));
+            if(category==="reisen")return grafikTravelEntries(von,bis);
+            if(category==="geplant")return geplanteAusgabenImZeitraum(von,bis).map(e=>grafikEntry(e.bereich==="reisen"?(e.land||"Reise"):(e.bereich==="freizeit"?"Freizeit":"Haushalt"),e.betrag,e.kategorie||"Sonstiges",parseISODate(e.datum)));
+            if(category==="sparen")return grafikSavingsEntries(von,bis);
+            return [];
+        }
+
+        function grafikCategoryTotals(von,bis){
+            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(k=>({key:k,name:GRAFIK_LABELS[k],value:grafikEntries(k,von,bis).reduce((s,e)=>s+e.value,0)})).filter(x=>x.value>0);
+        }
+
+        function grafikSubcategories(category){
+            if(category==="haushalt")return ["Einkauf","Tanken","Drogerie","Sonstiges"];
+            if(category==="freizeit")return ["Essen","Trinken","Aktivität","Sonstiges"];
+            if(category==="reisen"){
+                const set=new Set(); Object.values(daten.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
+                return [...set].sort((a,b)=>a.localeCompare(b,"de"));
+            }
+            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
+            if(category==="sparen")return ["Sparen","Investieren"];
+            return [];
+        }
+
+        function grafikInitCompareDates(){
+            const range=grafikGetRange();
+            const aVon=document.getElementById("grafikCompareAVon"), aBis=document.getElementById("grafikCompareABis"), bVon=document.getElementById("grafikCompareBVon"), bBis=document.getElementById("grafikCompareBBis");
+            if(aVon&&!aVon.value)aVon.value=isoAusDate(range.start);
+            if(aBis&&!aBis.value)aBis.value=isoAusDate(range.ende);
+            const days=grafikDays(range.start,range.ende);
+            if(bVon&&!bVon.value)bVon.value=isoAusDate(addDays(range.start,-days));
+            if(bBis&&!bBis.value)bBis.value=isoAusDate(addDays(range.start,-1));
+        }
+
+        function grafikReadCompareRange(prefix){
+            let start=parseISODate(document.getElementById(`grafikCompare${prefix}Von`)?.value), ende=parseISODate(document.getElementById(`grafikCompare${prefix}Bis`)?.value);
+            if(start&&ende&&start>ende)[start,ende]=[ende,start];
+            if(!start||!ende)return null;
+            return {start,ende,label:`${formatDatum(isoAusDate(start))} – ${formatDatum(isoAusDate(ende))}`};
+        }
+
+        function grafikSwapComparePeriods(){
+            const aVon=document.getElementById("grafikCompareAVon");
+            const aBis=document.getElementById("grafikCompareABis");
+            const bVon=document.getElementById("grafikCompareBVon");
+            const bBis=document.getElementById("grafikCompareBBis");
+            if(!aVon||!aBis||!bVon||!bBis)return;
+            const av=aVon.value, ab=aBis.value;
+            aVon.value=bVon.value;
+            aBis.value=bBis.value;
+            bVon.value=av;
+            bBis.value=ab;
+            renderGrafik();
+        }
+
+        function grafikToggleCompare(){
+            grafikCompareMode=!grafikCompareMode;
+            const btn=document.getElementById("grafikCompareToggle");
+            btn?.classList.toggle("on",grafikCompareMode);
+            if(btn)btn.textContent=grafikCompareMode?"✓ Vergleichsmodus aktiv":"⇄ Vergleichsmodus";
+            document.getElementById("grafikNormalRangeControls")?.classList.toggle("hidden",grafikCompareMode);
+            document.getElementById("grafikComparePeriods")?.classList.toggle("hidden",!grafikCompareMode);
+            document.getElementById("grafikNormalCategoryCard")?.classList.toggle("hidden",grafikCompareMode);
+            document.getElementById("grafikCompareCategoryCard")?.classList.toggle("hidden",!grafikCompareMode);
+            if(grafikCompareMode){grafikInitCompareDates();grafikRenderCompareSelection();}
+            renderGrafik();
+        }
+
+        function grafikCompareGroups(){
+            return ["haushalt","freizeit","fixkosten","versicherungen","einnahmen","reisen","geplant","sparen"].map(category=>({category,label:GRAFIK_LABELS[category],subs:grafikSubcategories(category)}));
+        }
+
+        function grafikRenderCompareSelection(){
+            const host=document.getElementById("grafikCompareSelection"); if(!host)return;
+            host.innerHTML=grafikCompareGroups().map(g=>{
+                const totalKey=`${g.category}|all`, totalChecked=grafikCompareSelection.has(totalKey);
+                const subRows=g.subs.map(sub=>{const key=`${g.category}|${sub}`;return `<label class="grafik-compare-option"><input type="checkbox" ${grafikCompareSelection.has(key)?"checked":""} onchange='grafikCompareChoose(${JSON.stringify(g.category)},${JSON.stringify(sub)},this.checked)'><span>${escapeHtml(sub)}</span></label>`;}).join("");
+                const selectedCount=[...grafikCompareSelection].filter(k=>k.startsWith(g.category+"|")).length;
+                return `<div class="grafik-compare-group"><div class="grafik-compare-group-head" onclick='grafikToggleCompareGroup(${JSON.stringify(g.category)})'><div><div class="grafik-compare-group-title">${escapeHtml(g.label)}</div><div class="grafik-compare-group-count">${selectedCount?selectedCount+" ausgewählt":"nichts ausgewählt"}</div></div><span id="grafikCompareChevron-${g.category}">⌄</span></div><div id="grafikCompareOptions-${g.category}" class="grafik-compare-options hidden"><label class="grafik-compare-option"><input type="checkbox" ${totalChecked?"checked":""} onchange='grafikCompareChoose(${JSON.stringify(g.category)},"all",this.checked)'><span>Gesamt</span></label>${subRows}</div></div>`;
+            }).join("");
+        }
+
+        function grafikToggleCompareGroup(category){
+            const el=document.getElementById(`grafikCompareOptions-${category}`), ch=document.getElementById(`grafikCompareChevron-${category}`); if(!el)return;
+            const opening=el.classList.contains("hidden"); el.classList.toggle("hidden"); if(ch)ch.textContent=opening?"⌃":"⌄";
+        }
+
+        function grafikCompareChoose(category,sub,checked){
+            const key=`${category}|${sub}`;
+            if(checked){
+                if(sub==="all"){[...grafikCompareSelection].filter(k=>k.startsWith(category+"|")).forEach(k=>grafikCompareSelection.delete(k));}
+                else grafikCompareSelection.delete(`${category}|all`);
+                grafikCompareSelection.add(key);
+            } else grafikCompareSelection.delete(key);
+            grafikRenderCompareSelection();
+            const options=document.getElementById(`grafikCompareOptions-${category}`); if(options)options.classList.remove("hidden");
+            const ch=document.getElementById(`grafikCompareChevron-${category}`); if(ch)ch.textContent="⌃";
+            renderGrafik();
+        }
+
+        function grafikCompareRows(rangeA,rangeB){
+            const rows=[];
+            for(const key of grafikCompareSelection){
+                const [category,...subParts]=key.split("|"), sub=subParts.join("|")||"all";
+                let a=grafikEntries(category,rangeA.start,rangeA.ende), b=grafikEntries(category,rangeB.start,rangeB.ende);
+                if(sub!=="all"){
+                    const match=e=>category==="sparen"?((sub==="Sparen"&&e.sub==="sparen")||(sub==="Investieren"&&e.sub==="investieren")):e.sub===sub;
+                    a=a.filter(match); b=b.filter(match);
+                }
+                rows.push({label:sub==="all"?GRAFIK_LABELS[category]:`${GRAFIK_LABELS[category]} · ${sub}`,a:a.reduce((sum,e)=>sum+e.value,0),b:b.reduce((sum,e)=>sum+e.value,0)});
+            }
+            return rows.filter(r=>r.a>0||r.b>0);
+        }
+
+        function grafikRenderCompareBars(rows,rangeA,rangeB){
+            const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return;
+            if(!rows.length){chart.innerHTML=`<div class="grafik-empty">Für diese Auswahl gibt es in beiden Zeiträumen noch keine passenden Daten.</div>`;legend.innerHTML="";return;}
+            const W=340,rowH=58,padL=118,padR=10,padT=10,padB=10,H=Math.max(220,padT+rows.length*rowH+padB),innerW=W-padL-padR,max=Math.max(1,...rows.flatMap(r=>[r.a,r.b]));
+            let svg=`<svg class="grafik-svg" style="height:${H}px" viewBox="0 0 ${W} ${H}" role="img">`;
+            rows.forEach((r,i)=>{const y=padT+i*rowH,labelY=y+27,aW=(r.a/max)*innerW,bW=(r.b/max)*innerW;svg+=`<text class="grafik-axis-label" x="0" y="${labelY}" text-anchor="start">${grafikEscapeXml(grafikShortLabel(r.label,17))}</text><rect x="${padL}" y="${y+5}" width="${aW}" height="17" rx="5" fill="${GRAFIK_COLORS[0]}"/><rect x="${padL}" y="${y+31}" width="${bW}" height="17" rx="5" fill="${GRAFIK_COLORS[1]}"/>`;});
+            svg+=`</svg>`;chart.innerHTML=svg;
+            legend.innerHTML=`<div class="grafik-compare-legend" style="grid-column:1/-1"><span><i class="grafik-compare-swatch" style="background:${GRAFIK_COLORS[0]}"></i>A · ${escapeHtml(rangeA.label)}</span><span><i class="grafik-compare-swatch" style="background:${GRAFIK_COLORS[1]}"></i>B · ${escapeHtml(rangeB.label)}</span></div>`;
+        }
+
+        function grafikCategoryChanged(doRender=true){
+            const category=document.getElementById("grafikCategory")?.value||"all", wrap=document.getElementById("grafikSubcategoryWrap"), select=document.getElementById("grafikSubcategory");
+            const subs=grafikSubcategories(category), showSubs=category!=="all"&&subs.length>0;
+            wrap?.classList.toggle("hidden",!showSubs);
+            if(select&&showSubs){const old=select.value;select.innerHTML=`<option value="all">Alle Unterkategorien</option>`+subs.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");if([...select.options].some(o=>o.value===old))select.value=old;}
+            if(doRender)renderGrafik();
+        }
+
+        function grafikGroup(entries){
+            const map=new Map(); entries.forEach(e=>map.set(e.name,(map.get(e.name)||0)+e.value));
+            return [...map.entries()].map(([name,value])=>({name,value})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
+        }
+
+        function grafikPrevRange(range){
+            if(grafikRangeType==="month")return {start:new Date(range.start.getFullYear(),range.start.getMonth()-1,1),ende:new Date(range.start.getFullYear(),range.start.getMonth(),0)};
+            if(grafikRangeType==="salary"){const p=grafikSalaryPeriodForDate(addDays(range.start,-1));return {start:p.start,ende:p.ende};}
+            const days=grafikDays(range.start,range.ende);return {start:addDays(range.start,-days),ende:addDays(range.start,-1)};
+        }
+
+        function grafikFilteredEntries(category,range){
+            let entries=grafikEntries(category,range.start,range.ende); const sub=document.getElementById("grafikSubcategory")?.value||"all";
+            if(category!=="all"&&sub!=="all")entries=entries.filter(e=>category==="sparen"?((sub==="Sparen"&&e.sub==="sparen")||(sub==="Investieren"&&e.sub==="investieren")):e.sub===sub);
+            return entries;
+        }
+
+        function grafikEscapeXml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));}
+        function grafikShortLabel(v,max=10){v=String(v);return v.length>max?v.slice(0,Math.max(1,max-1))+"…":v;}
+
+        function grafikRenderDonut(rows,total){
+            const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return;
+            if(!rows.length||total<=0){chart.innerHTML=`<div class="grafik-empty">Für diesen Zeitraum gibt es noch keine passenden Daten.</div>`;legend.innerHTML="";return;}
+            let p=0; const parts=rows.map((r,i)=>{const a=p,b=p+(r.value/total)*100;p=b;return `${GRAFIK_COLORS[i%GRAFIK_COLORS.length]} ${a}% ${b}%`;});
+            chart.innerHTML=`<div class="grafik-donut" style="background:conic-gradient(${parts.join(",")})"><div class="grafik-donut-center"><span>Gesamt</span><strong>${formatBetrag(total)}</strong></div></div>`;
+            legend.innerHTML=rows.map((r,i)=>`<div class="grafik-legend-item"><span class="grafik-dot" style="background:${GRAFIK_COLORS[i%GRAFIK_COLORS.length]}"></span><span class="grafik-legend-name">${escapeHtml(r.name)}</span><span class="grafik-legend-value">${formatBetrag(r.value)}</span></div>`).join("");
+        }
+
+        function grafikMonthlySeries(category,range){
+            const rows=[]; let cursor=new Date(range.start.getFullYear(),range.start.getMonth(),1);
+            while(cursor<=range.ende){const a=new Date(Math.max(cursor,range.start)), mend=new Date(cursor.getFullYear(),cursor.getMonth()+1,0), b=new Date(Math.min(mend,range.ende));let value;
+                if(category==="all")value=grafikCategoryTotals(a,b).reduce((s,x)=>s+x.value,0); else value=grafikFilteredEntries(category,{start:a,ende:b}).reduce((s,e)=>s+e.value,0);
+                rows.push({label:cursor.toLocaleDateString("de-DE",{month:"short",year:range.start.getFullYear()!==range.ende.getFullYear()?"2-digit":undefined}),value});cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);}
+            return rows;
+        }
+
+        function grafikRenderBars(rows){
+            const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return; legend.innerHTML="";
+            if(!rows.length||Math.max(...rows.map(r=>r.value),0)<=0){chart.innerHTML=`<div class="grafik-empty">Für diesen Zeitraum gibt es noch keine passenden Daten.</div>`;return;}
+            const W=340,H=220,padL=12,padR=8,padT=12,padB=38,innerW=W-padL-padR,innerH=H-padT-padB,max=Math.max(...rows.map(r=>r.value),1),gap=8,bw=Math.max(8,(innerW-gap*(rows.length-1))/rows.length);
+            let svg=`<svg class="grafik-svg" viewBox="0 0 ${W} ${H}" role="img">`;
+            [0,.5,1].forEach(t=>{const y=padT+innerH*(1-t);svg+=`<line class="grafik-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;});
+            rows.forEach((r,i)=>{const h=(r.value/max)*innerH,x=padL+i*(bw+gap),y=padT+innerH-h;svg+=`<rect class="grafik-bar" x="${x}" y="${y}" width="${bw}" height="${h}" rx="4"/><text class="grafik-axis-label" x="${x+bw/2}" y="${H-16}" text-anchor="middle">${grafikEscapeXml(grafikShortLabel(r.label))}</text>`;});
+            svg+=`</svg>`;chart.innerHTML=svg;
+        }
+
+        function grafikRenderLine(rows){
+            const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend"); if(!chart||!legend)return; legend.innerHTML="";
+            if(!rows.length||Math.max(...rows.map(r=>r.value),0)<=0){chart.innerHTML=`<div class="grafik-empty">Für diesen Zeitraum gibt es noch keine passenden Daten.</div>`;return;}
+            const W=340,H=220,padL=14,padR=14,padT=16,padB=38,innerW=W-padL-padR,innerH=H-padT-padB,max=Math.max(...rows.map(r=>r.value),1),step=rows.length>1?innerW/(rows.length-1):0;
+            const pts=rows.map((r,i)=>({x:padL+i*step,y:padT+innerH-(r.value/max)*innerH,...r}));
+            let svg=`<svg class="grafik-svg" viewBox="0 0 ${W} ${H}" role="img">`;
+            [0,.5,1].forEach(t=>{const y=padT+innerH*(1-t);svg+=`<line class="grafik-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;});
+            svg+=`<polyline class="grafik-line" points="${pts.map(p=>`${p.x},${p.y}`).join(" ")}"/>`;
+            pts.forEach((p,i)=>{svg+=`<circle class="grafik-point" cx="${p.x}" cy="${p.y}" r="4"/>`; if(rows.length<=7||i===0||i===rows.length-1||i%2===0)svg+=`<text class="grafik-axis-label" x="${p.x}" y="${H-16}" text-anchor="middle">${grafikEscapeXml(grafikShortLabel(p.label))}</text>`;});
+            svg+=`</svg>`;chart.innerHTML=svg;
+        }
+
+        function renderGrafik(){
+            if(document.getElementById("grafikView")?.classList.contains("hidden"))return;
+            const titleEl=document.getElementById("grafikTitle"), subtitle=document.getElementById("grafikSubtitle"), totalEl=document.getElementById("grafikTotal"), stats=document.getElementById("grafikStats");
+
+            if(grafikCompareMode){
+                const rangeA=grafikReadCompareRange("A"), rangeB=grafikReadCompareRange("B");
+                if(!rangeA||!rangeB){
+                    if(titleEl)titleEl.textContent="Zeiträume vergleichen";
+                    if(subtitle)subtitle.textContent="Bitte beide Zeiträume vollständig auswählen.";
+                    if(totalEl)totalEl.textContent="";
+                    const chart=document.getElementById("grafikChart"), legend=document.getElementById("grafikLegend");
+                    if(chart)chart.innerHTML=`<div class="grafik-empty">Bitte Zeitraum A und Zeitraum B auswählen.</div>`;
+                    if(legend)legend.innerHTML=""; if(stats)stats.innerHTML=""; return;
+                }
+                const rows=grafikCompareRows(rangeA,rangeB), totalA=rows.reduce((s,r)=>s+r.a,0), totalB=rows.reduce((s,r)=>s+r.b,0), diff=totalA-totalB, pct=totalB>0?(diff/totalB)*100:null;
+                if(titleEl)titleEl.textContent="Zeiträume vergleichen";
+                if(subtitle)subtitle.textContent=`A: ${rangeA.label} · B: ${rangeB.label}`;
+                if(totalEl)totalEl.textContent="";
+                grafikRenderCompareBars(rows,rangeA,rangeB);
+                const pctText=pct===null?"–":`${pct>0?"+":""}${pct.toLocaleString("de-DE",{maximumFractionDigits:1})} %`;
+                if(stats)stats.innerHTML=`
+                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum A</div><div class="grafik-stat-value">${formatBetrag(totalA)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Zeitraum B</div><div class="grafik-stat-value">${formatBetrag(totalB)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied</div><div class="grafik-stat-value">${diff>0?"+":""}${formatBetrag(diff)}</div></div>
+                    <div class="grafik-stat"><div class="grafik-stat-label">Unterschied in %</div><div class="grafik-stat-value">${pctText}</div></div>`;
+                return;
+            }
+
+            const range=grafikGetRange(), category=document.getElementById("grafikCategory")?.value||"all", sub=document.getElementById("grafikSubcategory")?.value||"all";
+            let total=0, rows=[];
+            if(category==="all"){rows=grafikCategoryTotals(range.start,range.ende);total=rows.reduce((s,x)=>s+x.value,0);}
+            else {const entries=grafikFilteredEntries(category,range);total=entries.reduce((s,e)=>s+e.value,0);rows=grafikGroup(entries);}
+            const selectedLabel=category==="all"?"Alle Kategorien":GRAFIK_LABELS[category]+(sub!=="all"?` · ${sub}`:"");
+            if(titleEl)titleEl.textContent=category==="einnahmen"?"Einnahmen":category==="all"?"Finanzübersicht":selectedLabel;
+            if(subtitle)subtitle.textContent=range.label;
+            if(totalEl)totalEl.innerHTML=formatBetrag(total);
+
+            const days=grafikDays(range.start,range.ende), months=(range.ende.getFullYear()-range.start.getFullYear())*12+range.ende.getMonth()-range.start.getMonth()+1;
+            if(grafikRangeType==="custom"&&months>=3){const series=grafikMonthlySeries(category,range); if(months>=7)grafikRenderLine(series);else grafikRenderBars(series);}
+            else grafikRenderDonut(rows,total);
+
+            const biggest=rows[0]?.name||"–";
+            if(stats)stats.innerHTML=`
+                <div class="grafik-stat"><div class="grafik-stat-label">Gesamt</div><div class="grafik-stat-value">${formatBetrag(total)}</div></div>
+                <div class="grafik-stat"><div class="grafik-stat-label">Ø pro Tag</div><div class="grafik-stat-value">${formatBetrag(total/days)}</div></div>
+                <div class="grafik-stat"><div class="grafik-stat-label">${category==="all"?"Größte Kategorie":"Größter Anteil"}</div><div class="grafik-stat-value">${escapeHtml(biggest)}</div></div>`;
+        }
+
+</script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
