@@ -1224,7 +1224,7 @@
         .grafik-stat-label { font-size:12px; opacity:.62; }
         .grafik-stat-value { font-size:19px; font-weight:850; margin-top:4px; overflow-wrap:anywhere; }
         .grafik-empty { text-align:center; opacity:.65; padding:38px 14px; line-height:1.45; }
-        .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; min-height:50px; border-radius:15px; }
+        .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; min-height:50px; border-radius:15px; font-size:18px; }
         .grafik-compare-toggle.on { background:#0a84ff; }
         .grafik-compare-periods { display:grid; grid-template-columns:1fr; gap:8px; margin-top:12px; }
         .grafik-compare-periods.hidden { display:none; }
@@ -7904,12 +7904,34 @@
         }
 
         function grafikSavingsEntries(von,bis){
-            const out=[]; let ref=new Date(von); const seen=new Set();
+            // Sparen & Investieren gilt einmal pro Gehaltsperiode.
+            // Fuer die Grafik wird der Betrag dem Start der Gehaltsperiode (Gehaltstag) zugeordnet.
+            // So wird ein Kalendermonat nicht doppelt belastet, nur weil er Teile von zwei
+            // Gehaltsperioden enthaelt.
+            const out=[];
+            let ref=grafikSalaryPeriodForDate(von).start;
+            const seen=new Set();
+
             while(ref<=bis){
-                const z=grafikSalaryPeriodForDate(ref), key=isoAusDate(z.start); if(seen.has(key)){ref=addDays(ref,1);continue;} seen.add(key);
-                (daten["Sparen & Investieren"]||[]).forEach(e=>{
-                    const valid=parseISODate(e.datum); if(valid&&valid<=z.ende&&z.start<=bis&&z.ende>=von)out.push(grafikEntry(e.typ==="sparen"?"Sparen":"Investieren",e.betrag,e.typ,z.start));
-                });
+                const z=grafikSalaryPeriodForDate(ref);
+                const key=isoAusDate(z.start);
+                if(seen.has(key)){
+                    ref=addDays(ref,1);
+                    continue;
+                }
+                seen.add(key);
+
+                // Nur Perioden zaehlen, deren Startdatum im ausgewaehlten Zeitraum liegt.
+                if(z.start>=von && z.start<=bis){
+                    (daten["Sparen & Investieren"]||[]).forEach(e=>{
+                        const valid=parseISODate(e.datum);
+                        // Wie in der Budgetlogik gilt ein Eintrag fuer die Periode,
+                        // sobald "Gueltig ab" spaetestens innerhalb dieser Periode liegt.
+                        if(valid && valid<=z.ende){
+                            out.push(grafikEntry(e.typ==="sparen"?"Sparen":"Investieren",e.betrag,e.typ,z.start));
+                        }
+                    });
+                }
                 ref=addDays(z.ende,1);
             }
             return out;
