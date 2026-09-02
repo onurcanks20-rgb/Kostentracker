@@ -1223,15 +1223,19 @@
         .grafik-stat-label { font-size:12px; opacity:.62; }
         .grafik-stat-value { font-size:19px; font-weight:850; margin-top:4px; overflow-wrap:anywhere; }
         .grafik-empty { text-align:center; opacity:.65; padding:38px 14px; line-height:1.45; }
-        .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; }
+        .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; min-height:50px; border-radius:15px; }
         .grafik-compare-toggle.on { background:#0a84ff; }
-        .grafik-compare-periods { display:grid; grid-template-columns:1fr; gap:10px; margin-top:12px; }
-        .grafik-compare-period { background:#242426; border-radius:15px; padding:12px; }
-        .grafik-compare-period-title { font-size:13px; font-weight:800; margin-bottom:8px; }
-        .grafik-compare-swap { display:flex; justify-content:center; margin:-2px 0; }
-        .grafik-compare-swap button { width:46px; height:46px; min-height:46px; margin:0; padding:0; border-radius:50%; background:#3a3a3c; font-size:22px; line-height:1; box-shadow:0 3px 12px rgba(0,0,0,.22); }
+        .grafik-compare-periods { display:grid; grid-template-columns:1fr; gap:8px; margin-top:12px; }
+        .grafik-compare-periods.hidden { display:none; }
+        .grafik-compare-period { background:#242426; border-radius:16px; padding:12px; border:1px solid rgba(255,255,255,.05); }
+        .grafik-compare-period-title { font-size:14px; font-weight:800; margin-bottom:9px; }
+        .grafik-compare-period .date-range { margin:0; grid-template-columns:1fr 1fr; gap:8px; }
+        .grafik-compare-period .date-field label { margin-left:2px; font-size:11px; }
+        .grafik-compare-period .date-field input[type="date"] { min-height:46px; padding:10px; font-size:14px; border-radius:12px; background:#3a3a3c; color:#fff; color-scheme:dark; }
+        .grafik-compare-swap { display:flex; justify-content:center; align-items:center; height:38px; margin:0; position:relative; }
+        .grafik-compare-swap::before, .grafik-compare-swap::after { content:""; height:1px; background:rgba(255,255,255,.08); flex:1; }
+        .grafik-compare-swap button { width:38px; height:38px; min-height:38px; flex:0 0 38px; margin:0 10px; padding:0; border-radius:50%; background:#3a3a3c; font-size:19px; line-height:1; box-shadow:none; }
         .grafik-compare-swap button:active { transform:scale(.94) rotate(180deg); }
-        .grafik-compare-period .date-range { margin:0; }
         .grafik-compare-select { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
         .grafik-compare-group { background:#242426; border-radius:15px; overflow:hidden; }
         .grafik-compare-group-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; cursor:pointer; }
@@ -1399,7 +1403,7 @@
                         </div>
                     </div>
                 </div>
-                <button id="grafikCompareToggle" class="grafik-compare-toggle" type="button" onclick="grafikToggleCompare()">⇄ Vergleichsmodus</button>
+                <button id="grafikCompareToggle" class="grafik-compare-toggle" type="button" onclick="grafikToggleCompare()">⇄ Zeiträume vergleichen</button>
                 <div id="grafikComparePeriods" class="grafik-compare-periods hidden">
                     <div class="grafik-compare-period">
                         <div class="grafik-compare-period-title">Zeitraum A</div>
@@ -7968,7 +7972,7 @@
             grafikCompareMode=!grafikCompareMode;
             const btn=document.getElementById("grafikCompareToggle");
             btn?.classList.toggle("on",grafikCompareMode);
-            if(btn)btn.textContent=grafikCompareMode?"✓ Vergleichsmodus aktiv":"⇄ Vergleichsmodus";
+            if(btn)btn.textContent=grafikCompareMode?"✓ Vergleich beenden":"⇄ Zeiträume vergleichen";
             document.getElementById("grafikNormalRangeControls")?.classList.toggle("hidden",grafikCompareMode);
             document.getElementById("grafikComparePeriods")?.classList.toggle("hidden",!grafikCompareMode);
             document.getElementById("grafikNormalCategoryCard")?.classList.toggle("hidden",grafikCompareMode);
