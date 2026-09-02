@@ -1195,9 +1195,10 @@
         .grafik-filter-card { padding:14px; }
         .grafik-filter-title { font-weight:800; font-size:16px; margin-bottom:10px; }
         .grafik-range-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-        .grafik-filter-field { margin-top:10px; }
-        .grafik-filter-field input, .grafik-filter-field select, #grafikCategory { margin:0; background:#3a3a3c; color:#fff; color-scheme:dark; }
-        .grafik-chart-card { padding:16px; overflow:hidden; }
+        .grafik-filter-field { margin-top:10px; min-width:0; width:100%; overflow:hidden; }
+        .grafik-filter-field input, .grafik-filter-field select, #grafikCategory { margin:0; background:#3a3a3c; color:#fff; color-scheme:dark; width:100%; max-width:100%; min-width:0; box-sizing:border-box; display:block; }
+        #grafikMonth { -webkit-appearance:none; appearance:none; }
+        .grafik-chart-card { padding:16px; overflow:hidden; width:100%; max-width:100%; margin-bottom:0; }
         .grafik-chart-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
         .grafik-chart-title { font-weight:850; font-size:18px; }
         .grafik-chart-subtitle { font-size:12px; opacity:.62; margin-top:3px; }
@@ -1218,7 +1219,7 @@
         .grafik-bar { fill:#0a84ff; }
         .grafik-line { fill:none; stroke:#0a84ff; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
         .grafik-point { fill:#64d2ff; stroke:#1c1c1e; stroke-width:2; }
-        .grafik-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .grafik-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; padding-bottom:4px; clear:both; }
         .grafik-stat { background:#2c2c2e; border-radius:18px; padding:13px 14px; min-width:0; }
         .grafik-stat-label { font-size:12px; opacity:.62; }
         .grafik-stat-value { font-size:19px; font-weight:850; margin-top:4px; overflow-wrap:anywhere; }
@@ -1250,6 +1251,11 @@
         .grafik-compare-legend { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px; font-size:12px; opacity:.82; }
         .grafik-compare-legend span { display:flex; align-items:center; gap:6px; }
         .grafik-compare-swatch { width:10px; height:10px; border-radius:3px; display:inline-block; }
+        @media (max-width:600px) {
+            .grafik-filter-card, .grafik-chart-card, .grafik-stats { width:100%; max-width:100%; min-width:0; }
+            .grafik-filter-field input[type="month"] { font-size:16px; padding-left:14px; padding-right:14px; }
+            .grafik-stats { margin-top:12px; }
+        }
         @media (max-width:390px) {
             .grafik-legend { grid-template-columns:1fr; }
             .grafik-chart { min-height:215px; }
