@@ -1260,6 +1260,35 @@
             font-weight: 650;
             color: #8e8e93;
         }
+        .date-group-title.has-total {
+            display:flex;
+            align-items:baseline;
+            justify-content:space-between;
+            gap:12px;
+        }
+        .date-group-title .date-group-total {
+            margin-left:auto;
+            color:var(--text);
+            font-size:14px;
+            font-weight:850;
+            white-space:nowrap;
+        }
+        .quick-amount-settings-grid {
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:8px;
+            margin:10px 0 12px;
+        }
+        .quick-amount-settings-grid input {
+            min-width:0;
+            margin:0;
+            text-align:center;
+            padding-left:8px;
+            padding-right:8px;
+        }
+        @media (max-width:390px) {
+            .quick-amount-settings-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
 
 
         /* ===== DYNAMISCHE GRAFIK ===== */
@@ -1966,6 +1995,17 @@
                 <div class="settings-note" style="margin-bottom:12px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
                 <div id="quickAddSettingsList" class="quick-fav-list"></div>
             </div>
+            <div class="settings-page-card">
+                <div style="font-weight:750;font-size:16px;">Schnellbeträge</div>
+                <div class="settings-note" style="margin-top:5px;">Diese vier Beträge erscheinen bei Haushalt, Freizeit und Reisen in der Schnelleingabe.</div>
+                <div class="quick-amount-settings-grid">
+                    <input id="quickAmount1" type="text" inputmode="decimal" aria-label="Schnellbetrag 1">
+                    <input id="quickAmount2" type="text" inputmode="decimal" aria-label="Schnellbetrag 2">
+                    <input id="quickAmount3" type="text" inputmode="decimal" aria-label="Schnellbetrag 3">
+                    <input id="quickAmount4" type="text" inputmode="decimal" aria-label="Schnellbetrag 4">
+                </div>
+                <button onclick="saveQuickAmounts()">Schnellbeträge speichern</button>
+            </div>
         </div>
     </div>
 
@@ -2599,6 +2639,7 @@
                 gehaltstag: 26,
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
+                schnellbetraege: [5, 10, 20, 50],
                 letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
                 designModus: "system",
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
@@ -2721,6 +2762,16 @@
         } else {
             const gueltig = new Set(QUICK_ADD_DEFAULT);
             daten.Einstellungen.quickAddFavoriten = daten.Einstellungen.quickAddFavoriten.filter((key, index, arr) => gueltig.has(key) && arr.indexOf(key) === index);
+        }
+
+        const standardSchnellbetraege = [5, 10, 20, 50];
+        if (!Array.isArray(daten.Einstellungen.schnellbetraege) || daten.Einstellungen.schnellbetraege.length !== 4) {
+            daten.Einstellungen.schnellbetraege = [...standardSchnellbetraege];
+        } else {
+            daten.Einstellungen.schnellbetraege = daten.Einstellungen.schnellbetraege.map((wert, index) => {
+                const n = parseBetrag(wert);
+                return Number.isFinite(n) && n > 0 ? n : standardSchnellbetraege[index];
+            });
         }
 
         if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
@@ -3227,18 +3278,33 @@
         function formatDateGroupLabel(value) {
             const d = value instanceof Date ? new Date(value) : parseISODate(value);
             if (!d || isNaN(d)) return "Ohne Datum";
+            const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+            const heute = heuteISO();
+            const gesternDate = addDays(startOfToday(), -1);
+            const gestern = `${gesternDate.getFullYear()}-${String(gesternDate.getMonth()+1).padStart(2,"0")}-${String(gesternDate.getDate()).padStart(2,"0")}`;
+            if (iso === heute) return "Heute";
+            if (iso === gestern) return "Gestern";
             return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
         }
 
         function appendDateGroupHeader(container, value, options = {}) {
             if (!container) return;
             const el = document.createElement("div");
-            el.className = `date-group-title${options.first ? " first" : ""}${options.inset ? " inset" : ""}`;
-            el.textContent = options.label || formatDateGroupLabel(value);
+            const hasTotal = Number.isFinite(Number(options.total));
+            el.className = `date-group-title${options.first ? " first" : ""}${options.inset ? " inset" : ""}${hasTotal ? " has-total" : ""}`;
+            const left = document.createElement("span");
+            left.textContent = options.label || formatDateGroupLabel(value);
             if (options.note) {
                 const small = document.createElement("small");
                 small.textContent = options.note;
-                el.appendChild(small);
+                left.appendChild(small);
+            }
+            el.appendChild(left);
+            if (hasTotal) {
+                const total = document.createElement("span");
+                total.className = "date-group-total";
+                total.textContent = formatBetrag(Number(options.total));
+                el.appendChild(total);
             }
             container.appendChild(el);
         }
@@ -3367,6 +3433,7 @@
         function openSettingsQuickAdd() {
             show("settingsQuickAddView");
             renderQuickAddSettings();
+            renderQuickAmountSettings();
         }
 
         function openSettingsWarnings() {
@@ -4015,6 +4082,34 @@
             if (sollOeffnen) renderQuickAddSettings();
         }
 
+        function getQuickAmounts() {
+            const fallback = [5, 10, 20, 50];
+            const values = daten.Einstellungen?.schnellbetraege;
+            if (!Array.isArray(values) || values.length !== 4) return fallback;
+            return values.map((wert, index) => {
+                const n = parseBetrag(wert);
+                return Number.isFinite(n) && n > 0 ? n : fallback[index];
+            });
+        }
+
+        function renderQuickAmountSettings() {
+            getQuickAmounts().forEach((wert, index) => {
+                const input = document.getElementById(`quickAmount${index + 1}`);
+                if (input) input.value = formatInputBetrag(wert);
+            });
+        }
+
+        function saveQuickAmounts() {
+            const values = [1,2,3,4].map(index => parseBetrag(document.getElementById(`quickAmount${index}`)?.value));
+            if (values.some(v => !Number.isFinite(v) || v <= 0)) {
+                alert("Bitte vier gültige Schnellbeträge größer als 0 eingeben.");
+                return;
+            }
+            daten.Einstellungen.schnellbetraege = values;
+            speichern();
+            renderQuickAmountSettings();
+        }
+
         function renderQuickAddSettings() {
             const host = document.getElementById("quickAddSettingsList");
             if (!host) return;
@@ -4138,7 +4233,7 @@
             const row = document.createElement("div");
             row.className = "quick-amount-row";
             row.setAttribute("aria-label", "Schnellbeträge");
-            [5,10,20,50].forEach(amount => {
+            getQuickAmounts().forEach(amount => {
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "quick-amount-btn";
@@ -7310,12 +7405,17 @@
             }
 
             const offenMap = istFreizeit ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            const tagesSummen = {};
+            liste.forEach(e => {
+                const key = e.datum || "ohne-datum";
+                tagesSummen[key] = (tagesSummen[key] || 0) + (Number(e.betrag) || 0);
+            });
             let letzterTag = null;
 
             liste.forEach(e => {
                 const tagKey = e.datum || "ohne-datum";
                 if (tagKey !== letzterTag) {
-                    appendDateGroupHeader(container, e.datum, { first: letzterTag === null });
+                    appendDateGroupHeader(container, e.datum, { first: letzterTag === null, total: tagesSummen[tagKey] || 0 });
                     letzterTag = tagKey;
                 }
                 const isEdit = istFreizeit ? String(state.editFreizeitId) === String(e.id) : String(state.editHaushaltId) === String(e.id);
