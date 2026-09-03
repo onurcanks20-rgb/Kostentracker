@@ -3303,7 +3303,7 @@
             if (hasTotal) {
                 const total = document.createElement("span");
                 total.className = "date-group-total";
-                total.textContent = formatBetrag(Number(options.total));
+                total.textContent = formatBetragText(Number(options.total));
                 el.appendChild(total);
             }
             container.appendChild(el);
