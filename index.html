@@ -1647,6 +1647,31 @@
         :root[data-theme="light"] .accent-preview { background:#f2f2f7; }
         :root[data-theme="light"] .accent-color-input::-webkit-color-swatch { border-color:rgba(0,0,0,.12); }
 
+        /* ===== SCHNELLEINGABE: SCHNELLBETRAEGE ===== */
+        .quick-entry-mode #hausText,
+        .quick-entry-mode #freizeitText,
+        .quick-entry-mode #text { display:none !important; }
+        .quick-amount-row {
+            display:grid;
+            grid-template-columns:repeat(4, minmax(0,1fr));
+            gap:8px;
+            margin:2px 0 10px;
+        }
+        .quick-amount-btn {
+            margin:0;
+            min-height:42px;
+            padding:9px 6px;
+            border-radius:12px;
+            background:#3a3a3c;
+            font-size:14px;
+            font-weight:750;
+        }
+        :root[data-theme="light"] .quick-amount-btn { background:#e5e5ea; color:#111; }
+        @media (max-width:360px) {
+            .quick-amount-row { gap:6px; }
+            .quick-amount-btn { font-size:13px; padding:8px 4px; }
+        }
+
 </style>
 </head>
 
@@ -2246,6 +2271,7 @@
 
             <div id="reiseAddPanel" class="category-add-panel hidden">
                 <h3>Reiseausgabe hinzufügen</h3>
+                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="reiseKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Essen" onclick="setReiseKategorie('Essen',this)">🍽️ Essen</button>
                     <button class="quick-category-btn" data-category="Trinken" onclick="setReiseKategorie('Trinken',this)">🥤 Trinken</button>
@@ -2256,7 +2282,6 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setReiseKategorie('Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <select id="kategorieSelect" class="hidden" aria-hidden="true"></select>
-                <input id="betrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="datum" type="date">
                 <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
@@ -2355,6 +2380,7 @@
 
             <div id="hausAddPanel" class="category-add-panel hidden">
                 <h3>Haushaltsausgabe hinzufügen</h3>
+                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="hausKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Einkauf" onclick="setQuickCategory('haus','Einkauf',this)">🛒 Einkauf</button>
                     <button class="quick-category-btn" data-category="Tanken" onclick="setQuickCategory('haus','Tanken',this)">⛽ Tanken</button>
@@ -2362,7 +2388,6 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('haus','Sonstiges',this)">🏠 Sonstiges</button>
                 </div>
                 <input id="hausKategorie" type="hidden" value="Einkauf">
-                <input id="hausBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="hausDatum" type="date">
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
@@ -2407,6 +2432,7 @@
 
             <div id="freizeitAddPanel" class="category-add-panel hidden">
                 <h3>Freizeitausgabe hinzufügen</h3>
+                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
                     <button class="quick-category-btn selected" data-category="Essen" onclick="setQuickCategory('freizeit','Essen',this)">🍽️ Essen</button>
                     <button class="quick-category-btn" data-category="Trinken" onclick="setQuickCategory('freizeit','Trinken',this)">🥤 Trinken</button>
@@ -2414,7 +2440,6 @@
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen">
-                <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
@@ -4084,6 +4109,46 @@
             if (panelId === "reiseAddPanel") applyLetzteReiseKategorie(false);
         }
 
+        function setQuickAmount(inputId, amount) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.value = String(amount).replace(".", ",");
+            input.focus();
+        }
+
+        function prepareQuickEntryLayout(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const config = {
+                hausAddPanel: { amountId:"hausBetrag", textId:"hausText" },
+                freizeitAddPanel: { amountId:"freizeitBetrag", textId:"freizeitText" },
+                reiseAddPanel: { amountId:"betrag", textId:"text" }
+            }[panelId];
+
+            panel.classList.toggle("quick-entry-mode", !!config);
+            panel.querySelectorAll(".quick-amount-row").forEach(el => el.remove());
+            if (!config) return;
+
+            const textInput = document.getElementById(config.textId);
+            if (textInput) textInput.value = "";
+
+            const amountInput = document.getElementById(config.amountId);
+            if (!amountInput) return;
+            const row = document.createElement("div");
+            row.className = "quick-amount-row";
+            row.setAttribute("aria-label", "Schnellbeträge");
+            [5,10,20,50].forEach(amount => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "quick-amount-btn";
+                btn.textContent = `${amount} €`;
+                btn.addEventListener("click", () => setQuickAmount(config.amountId, amount));
+                row.appendChild(btn);
+            });
+            amountInput.insertAdjacentElement("afterend", row);
+        }
+
         function openStartQuickAdd(panelId, focusId) {
             closeAddSheet();
             closeStartQuickAdd();
@@ -4100,6 +4165,7 @@
             host.appendChild(panel);
             panel.classList.remove("hidden");
             prepareStartQuickAdd(panelId);
+            prepareQuickEntryLayout(panelId);
             sheet.classList.remove("hidden");
 
             setTimeout(() => {
@@ -4112,6 +4178,8 @@
             const sheet = document.getElementById("startQuickAddSheet");
             if (startQuickAddContext?.panel) {
                 const {panel, parent, nextSibling} = startQuickAddContext;
+                panel.querySelectorAll(".quick-amount-row").forEach(el => el.remove());
+                panel.classList.remove("quick-entry-mode");
                 panel.classList.add("hidden");
                 if (parent) {
                     if (nextSibling && nextSibling.parentNode === parent) parent.insertBefore(panel, nextSibling);
@@ -4205,6 +4273,7 @@
             if (wirdGeoeffnet) {
                 panel.classList.remove("hidden");
                 resetAddReminderForPanel(panelId);
+                prepareStartQuickAdd(panelId);
                 setTimeout(() => {
                     const firstId = setupUniversalAddEnterFlow(panelId) || focusId;
                     document.getElementById(firstId)?.focus();
@@ -5138,6 +5207,8 @@
             const textInput = document.getElementById("text");
             if (betragInput) betragInput.value = "";
             if (textInput) textInput.value = "";
+            const datumInput = document.getElementById("datum");
+            if (datumInput) datumInput.value = heuteISO();
 
             renderListe();
             renderKategorienUebersicht();
