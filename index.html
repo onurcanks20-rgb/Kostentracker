@@ -17,12 +17,38 @@
 
     <title>Kostentracker</title>
 
+    <script>
+        // Design so frueh wie moeglich anwenden, damit beim Start nichts kurz aufblitzt.
+        (() => {
+            let mode = "system";
+            let saved = null;
+            try {
+                saved = JSON.parse(localStorage.getItem("kostenApp") || "null");
+                const candidate = saved?.Einstellungen?.designModus;
+                if (["dunkel", "hell", "system"].includes(candidate)) mode = candidate;
+            } catch (_) {}
+            const dark = mode === "dunkel" || (mode === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+            document.documentElement.dataset.theme = dark ? "dark" : "light";
+            document.documentElement.dataset.themeMode = mode;
+            const colors = saved?.Einstellungen?.aktionsfarben || {};
+            const valid = value => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+            if (valid(colors.hinzufuegen)) document.documentElement.style.setProperty("--action-add", colors.hinzufuegen);
+            if (valid(colors.bearbeiten)) document.documentElement.style.setProperty("--action-edit", colors.bearbeiten);
+            if (valid(colors.verschieben)) document.documentElement.style.setProperty("--action-move", colors.verschieben);
+            if (valid(colors.schalter)) document.documentElement.style.setProperty("--action-switch", colors.schalter);
+        })();
+    </script>
+
     <style>
         :root {
             --bg: #000;
             --card: #1c1c1e;
             --text: #fff;
             --primary: #3498db;
+            --action-add: #3498db;
+            --action-edit: #3498db;
+            --action-move: #3498db;
+            --action-switch: #3498db;
             --secondary: #2c2c2e;
             --danger: #ff453a;
         }
@@ -144,7 +170,9 @@
             padding: 14px;
             margin: 8px 0;
 
-            background: var(--primary);
+            /* Standard-Aktionsbuttons folgen der eingestellten Hinzufügen-/Speichern-Farbe.
+               Neutrale, gefährliche oder spezielle Buttons überschreiben diese Farbe weiterhin explizit. */
+            background: var(--action-add);
             color: white;
             font-weight: 600;
 
@@ -308,11 +336,12 @@
         }
 
         .edit {
-            background: #3498db;
+            background: var(--action-edit);
         }
 
-        .cut {
-            background: orange;
+        .cut,
+        button[onclick*="moveAusgabe("] {
+            background: var(--action-move);
         }
 
         .delete {
@@ -368,7 +397,7 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: var(--action-add);
             color: white;
         }
 
@@ -436,7 +465,6 @@
             font-size: 13px;
             line-height: 1.35;
         }
-
 
 
         /* 🔥 HOME MONATSÜBERSICHT */
@@ -612,7 +640,7 @@
         .empty-state-icon { font-size:28px; line-height:1; margin-bottom:8px; }
         .empty-state-title { font-size:15px; font-weight:800; }
         .empty-state-text { margin-top:5px; font-size:12px; line-height:1.4; opacity:.62; }
-        .primary-add { font-size:16px; padding:15px; margin:0 0 10px; }
+        .primary-add { font-size:16px; padding:15px; margin:0 0 10px; background:var(--action-add); color:#fff; }
         .overview-link { background:#2c2c2e; }
         .bottom-nav { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); width:min(calc(100% - 24px), 520px); display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:8px; border-radius:20px; background:rgba(28,28,30,.94); backdrop-filter:blur(20px); box-shadow:0 10px 30px rgba(0,0,0,.45); z-index:50; }
         .bottom-nav button { margin:0; padding:9px 6px; background:transparent; font-size:12px; display:flex; flex-direction:column; gap:5px; align-items:center; justify-content:center; color:#aaa; }
@@ -639,7 +667,7 @@
         .category-topbar h2 { flex:1; margin:0; }
         .category-add-btn {
             width:42px; height:42px; flex:0 0 42px; margin:0; padding:0;
-            border-radius:50%; background:#2c2c2e; color:#fff;
+            border-radius:50%; background:var(--action-add); color:#fff;
             display:flex; align-items:center; justify-content:center;
             font-size:28px; font-weight:400; line-height:1;
         }
@@ -883,7 +911,6 @@
         }
 
 
-
         /* ===== iPHONE DASHBOARD POLISH v9 ===== */
         @media (max-width: 600px) {
             .container.app-shell {
@@ -1047,7 +1074,7 @@
             font-size:14px;
             font-weight:700;
         }
-        .select-dot.selected { background:#0a84ff; }
+        .select-dot.selected { background:var(--action-switch); }
     
         /* ===== COMPACT BOTTOM NAV ===== */
         @media (max-width: 600px) {
@@ -1103,7 +1130,7 @@
             max-width: 46%;
             margin: 0;
             padding: 8px 11px;
-            background: #0a84ff;
+            background: var(--action-add);
             font-size: 13px;
             flex: 0 0 auto;
             white-space: nowrap;
@@ -1157,11 +1184,11 @@
 
         /* ===== SCHNELLEINGABE FAVORITEN ===== */
         .quick-fav-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
-        .quick-fav-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; background:#242426; border-radius:14px; padding:10px 10px 10px 12px; }
-        .quick-fav-toggle { display:flex; align-items:center; gap:10px; min-width:0; font-weight:650; }
-        .quick-fav-toggle input { width:22px; height:22px; margin:0; flex:0 0 22px; accent-color:var(--primary); }
-        .quick-fav-label { min-width:0; overflow-wrap:anywhere; }
-        .quick-fav-actions { display:flex; gap:6px; }
+        .quick-fav-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; background:#242426; border-radius:14px; padding:10px 10px 10px 12px; min-height:58px; }
+        .quick-fav-toggle { display:flex; align-items:center; gap:10px; min-width:0; font-weight:650; cursor:pointer; }
+        .quick-fav-toggle input { width:22px; height:22px; min-width:22px; margin:0; flex:0 0 22px; accent-color:var(--action-switch); }
+        .quick-fav-label { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+        .quick-fav-actions { display:flex; gap:6px; flex:0 0 auto; }
         .quick-fav-actions button { width:38px; height:38px; min-height:38px; padding:0; margin:0; border-radius:10px; background:#3a3a3c; font-size:16px; }
         .quick-fav-actions button:disabled { opacity:.28; }
         .quick-fav-card { padding:12px 14px; }
@@ -1176,9 +1203,36 @@
         }
         .settings-collapse-btn[aria-expanded="true"] .settings-collapse-chevron { transform:rotate(180deg); }
         .quick-add-empty { padding:16px 8px; text-align:center; opacity:.7; line-height:1.45; }
-        .reminder-control { margin-top:8px; padding:10px; border-radius:14px; background:#2c2c2e; }
-        .reminder-toggle { width:100%; margin:0; background:#3a3a3c; display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left; }
-        .reminder-toggle.on { background:#0a84ff; }
+        .reminder-control { margin-top:8px; padding:12px 14px; border-radius:14px; background:#2c2c2e; }
+        .reminder-toggle {
+            width:100%; margin:0; padding:0; background:transparent;
+            display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:left;
+        }
+        .reminder-toggle:active { transform:none; opacity:.9; }
+
+        /* Farbthema: aktive Formular-Auswahlen folgen der Schalterfarbe. */
+        input[type="checkbox"],
+        input[type="radio"] {
+            accent-color: var(--action-switch);
+        }
+
+        .ios-switch {
+            position:relative; display:block; width:51px; height:31px; min-width:51px; flex:0 0 51px; border-radius:999px;
+            background:#636366; transition:background .18s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+        }
+        .ios-switch::after {
+            content:""; position:absolute; width:27px; height:27px; left:2px; top:2px; border-radius:50%;
+            background:#fff; box-shadow:0 2px 5px rgba(0,0,0,.28); transition:transform .18s ease;
+        }
+        .reminder-toggle.on .ios-switch, .ios-switch.on { background:var(--action-switch); }
+        .reminder-toggle.on .ios-switch::after, .ios-switch.on::after { transform:translateX(20px); }
+        .settings-switch-row {
+            display:flex; align-items:center; justify-content:space-between; gap:14px;
+            min-height:52px; padding:4px 0 10px;
+        }
+        .settings-switch-row .switch-label { font-size:16px; font-weight:650; }
+        .settings-switch-button { width:51px; min-width:51px; height:31px; min-height:31px; flex:0 0 51px; margin:0; padding:0; background:transparent; overflow:visible; }
+        .settings-switch-button:active { transform:none; opacity:.9; }
         .reminder-days { margin-top:10px; }
         .warning-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
         .warning-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -1189,6 +1243,23 @@
         .home-warning-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
         .home-warning-item { display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:12px; background:#3a3a3c; }
         .home-warning-item small { display:block; opacity:.65; margin-top:3px; }
+
+        /* ===== DATUMSGRUPPEN WIE IN BANKING-APPS ===== */
+        .date-group-title {
+            margin: 18px 4px 7px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #d1d1d6;
+            letter-spacing: .01em;
+        }
+        .date-group-title.first { margin-top: 4px; }
+        .date-group-title.inset { margin-left: 24px; }
+        .date-group-title small {
+            margin-left: 6px;
+            font-size: 11px;
+            font-weight: 650;
+            color: #8e8e93;
+        }
 
 
         /* ===== DYNAMISCHE GRAFIK ===== */
@@ -1216,8 +1287,8 @@
         .grafik-svg { width:100%; height:230px; overflow:visible; }
         .grafik-axis-label { fill:#8e8e93; font-size:10px; }
         .grafik-grid-line { stroke:rgba(255,255,255,.08); stroke-width:1; }
-        .grafik-bar { fill:#0a84ff; }
-        .grafik-line { fill:none; stroke:#0a84ff; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+        .grafik-bar { fill:var(--primary); }
+        .grafik-line { fill:none; stroke:var(--primary); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
         .grafik-point { fill:#64d2ff; stroke:#1c1c1e; stroke-width:2; }
         .grafik-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; padding-bottom:4px; clear:both; }
         .grafik-stat { background:#2c2c2e; border-radius:18px; padding:13px 14px; min-width:0; }
@@ -1225,7 +1296,7 @@
         .grafik-stat-value { font-size:19px; font-weight:850; margin-top:4px; overflow-wrap:anywhere; }
         .grafik-empty { text-align:center; opacity:.65; padding:38px 14px; line-height:1.45; }
         .grafik-compare-toggle { margin-top:12px; background:#3a3a3c; min-height:50px; border-radius:15px; font-size:18px; }
-        .grafik-compare-toggle.on { background:#0a84ff; }
+        .grafik-compare-toggle.on { background:var(--primary); }
         .grafik-compare-periods { display:grid; grid-template-columns:1fr; gap:8px; margin-top:12px; }
         .grafik-compare-periods.hidden { display:none; }
         .grafik-compare-period { background:#242426; border-radius:16px; padding:12px; border:1px solid rgba(255,255,255,.05); }
@@ -1245,7 +1316,7 @@
         .grafik-compare-options { padding:0 10px 10px; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
         .grafik-compare-options.hidden { display:none; }
         .grafik-compare-option { display:flex; align-items:center; gap:8px; min-width:0; padding:9px; border-radius:11px; background:#303033; font-size:13px; }
-        .grafik-compare-option input { width:19px; height:19px; margin:0; flex:0 0 19px; accent-color:#0a84ff; }
+        .grafik-compare-option input { width:19px; height:19px; margin:0; flex:0 0 19px; accent-color:var(--action-switch); }
         .grafik-compare-option span { min-width:0; overflow-wrap:anywhere; }
         .grafik-compare-help { font-size:12px; opacity:.62; line-height:1.4; margin-top:8px; }
         .grafik-compare-legend { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px; font-size:12px; opacity:.82; }
@@ -1262,6 +1333,319 @@
             .grafik-total { font-size:16px; }
             .grafik-compare-options { grid-template-columns:1fr; }
         }
+
+
+        /* ===== EINSTELLUNGEN IM iOS-STIL ===== */
+        .settings-menu { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+        .settings-menu-item {
+            width:100%; margin:0; padding:15px 16px; min-height:68px;
+            display:grid; grid-template-columns:44px minmax(0,1fr) auto;
+            align-items:center; gap:12px; text-align:left;
+            background:#2c2c2e; border-radius:17px; color:#fff;
+        }
+        .settings-menu-item:active { background:#3a3a3c; }
+        .settings-menu-icon {
+            width:40px; height:40px; border-radius:12px; background:#3a3a3c;
+            display:flex; align-items:center; justify-content:center; font-size:20px;
+        }
+        .settings-menu-main { min-width:0; }
+        .settings-menu-title { font-size:16px; font-weight:750; line-height:1.2; }
+        .settings-menu-sub { margin-top:4px; font-size:12px; line-height:1.35; opacity:.58; overflow-wrap:anywhere; }
+        .settings-menu-chevron { font-size:25px; font-weight:300; opacity:.42; line-height:1; }
+        .settings-section-head { margin:6px 4px 12px; font-size:13px; opacity:.55; text-transform:uppercase; letter-spacing:.06em; font-weight:750; }
+        .settings-page-card { background:#2c2c2e; border-radius:20px; padding:16px; margin-top:12px; }
+        .settings-page-card:first-of-type { margin-top:4px; }
+        .settings-page-card h3 { margin:0 0 12px; font-size:17px; }
+        .settings-page-card label:first-child { margin-top:0; }
+        @media (max-width:600px) {
+            #settingsView .container,
+            #settingsBudgetView .container,
+            #settingsQuickAddView .container,
+            #settingsWarningsView .container,
+            #settingsBackupView .container {
+                width:100%; max-width:none; margin:0; padding:14px 16px calc(28px + env(safe-area-inset-bottom));
+                border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+            }
+        }
+
+
+        /* ===== KATEGORIEN / UX POLISH v1 ===== */
+        /* Einheitliche Grundoptik fuer alle Listenbereiche, ohne Datenlogik anzufassen. */
+        #haushaltView .container,
+        #freizeitView .container,
+        #kostenView .container,
+        #versicherungenView .container,
+        #einnahmenView .container,
+        #geplanteAusgabenView .container,
+        #sparenInvestierenView .container,
+        #reisen .container,
+        #land .container {
+            border: 1px solid rgba(255,255,255,.055);
+        }
+
+        .category-topbar {
+            min-height: 48px;
+            margin-bottom: 16px;
+        }
+        .category-topbar h2 {
+            font-size: 26px;
+            line-height: 1.08;
+            letter-spacing: -.02em;
+        }
+        .category-add-btn {
+            width: 44px;
+            height: 44px;
+            flex-basis: 44px;
+            border-radius: 50%;
+            background: var(--action-add);
+            color: #fff;
+            font-size: 27px;
+        }
+        .category-add-panel {
+            padding: 15px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,.06);
+        }
+        .category-add-panel h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .list-search {
+            min-height: 48px;
+            margin: 8px 0 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #2c2c2e;
+            border: 1px solid rgba(255,255,255,.07);
+        }
+        .delete-tools {
+            gap: 8px;
+            margin: 0 0 12px;
+        }
+        .delete-tools button {
+            min-height: 44px;
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 13px;
+            font-size: 14px;
+        }
+
+        .date-group-title {
+            margin: 20px 4px 8px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #f2f2f7;
+            letter-spacing: .01em;
+        }
+        .date-group-title.first { margin-top: 6px; }
+        .date-group-title small {
+            font-size: 11px;
+            font-weight: 650;
+            color: #8e8e93;
+        }
+
+        /* Gleiche Kartenform und Aktionsgroessen in allen Kategorien. */
+        #haushaltView .item,
+        #freizeitView .item,
+        #kostenView .item,
+        #versicherungenView .item,
+        #einnahmenView .item,
+        #geplanteAusgabenView .item,
+        #sparenInvestierenView .item,
+        #land .item {
+            margin: 7px 0;
+            padding: 13px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,.055);
+        }
+        #haushaltView .actions,
+        #freizeitView .actions,
+        #kostenView .actions,
+        #versicherungenView .actions,
+        #einnahmenView .actions,
+        #geplanteAusgabenView .actions,
+        #sparenInvestierenView .actions,
+        #land .actions {
+            gap: 6px !important;
+        }
+        #haushaltView .actions button,
+        #freizeitView .actions button,
+        #kostenView .actions button,
+        #versicherungenView .actions button,
+        #einnahmenView .actions button,
+        #geplanteAusgabenView .actions button,
+        #sparenInvestierenView .actions button,
+        #land .actions button {
+            width: 38px;
+            height: 38px;
+            min-height: 38px;
+            margin: 0;
+            padding: 0;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex: 0 0 38px;
+        }
+
+        .bereich-week-info {
+            border: 1px solid rgba(255,255,255,.055);
+            margin-bottom: 14px;
+        }
+        .bereich-week-info-label { font-size: 12px; }
+        .bereich-week-info-amount { font-size: 21px; }
+
+        /* Summenzeilen wirken wie ein Abschluss der Liste statt wie loses Textstueck. */
+        #kostenGesamt, #versicherungenGesamt, #einnahmenGesamt {
+            text-align: left;
+            margin: 14px 0 2px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #242426;
+            border: 1px solid rgba(255,255,255,.055);
+            font-size: 14px;
+            line-height: 1.35;
+        }
+
+        /* Rote Alles-loeschen-Aktionen optisch klar vom normalen Inhalt trennen. */
+        #haushaltDeleteAllBtn, #freizeitDeleteAllBtn, #fixkostenDeleteAllBtn,
+        #versicherungenDeleteAllBtn, #einnahmenDeleteAllBtn, #geplantDeleteAllBtn,
+        #sparenInvestierenDeleteAllBtn, #reiseDeleteAllBtn {
+            min-height: 48px;
+            border-radius: 15px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            #haushaltView .container,
+            #freizeitView .container,
+            #kostenView .container,
+            #versicherungenView .container,
+            #einnahmenView .container,
+            #geplanteAusgabenView .container,
+            #sparenInvestierenView .container,
+            #reisen .container,
+            #land .container {
+                width: calc(100% - 24px);
+                margin: 12px auto;
+                padding: 15px;
+                border-radius: 22px;
+            }
+            .category-topbar h2 { font-size: clamp(23px, 6.7vw, 28px); }
+            .date-group-title.inset { margin-left: 18px; }
+            #land .item[style*="margin-left"] { margin-left: 14px !important; }
+        }
+
+
+        /* ===== DESIGN: DUNKEL / HELL / SYSTEM ===== */
+        :root[data-theme="light"] {
+            --bg:#f2f2f7;
+            --card:#ffffff;
+            --text:#111111;
+            --secondary:#e5e5ea;
+        }
+        :root[data-theme="light"] { color-scheme: light; }
+        :root[data-theme="dark"] { color-scheme: dark; }
+        :root[data-theme="light"] body { background:#f2f2f7; color:#111; }
+        :root[data-theme="light"] .container { background:rgba(255,255,255,.92); box-shadow:0 10px 30px rgba(0,0,0,.08); }
+        :root[data-theme="light"] .container.app-shell { background:transparent; }
+        :root[data-theme="light"] .hero-card,
+        :root[data-theme="light"] .week-summary-card,
+        :root[data-theme="light"] .salary-row,
+        :root[data-theme="light"] .overview-card,
+        :root[data-theme="light"] .bereich-week-info,
+        :root[data-theme="light"] .category-add-panel,
+        :root[data-theme="light"] .settings-card,
+        :root[data-theme="light"] .settings-page-card,
+        :root[data-theme="light"] .settings-menu-item,
+        :root[data-theme="light"] .archive-filter-card,
+        :root[data-theme="light"] .archive-month,
+        :root[data-theme="light"] .home-warning-card,
+        :root[data-theme="light"] .grafik-card,
+        :root[data-theme="light"] .grafik-filter-card { background:#fff; color:#111; }
+        :root[data-theme="light"] .compact-details,
+        :root[data-theme="light"] .item,
+        :root[data-theme="light"] .land-item,
+        :root[data-theme="light"] .quick-fav-row,
+        :root[data-theme="light"] .empty-state,
+        :root[data-theme="light"] .week-preview-row,
+        :root[data-theme="light"] .reminder-control,
+        :root[data-theme="light"] .home-warning-item { background:#f2f2f7; color:#111; }
+        :root[data-theme="light"] .bottom-nav { background:rgba(250,250,252,.96); box-shadow:0 -8px 24px rgba(0,0,0,.10); }
+        :root[data-theme="light"] .back-btn,
+        :root[data-theme="light"] .icon-btn,
+        :root[data-theme="light"] .overview-link,
+        :root[data-theme="light"] .list-search,
+        :root[data-theme="light"] .quick-category-btn,
+        :root[data-theme="light"] .settings-menu-item:active { background:#e5e5ea; color:#111; }
+        :root[data-theme="light"] .back-icon { border-color:#111; }
+        :root[data-theme="light"] .list-search::placeholder { color:rgba(0,0,0,.42); }
+        :root[data-theme="light"] input,
+        :root[data-theme="light"] select { background:#fff; color:#111; border:1px solid rgba(0,0,0,.09); }
+        :root[data-theme="light"] .archive-date-field input[type="date"] { background:#f2f2f7; color:#111; border-color:rgba(0,0,0,.08); color-scheme:light; }
+        :root[data-theme="light"] .settings-note,
+        :root[data-theme="light"] .overview-card-sub,
+        :root[data-theme="light"] .info-text,
+        :root[data-theme="light"] .detail-note,
+        :root[data-theme="light"] .section-label { color:#555; }
+        :root[data-theme="light"] .calc-row,
+        :root[data-theme="light"] .archive-entry { border-color:rgba(0,0,0,.08); }
+        :root[data-theme="light"] .sheet-backdrop { background:rgba(0,0,0,.32); }
+        :root[data-theme="light"] .add-sheet { background:#f2f2f7; color:#111; }
+        :root[data-theme="light"] .add-choice { background:#fff; color:#111; }
+        :root[data-theme="light"] .undo-toast { background:#fff; color:#111; box-shadow:0 8px 28px rgba(0,0,0,.18); }
+        :root[data-theme="light"] [style*="background:#3a3a3c"],
+        :root[data-theme="light"] [style*="background: #3a3a3c"] { background:#e5e5ea !important; color:#111 !important; }
+        :root[data-theme="light"] [style*="background:#2c2c2e"],
+        :root[data-theme="light"] [style*="background: #2c2c2e"] { background:#fff !important; color:#111 !important; }
+        :root[data-theme="light"] [style*="background:#242426"],
+        :root[data-theme="light"] [style*="background: #242426"],
+        :root[data-theme="light"] [style*="background:#1c1c1e"],
+        :root[data-theme="light"] [style*="background: #1c1c1e"] { background:#f2f2f7 !important; color:#111 !important; }
+
+        .design-choice-list { display:flex; flex-direction:column; gap:0; overflow:hidden; border-radius:18px; background:#2c2c2e; }
+        .design-choice { width:100%; margin:0; min-height:58px; padding:14px 16px; border-radius:0; background:transparent; display:flex; align-items:center; justify-content:space-between; gap:14px; text-align:left; border-top:1px solid rgba(255,255,255,.08); color:inherit; }
+        .design-choice:first-child { border-top:0; }
+        .design-choice-main { min-width:0; display:flex; flex-direction:column; gap:3px; }
+        .design-choice-title { font-size:16px; font-weight:750; }
+        .design-choice-sub { font-size:12px; opacity:.58; }
+        .design-choice-check { width:24px; flex:0 0 24px; font-size:20px; color:var(--action-switch); text-align:center; }
+        :root[data-theme="light"] .design-choice-list { background:#fff; }
+        :root[data-theme="light"] .design-choice { border-color:rgba(0,0,0,.08); color:#111; }
+        .accent-picker-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0 4px; }
+        .accent-picker-copy { min-width:0; }
+        .accent-picker-title { font-size:16px; font-weight:750; }
+        .accent-picker-sub { margin-top:3px; font-size:12px; opacity:.58; line-height:1.35; }
+        .accent-color-input { width:58px; height:44px; min-width:58px; padding:3px; margin:0; border:0; border-radius:12px; background:transparent; cursor:pointer; }
+        .accent-color-input::-webkit-color-swatch-wrapper { padding:0; }
+        .accent-color-input::-webkit-color-swatch { border:2px solid rgba(255,255,255,.18); border-radius:10px; }
+        .accent-color-input::-moz-color-swatch { border:2px solid rgba(255,255,255,.18); border-radius:10px; }
+        .accent-preview { display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px; border-radius:14px; background:#242426; }
+        .accent-preview-dot { width:22px; height:22px; border-radius:50%; background:var(--primary); flex:0 0 22px; }
+        .accent-preview-code { font-size:13px; font-weight:700; opacity:.8; }
+        .accent-reset-btn { background:#3a3a3c; margin-top:10px; }
+        .action-color-mode { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0 4px; }
+        .action-color-mode button { margin:0; background:#3a3a3c; color:#fff; }
+        .action-color-mode button.active { background:var(--primary); }
+        .action-color-grid { display:flex; flex-direction:column; gap:0; margin-top:10px; border-radius:16px; overflow:hidden; background:#242426; }
+        .action-color-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 12px; border-top:1px solid rgba(255,255,255,.08); }
+        .action-color-row:first-child { border-top:0; }
+        .action-color-row span { font-size:14px; font-weight:700; }
+        .action-color-row input[type="color"] { width:54px; height:38px; min-width:54px; padding:2px; margin:0; border:0; border-radius:10px; background:transparent; }
+        .action-color-row input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+        .action-color-row input[type="color"]::-webkit-color-swatch { border:2px solid rgba(255,255,255,.18); border-radius:9px; }
+        .action-color-help { margin-top:9px; font-size:12px; opacity:.58; line-height:1.4; }
+        .action-color-save-row { display:grid; grid-template-columns:1fr; gap:8px; margin-top:12px; }
+        .action-color-save-btn { background:var(--action-add); margin:0; }
+        .action-color-status { min-height:18px; margin-top:8px; font-size:12px; opacity:.65; text-align:center; }
+        :root[data-theme="light"] .action-color-grid { background:#f2f2f7; }
+        :root[data-theme="light"] .action-color-row { border-color:rgba(0,0,0,.08); }
+        :root[data-theme="light"] .action-color-mode button { background:#e5e5ea; color:#111; }
+        :root[data-theme="light"] .action-color-mode button.active { background:var(--primary); color:#fff; }
+        :root[data-theme="light"] .accent-preview { background:#f2f2f7; }
+        :root[data-theme="light"] .accent-color-input::-webkit-color-swatch { border-color:rgba(0,0,0,.12); }
 
 </style>
 </head>
@@ -1483,58 +1867,170 @@
                 <button class="back-btn" onclick="goHome()" aria-label="Zurück"><span class="back-icon"></span></button>
                 <h2 style="flex:1;">Einstellungen</h2>
             </div>
-            <div class="settings-card">
+
+            <div class="settings-section-head">Allgemein</div>
+            <div class="settings-menu">
+                <button class="settings-menu-item" type="button" onclick="openSettingsBudget()">
+                    <span class="settings-menu-icon">💶</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Budget & Gehalt</span><span class="settings-menu-sub">Startgehalt, Gehaltstag und Gehaltszeitraum</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsQuickAdd()">
+                    <span class="settings-menu-icon">⚡</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Schnelleingabe</span><span class="settings-menu-sub">Bereiche auswählen und Reihenfolge anpassen</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsWarnings()">
+                    <span class="settings-menu-icon">🔔</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Erinnerungen & Warnungen</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
+                    <span class="settings-menu-icon">🎨</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Design</span><span id="settingsDesignMenuSub" class="settings-menu-sub">Systemeinstellung verwenden</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+            </div>
+
+            <div class="settings-section-head" style="margin-top:22px;">Daten</div>
+            <div class="settings-menu">
+                <button class="settings-menu-item" type="button" onclick="openGlobalArchiv()">
+                    <span class="settings-menu-icon">📁</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Archiv</span><span class="settings-menu-sub">Alle gespeicherten Einträge durchsuchen und exportieren</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+                <button class="settings-menu-item" type="button" onclick="openSettingsBackup()">
+                    <span class="settings-menu-icon">💾</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Backup</span><span class="settings-menu-sub">Daten sichern oder wiederherstellen</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== EINSTELLUNGEN: BUDGET & GEHALT ===================== -->
+    <div id="settingsBudgetView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Budget & Gehalt</h2>
+            </div>
+            <div class="settings-page-card">
                 <label for="startgehaltInput">Startgehalt / Startbudget</label>
                 <input id="startgehaltInput" type="text" inputmode="decimal" min="0" step="0.01" placeholder="z. B. 2500">
                 <button onclick="saveStartgehalt()">Startgehalt speichern</button>
                 <div class="settings-note">Das Startgehalt wird getrennt für jeden Gehaltszeitraum gespeichert.</div>
-
+            </div>
+            <div class="settings-page-card">
                 <label for="gehaltstagInput">Regulärer Gehaltstag</label>
                 <input id="gehaltstagInput" type="number" min="1" max="31" value="26">
                 <button onclick="saveGehaltstag()">Gehaltstag speichern</button>
                 <div class="settings-note">Fällt der Gehaltstag auf Samstag oder Sonntag, verwendet die App automatisch den folgenden Montag.</div>
             </div>
+        </div>
+    </div>
 
-            <div class="settings-card quick-fav-card">
-                <button id="quickAddSettingsToggle" class="settings-collapse-btn" type="button" onclick="toggleQuickAddSettingsPanel()" aria-expanded="false">
-                    <span>⚡ Schnelleingabe anpassen</span>
-                    <span id="quickAddSettingsChevron" class="settings-collapse-chevron">⌄</span>
-                </button>
-                <div id="quickAddSettingsPanel" class="hidden">
-                    <div class="settings-note" style="margin-top:10px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
-                    <div id="quickAddSettingsList" class="quick-fav-list"></div>
-                </div>
+    <!-- ===================== EINSTELLUNGEN: SCHNELLEINGABE ===================== -->
+    <div id="settingsQuickAddView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Schnelleingabe</h2>
             </div>
+            <div class="settings-page-card">
+                <div class="settings-note" style="margin-bottom:12px;">Lege fest, was unter „Abrechnung hinzufügen“ erscheint und in welcher Reihenfolge.</div>
+                <div id="quickAddSettingsList" class="quick-fav-list"></div>
+            </div>
+        </div>
+    </div>
 
-            <div class="settings-card">
-                <div style="font-weight:750;font-size:16px;margin-bottom:10px;">🔔 Große Ausgaben & Erinnerungen</div>
-                <label for="warnungenAktiv">Automatische Warnungen</label>
-                <select id="warnungenAktiv" onchange="saveWarnSettings()"><option value="an">An</option><option value="aus">Aus</option></select>
+    <!-- ===================== EINSTELLUNGEN: WARNUNGEN ===================== -->
+    <div id="settingsWarningsView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Erinnerungen</h2>
+            </div>
+            <div class="settings-page-card">
+                <div class="settings-switch-row">
+                    <span class="switch-label">Automatische Warnungen</span>
+                    <button id="warnungenAktiv" type="button" class="settings-switch-button" role="switch" aria-checked="true" onclick="toggleWarnungenAktiv()" aria-label="Automatische Warnungen an oder aus">
+                        <span class="ios-switch on" aria-hidden="true"></span>
+                    </button>
+                </div>
                 <div id="warnGlobalFields">
                     <div class="warning-settings-grid">
                         <div><label for="warnSchwelle">Ab Betrag</label><input id="warnSchwelle" type="text" inputmode="decimal" placeholder="100"></div>
                         <div><label for="warnTage">Warnzeit (Tage)</label><input id="warnTage" type="number" min="0" max="365" placeholder="14"></div>
                     </div>
                     <div class="settings-note">Automatische Hinweise nutzen Schwellwert und Warnzeit. Manuell markierte Einträge werden unabhängig vom Schwellwert angezeigt.</div>
-                    <div style="font-weight:700;margin-top:12px;">Automatisch berücksichtigen</div>
+                    <div style="font-weight:700;margin-top:16px;">Automatisch berücksichtigen</div>
                     <div id="warnKategorieGrid" class="warning-cat-grid"></div>
-                    <button onclick="saveWarnSettings()" style="margin-top:12px;">Warnungen speichern</button>
+                    <button onclick="saveWarnSettings()" style="margin-top:14px;">Warnungen speichern</button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="settings-card">
-                <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Archiv</div>
-                <div class="settings-note" style="margin-bottom:12px;">Alle gespeicherten Einträge zentral durchsuchen und nach Zeitraum oder Bereich filtern.</div>
-                <button onclick="openGlobalArchiv()" style="background:#3a3a3c;">📁 Archiv öffnen</button>
+    <!-- ===================== EINSTELLUNGEN: DESIGN ===================== -->
+    <div id="settingsDesignView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Design</h2>
             </div>
+            <div class="settings-page-card">
+                <div class="settings-note" style="margin:0 0 14px;">Wähle, ob der Kostentracker dunkel, hell oder automatisch passend zu deinem iPhone dargestellt wird.</div>
+                <div class="design-choice-list">
+                    <button type="button" class="design-choice" data-design-mode="system" onclick="setDesignMode('system')">
+                        <span class="design-choice-main"><span class="design-choice-title">Automatisch</span><span class="design-choice-sub">Folgt der Systemeinstellung</span></span><span class="design-choice-check"></span>
+                    </button>
+                    <button type="button" class="design-choice" data-design-mode="dunkel" onclick="setDesignMode('dunkel')">
+                        <span class="design-choice-main"><span class="design-choice-title">Dunkel</span><span class="design-choice-sub">Immer dunkles Erscheinungsbild</span></span><span class="design-choice-check"></span>
+                    </button>
+                    <button type="button" class="design-choice" data-design-mode="hell" onclick="setDesignMode('hell')">
+                        <span class="design-choice-main"><span class="design-choice-title">Hell</span><span class="design-choice-sub">Immer helles Erscheinungsbild</span></span><span class="design-choice-check"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="settings-page-card">
+                <div class="accent-picker-title">Button-, Schalter- & Hakenfarben</div>
+                <div class="accent-picker-sub">Oben kannst du alle Farben gleichzeitig setzen. Darunter lässt sich jede Aktion bei Bedarf einzeln anpassen.</div>
+                <div class="action-color-grid">
+                    <div class="action-color-row"><span>Alle Buttons, Schalter & Haken</span><input id="actionColorCommon" type="color" value="#3498db" aria-label="Alle Buttons, Schalter und Haken färben" oninput="previewCommonActionColor(this.value)"></div>
+                    <div class="action-color-row"><span>＋ Hinzufügen / Speichern</span><input id="actionColorAdd" type="color" value="#3498db" aria-label="Farbe für Hinzufügen und Speichern" oninput="previewActionColor('hinzufuegen',this.value)"></div>
+                    <div class="action-color-row"><span>✏️ Bearbeiten</span><input id="actionColorEdit" type="color" value="#3498db" aria-label="Farbe für Bearbeiten" oninput="previewActionColor('bearbeiten',this.value)"></div>
+                    <div class="action-color-row"><span>↪️ Verschieben</span><input id="actionColorMove" type="color" value="#3498db" aria-label="Farbe für Verschieben" oninput="previewActionColor('verschieben',this.value)"></div>
+                    <div class="action-color-row"><span>◉ Schalter & Haken</span><input id="actionColorSwitch" type="color" value="#3498db" aria-label="Farbe für Schalter und Haken" oninput="previewActionColor('schalter',this.value)"></div>
+                </div>
+                <div class="action-color-help">„Alle Buttons, Schalter & Haken“ setzt Hinzufügen/Speichern, Bearbeiten, Verschieben sowie aktive Schalter und Auswahlhaken auf dieselbe Farbe. Darunter kannst du einzelne Farben wieder abweichend wählen. Erst mit „Farben speichern“ wird die Auswahl dauerhaft übernommen. Löschen bleibt bewusst rot.</div>
+                <div class="action-color-save-row">
+                    <button type="button" class="action-color-save-btn" onclick="saveActionColorsFromInputs()">Farben speichern</button>
+                    <button type="button" class="accent-reset-btn" onclick="resetActionColors()">Standardfarbe zurücksetzen</button>
+                </div>
+                <div id="actionColorStatus" class="action-color-status"></div>
+            </div>
+        </div>
+    </div>
 
-            <div class="settings-card">
-                <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Backup</div>
-                <div class="settings-note" style="margin-bottom:12px;">Sichere alle Einträge und Einstellungen in einer Datei. Die Backup-Datei kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</div>
+    <!-- ===================== EINSTELLUNGEN: BACKUP ===================== -->
+    <div id="settingsBackupView" class="hidden">
+        <div class="container">
+            <div class="topbar">
+                <button class="back-btn" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button>
+                <h2 style="flex:1;">Backup</h2>
+            </div>
+            <div class="settings-page-card">
+                <h3>Daten sichern</h3>
+                <div class="settings-note" style="margin-bottom:12px;">Sichere alle Einträge und Einstellungen in einer Datei. Diese kannst du später auf diesem oder einem neuen Gerät wieder einspielen.</div>
                 <button onclick="exportBackup()">⬇️ Backup erstellen</button>
-                <button onclick="document.getElementById('backupImportInput')?.click()" style="background:#3a3a3c;">⬆️ Backup wiederherstellen</button>
+            </div>
+            <div class="settings-page-card">
+                <h3>Backup wiederherstellen</h3>
+                <div class="settings-note" style="margin-bottom:12px;">Beim Wiederherstellen werden die aktuell gespeicherten App-Daten durch das gewählte Backup ersetzt.</div>
+                <button onclick="document.getElementById('backupImportInput')?.click()" style="background:#3a3a3c;">⬆️ Backup auswählen</button>
                 <input id="backupImportInput" type="file" accept="application/json,.json" class="hidden" onchange="importBackup(event)">
-                <div id="backupStatus" class="settings-note" style="margin-top:8px;"></div>
+                <div id="backupStatus" class="settings-note" style="margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -2079,6 +2575,7 @@
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
+                designModus: "system",
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
             geloeschteKategorien: {}
@@ -2184,6 +2681,7 @@
         if (!daten.Einstellungen || typeof daten.Einstellungen !== "object" || Array.isArray(daten.Einstellungen)) {
             daten.Einstellungen = {};
         }
+        if (!["dunkel", "hell", "system"].includes(daten.Einstellungen.designModus)) daten.Einstellungen.designModus = "system";
         const standardWarnungen = structuredClone(STANDARD_DATEN.Einstellungen.warnungen);
         if (!daten.Einstellungen.warnungen || typeof daten.Einstellungen.warnungen !== "object") daten.Einstellungen.warnungen = standardWarnungen;
         daten.Einstellungen.warnungen = { ...standardWarnungen, ...daten.Einstellungen.warnungen, kategorien:{...standardWarnungen.kategorien,...(daten.Einstellungen.warnungen.kategorien||{})} };
@@ -2238,6 +2736,14 @@
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
 
+
+        applyDesignTheme();
+        if (window.matchMedia) {
+            const designMedia = window.matchMedia("(prefers-color-scheme: dark)");
+            const onSystemDesignChange = () => { if (getDesignMode() === "system") applyDesignTheme(); };
+            if (designMedia.addEventListener) designMedia.addEventListener("change", onSystemDesignChange);
+            else if (designMedia.addListener) designMedia.addListener(onSystemDesignChange);
+        }
 
         for (let i = 1; i <= 12; i++) {
             daten.Haushalt[i] ??= [];
@@ -2381,7 +2887,6 @@
         }));
 
 
-
         let undoDeleteState = null;
         let undoDeleteTimer = null;
 
@@ -2434,15 +2939,16 @@
 
         const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["einnahmen","Einnahmen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
         function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
-        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><strong>${on?'An':'Aus'}</strong></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
-        function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); days?.classList.toggle('hidden',!on); const st=btn.querySelector('strong'); if(st)st.textContent=on?'An':'Aus'; }
-        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');days?.classList.add('hidden');const st=btn?.querySelector('strong');if(st)st.textContent='Aus';if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
+        function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
+        function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
+        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
         function resetAddReminderForPanel(panelId){const map={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'};if(map[panelId])resetReminderControl(`add:${map[panelId]}`);}
         function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
         function findReminderEntry(type,id){ const sid=String(id); if(type==='sparen')return(daten['Sparen & Investieren']||[]).find(e=>String(e.id)===sid); if(type==='geplant')return(daten['Geplante Ausgaben']||[]).find(e=>String(e.id)===sid); if(type==='fixkosten')return(daten['Laufende Kosten']?.fix||[]).find(e=>String(e.id)===sid); if(type==='versicherungen')return(daten.Versicherungen||[]).find(e=>String(e.id)===sid); if(type==='einnahmen')return(daten.Einnahmen||[]).find(e=>String(e.id)===sid); if(type==='haushalt'){for(const l of Object.values(daten.Haushalt||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='freizeit'){for(const l of Object.values(daten.Freizeit||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='reisen'){for(const r of Object.values(daten.Reisen||{}))for(const l of Object.values(r||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} return null; }
         function decorateReminderControls(){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); document.querySelectorAll('input[type="date"][id^="edit"]').forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
-        function renderWarnSettings(){ const w=getWarnSettings(),a=document.getElementById('warnungenAktiv');if(a)a.value=w.aktiv===false?'aus':'an';const s=document.getElementById('warnSchwelle');if(s)s.value=formatInputBetrag(w.schwelle??100);const t=document.getElementById('warnTage');if(t)t.value=Math.max(0,parseInt(w.tage,10)||14);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',w.aktiv===false);const g=document.getElementById('warnKategorieGrid');if(g)g.innerHTML=WARN_KATEGORIEN.map(([k,l])=>`<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join(''); }
-        function saveWarnSettings(doSave=true){ const w=getWarnSettings();w.aktiv=document.getElementById('warnungenAktiv')?.value!=='aus';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
+        function renderWarnSettings(){ const w=getWarnSettings(),a=document.getElementById('warnungenAktiv');if(a){const on=w.aktiv!==false;a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);}const s=document.getElementById('warnSchwelle');if(s)s.value=formatInputBetrag(w.schwelle??100);const t=document.getElementById('warnTage');if(t)t.value=Math.max(0,parseInt(w.tage,10)||14);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',w.aktiv===false);const g=document.getElementById('warnKategorieGrid');if(g)g.innerHTML=WARN_KATEGORIEN.map(([k,l])=>`<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join(''); }
+        function toggleWarnungenAktiv(){ const a=document.getElementById('warnungenAktiv');if(!a)return;const on=a.getAttribute('aria-checked')!=='true';a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);saveWarnSettings();renderWarnSettings();renderHomeWarnings(); }
+        function saveWarnSettings(doSave=true){ const w=getWarnSettings();const a=document.getElementById('warnungenAktiv');if(a)w.aktiv=a.getAttribute('aria-checked')!=='false';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
         function daysBetween(a,b){return Math.round((b-a)/86400000);}
         function collectUpcomingWarnings(){ const w=getWarnSettings(),today=startOfToday(),horizon=addDays(today,365),rows=[]; const push=(type,label,entry,date,amount,name)=>{if(!date||date<today||date>horizon)return;const days=daysBetween(today,date),manual=!!entry?.warnung,own=Math.max(0,parseInt(entry?.warnTage,10)||14),auto=w.aktiv!==false&&!!w.kategorien?.[type]&&(parseBetrag(amount)||0)>=(parseBetrag(w.schwelle)||0)&&days<=Math.max(0,parseInt(w.tage,10)||14);if(!(manual&&days<=own)&&!auto)return;rows.push({type,label,name:name||label,betrag:parseBetrag(amount)||0,datum:new Date(date),manual});}; Object.values(daten.Haushalt||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('haushalt','Haushalt',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.values(daten.Freizeit||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('freizeit','Freizeit',e,parseISODate(e.datum),e.betrag,e.text||e.kategorie)));Object.entries(daten.Reisen||{}).forEach(([land,r])=>Object.values(r||{}).forEach(l=>Array.isArray(l)&&l.forEach(e=>push('reisen',`Reise · ${land}`,e,parseISODate(e.datum),e.betrag,e.text||land))));(daten['Geplante Ausgaben']||[]).forEach(e=>push('geplant','Geplante Ausgabe',e,parseISODate(e.datum),e.betrag,e.text)); const fix=(daten['Laufende Kosten']?.fix||[]);laufendeKostenImZeitraum(today,horizon).forEach(x=>{const e=fix.find(k=>String(k.id)===String(x.sourceId))||fix.find(k=>(k.text||k.name||'Fixkosten')===x.name&&(parseBetrag(k.betrag)||0)===x.betrag);push('fixkosten','Fixkosten',e||{},x.datum,x.betrag,x.name);});versicherungsZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Versicherungen||[]).find(v=>String(v.id)===String(x.sourceId))||(daten.Versicherungen||[]).find(v=>(v.name||'Versicherung')===x.name&&(parseBetrag(v.betrag)||0)===x.betrag);push('versicherungen','Versicherung',e||{},x.datum,x.betrag,x.name);});einnahmenZahlungenImZeitraum(today,horizon).forEach(x=>{const e=(daten.Einnahmen||[]).find(v=>String(v.id)===String(x.id));push('einnahmen','Einnahme',e||x,x.datumObj,x.betrag,x.text);});const z=getGehaltszeitraum(),next=z.naechstesGehalt||addDays(today,30);(daten['Sparen & Investieren']||[]).forEach(e=>{const a=parseISODate(e.datum),d=a&&a>=today?a:next;push('sparen',e.typ==='sparen'?'Sparen':'Investieren',e,d,e.betrag,e.text||(e.typ==='sparen'?'Sparen':'Investieren'));});return rows.sort((a,b)=>a.datum-b.datum||b.betrag-a.betrag);}
         function toggleHomeWarnings(){state.homeWarnungenOffen=!state.homeWarnungenOffen;renderHomeWarnings();}
@@ -2590,7 +3096,6 @@
         }
 
 
-
         function validiereGehaltstag(wert) {
             let tag = parseInt(wert, 10);
             if (isNaN(tag)) tag = 26;
@@ -2694,6 +3199,25 @@
             return String(text).trim();
         }
 
+        function formatDateGroupLabel(value) {
+            const d = value instanceof Date ? new Date(value) : parseISODate(value);
+            if (!d || isNaN(d)) return "Ohne Datum";
+            return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
+        }
+
+        function appendDateGroupHeader(container, value, options = {}) {
+            if (!container) return;
+            const el = document.createElement("div");
+            el.className = `date-group-title${options.first ? " first" : ""}${options.inset ? " inset" : ""}`;
+            el.textContent = options.label || formatDateGroupLabel(value);
+            if (options.note) {
+                const small = document.createElement("small");
+                small.textContent = options.note;
+                el.appendChild(small);
+            }
+            container.appendChild(el);
+        }
+
         function monatZuZahl(name) {
             const monate = [
                 "januar", "februar", "märz", "april", "mai", "juni",
@@ -2726,7 +3250,12 @@
                 "versicherungenView",
                 "uebersichtView",
                 "grafikView",
-                "settingsView"
+                "settingsView",
+                "settingsBudgetView",
+                "settingsQuickAddView",
+                "settingsWarningsView",
+                "settingsDesignView",
+                "settingsBackupView"
             ];
 
             // Alle Views verstecken
@@ -2798,13 +3327,198 @@
 
         function openSettings() {
             show("settingsView");
-            renderWarnSettings();
+            renderDesignMenuStatus();
+        }
+
+        function openSettingsBudget() {
+            show("settingsBudgetView");
             const z = getGehaltszeitraum();
             const startInput = document.getElementById("startgehaltInput");
             const tagInput = document.getElementById("gehaltstagInput");
             if (startInput) startInput.value = getStartgehalt(z) || "";
             if (tagInput) tagInput.value = getGehaltstag();
+        }
+
+        function openSettingsQuickAdd() {
+            show("settingsQuickAddView");
             renderQuickAddSettings();
+        }
+
+        function openSettingsWarnings() {
+            show("settingsWarningsView");
+            renderWarnSettings();
+        }
+
+        function openSettingsDesign() {
+            show("settingsDesignView");
+            renderDesignSettings();
+        }
+
+        function getDesignMode() {
+            daten.Einstellungen ??= {};
+            return ["dunkel", "hell", "system"].includes(daten.Einstellungen.designModus) ? daten.Einstellungen.designModus : "system";
+        }
+
+        function resolveDesignTheme(mode = getDesignMode()) {
+            if (mode === "dunkel") return "dark";
+            if (mode === "hell") return "light";
+            return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        function applyDesignTheme() {
+            const mode = getDesignMode();
+            const theme = resolveDesignTheme(mode);
+            document.documentElement.dataset.themeMode = mode;
+            document.documentElement.dataset.theme = theme;
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute("content", theme === "dark" ? "#000000" : "#f2f2f7");
+            applyActionColors();
+            renderDesignMenuStatus();
+            renderDesignSettings();
+        }
+
+        function setDesignMode(mode) {
+            if (!["dunkel", "hell", "system"].includes(mode)) return;
+            daten.Einstellungen ??= {};
+            daten.Einstellungen.designModus = mode;
+            speichern();
+            applyDesignTheme();
+        }
+
+        const DEFAULT_ACTION_COLOR = "#3498db";
+        const DEFAULT_ACTION_COLORS = {
+            hinzufuegen: DEFAULT_ACTION_COLOR,
+            bearbeiten: DEFAULT_ACTION_COLOR,
+            verschieben: DEFAULT_ACTION_COLOR,
+            schalter: DEFAULT_ACTION_COLOR
+        };
+
+        function normalizeActionColor(value) {
+            const color = String(value || "").trim();
+            return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : DEFAULT_ACTION_COLOR;
+        }
+
+        function getActionColors() {
+            daten.Einstellungen ??= {};
+            const src = daten.Einstellungen.aktionsfarben || {};
+            return {
+                hinzufuegen: normalizeActionColor(src.hinzufuegen || DEFAULT_ACTION_COLORS.hinzufuegen),
+                bearbeiten: normalizeActionColor(src.bearbeiten || DEFAULT_ACTION_COLORS.bearbeiten),
+                verschieben: normalizeActionColor(src.verschieben || DEFAULT_ACTION_COLORS.verschieben),
+                schalter: normalizeActionColor(src.schalter || DEFAULT_ACTION_COLORS.schalter)
+            };
+        }
+
+        function applyActionColors(colors = getActionColors()) {
+            document.documentElement.style.setProperty("--action-add", normalizeActionColor(colors.hinzufuegen));
+            document.documentElement.style.setProperty("--action-edit", normalizeActionColor(colors.bearbeiten));
+            document.documentElement.style.setProperty("--action-move", normalizeActionColor(colors.verschieben));
+            document.documentElement.style.setProperty("--action-switch", normalizeActionColor(colors.schalter));
+        }
+
+        function setActionColorStatus(text = "") {
+            const el = document.getElementById("actionColorStatus");
+            if (el) el.textContent = text;
+        }
+
+        function readActionColorInputs() {
+            return {
+                hinzufuegen: normalizeActionColor(document.getElementById("actionColorAdd")?.value),
+                bearbeiten: normalizeActionColor(document.getElementById("actionColorEdit")?.value),
+                verschieben: normalizeActionColor(document.getElementById("actionColorMove")?.value),
+                schalter: normalizeActionColor(document.getElementById("actionColorSwitch")?.value)
+            };
+        }
+
+        function previewCommonActionColor(value) {
+            const c = normalizeActionColor(value);
+            ["actionColorAdd","actionColorEdit","actionColorMove","actionColorSwitch"].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = c;
+            });
+            applyActionColors({hinzufuegen:c,bearbeiten:c,verschieben:c,schalter:c});
+            setActionColorStatus("Noch nicht gespeichert");
+        }
+
+        function previewActionColor(key, value) {
+            const colors = readActionColorInputs();
+            if (key in colors) colors[key] = normalizeActionColor(value);
+            applyActionColors(colors);
+            const common = document.getElementById("actionColorCommon");
+            if (common && colors.hinzufuegen === colors.bearbeiten && colors.hinzufuegen === colors.verschieben && colors.hinzufuegen === colors.schalter) {
+                common.value = colors.hinzufuegen;
+            }
+            setActionColorStatus("Noch nicht gespeichert");
+        }
+
+        function saveActionColorsFromInputs() {
+            daten.Einstellungen ??= {};
+            const colors = readActionColorInputs();
+            daten.Einstellungen.aktionsfarben = colors;
+            delete daten.Einstellungen.aktionsfarbenModus;
+            delete daten.Einstellungen.akzentfarbe;
+            speichern();
+            applyActionColors(colors);
+            renderDesignSettings();
+            setActionColorStatus("Gespeichert ✓");
+        }
+
+        // Alte Aufrufe bleiben kompatibel, speichern aber nur noch ueber den zentralen Speichern-Button.
+        function saveCommonActionColor(value) { previewCommonActionColor(value); }
+        function saveActionColor(key, value) { previewActionColor(key, value); }
+
+        function resetActionColors() {
+            daten.Einstellungen ??= {};
+            const defaults = { ...DEFAULT_ACTION_COLORS };
+            daten.Einstellungen.aktionsfarben = defaults;
+            delete daten.Einstellungen.aktionsfarbenModus;
+            delete daten.Einstellungen.akzentfarbe;
+            speichern();
+            applyActionColors(defaults);
+            [
+                ["actionColorCommon", DEFAULT_ACTION_COLOR],
+                ["actionColorAdd", defaults.hinzufuegen],
+                ["actionColorEdit", defaults.bearbeiten],
+                ["actionColorMove", defaults.verschieben],
+                ["actionColorSwitch", defaults.schalter]
+            ].forEach(([id,value]) => { const input=document.getElementById(id); if(input) input.value=value; });
+            setActionColorStatus("Standardfarbe wiederhergestellt ✓");
+        }
+
+        function renderDesignSettings() {
+            const mode = getDesignMode();
+            applyActionColors();
+            const colors = getActionColors();
+            const values = {
+                actionColorCommon: (colors.hinzufuegen === colors.bearbeiten && colors.hinzufuegen === colors.verschieben && colors.hinzufuegen === colors.schalter) ? colors.hinzufuegen : DEFAULT_ACTION_COLOR,
+                actionColorAdd: colors.hinzufuegen,
+                actionColorEdit: colors.bearbeiten,
+                actionColorMove: colors.verschieben,
+                actionColorSwitch: colors.schalter
+            };
+            Object.entries(values).forEach(([id,value]) => {
+                const input = document.getElementById(id);
+                if (input) input.value = value;
+            });
+            setActionColorStatus("");
+            document.querySelectorAll(".design-choice").forEach(button => {
+                const active = button.dataset.designMode === mode;
+                button.setAttribute("aria-pressed", active ? "true" : "false");
+                const check = button.querySelector(".design-choice-check");
+                if (check) check.textContent = active ? "✓" : "";
+            });
+        }
+
+        function renderDesignMenuStatus() {
+            const sub = document.getElementById("settingsDesignMenuSub");
+            if (!sub) return;
+            const mode = getDesignMode();
+            sub.textContent = mode === "dunkel" ? "Dunkles Erscheinungsbild" : mode === "hell" ? "Helles Erscheinungsbild" : "Systemeinstellung verwenden";
+        }
+
+        function openSettingsBackup() {
+            show("settingsBackupView");
+            setBackupStatus("");
         }
 
         function openGlobalArchiv() {
@@ -2868,7 +3582,11 @@
                     liste.forEach(e => add("reisen", e, { land, kategorie }, { titel:e.text || kategorie || "Reiseausgabe", meta:`${land} · ${kategorie}` }));
                 });
             });
-            return out.sort((a,b) => datumZeitwert(b.datum) - datumZeitwert(a.datum));
+            return out.sort((a,b) => {
+                    const diff = datumZeitwert(b.datum) - datumZeitwert(a.datum);
+                    if (diff !== 0) return diff;
+                    return Number(b.id || 0) - Number(a.id || 0);
+                });
         }
 
         function filterGlobalArchivRecords(records) {
@@ -3297,13 +4015,14 @@
 
                 const actions = document.createElement("div");
                 actions.className = "quick-fav-actions";
+                const activeIndex = aktiv.indexOf(key);
                 const up = document.createElement("button");
                 up.type = "button"; up.textContent = "↑"; up.setAttribute("aria-label", "Nach oben");
-                up.disabled = !aktiv.includes(key) || index === 0;
+                up.disabled = activeIndex <= 0;
                 up.addEventListener("click", () => moveQuickAddOption(key, -1));
                 const down = document.createElement("button");
                 down.type = "button"; down.textContent = "↓"; down.setAttribute("aria-label", "Nach unten");
-                down.disabled = !aktiv.includes(key) || index === aktiv.length - 1;
+                down.disabled = activeIndex < 0 || activeIndex >= aktiv.length - 1;
                 down.addEventListener("click", () => moveQuickAddOption(key, 1));
                 actions.append(up, down);
                 row.append(label, actions);
@@ -3323,14 +4042,12 @@
         }
 
         function moveQuickAddOption(key, richtung) {
-            const aktiv = getQuickAddFavoriten();
-            const alle = [...aktiv, ...QUICK_ADD_DEFAULT.filter(x => !aktiv.includes(x))];
-            const index = alle.indexOf(key);
+            const aktiv = [...getQuickAddFavoriten()];
+            const index = aktiv.indexOf(key);
             const neu = index + richtung;
-            if (index < 0 || neu < 0 || neu >= alle.length) return;
-            [alle[index], alle[neu]] = [alle[neu], alle[index]];
-            const aktivSet = new Set(aktiv);
-            daten.Einstellungen.quickAddFavoriten = alle.filter(x => aktivSet.has(x));
+            if (index < 0 || neu < 0 || neu >= aktiv.length) return;
+            [aktiv[index], aktiv[neu]] = [aktiv[neu], aktiv[index]];
+            daten.Einstellungen.quickAddFavoriten = aktiv;
             speichern();
             renderQuickAddSettings();
         }
@@ -3758,15 +4475,22 @@
                 <div class="bereich-week-info-top"><span class="bereich-week-info-label">Diese Gehaltsperiode</span><span class="bereich-week-info-amount">${formatBetrag(status.investieren + status.gespart)}</span></div>
                 <div class="bereich-week-info-breakdown">📈 Investiert: ${formatBetrag(status.investieren)} · 💰 Gespart: ${formatBetrag(status.gespart)} von ${formatBetrag(status.sparenPlan)}${status.sparVerbrauch > 0 ? ` · ${formatBetrag(status.sparVerbrauch)} als Puffer genutzt` : ""}</div>`;
 
-            const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(a.typ).localeCompare(String(b.typ)) || String(a.datum || "").localeCompare(String(b.datum || "")));
+            const items = [...(daten["Sparen & Investieren"] || [])].sort((a,b) => String(b.datum || "").localeCompare(String(a.datum || "")) || Number(b.id || 0) - Number(a.id || 0));
             document.getElementById("sparenInvestierenDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">Noch nichts festgelegt</div><div class="empty-state-text">Lege deinen festen Investitionsbetrag und deine Rücklage pro Gehaltsperiode fest.</div></div>`;
                 return;
             }
+            let letzteSparGruppe = null;
             listeEl.innerHTML = items.map(e => {
+                let gruppenHeader = "";
+                const gruppenKey = e.datum || "ohne-datum";
+                if (gruppenKey !== letzteSparGruppe) {
+                    gruppenHeader = `<div class="date-group-title${letzteSparGruppe === null ? " first" : ""}">${formatDateGroupLabel(e.datum)}<small>Gültig ab</small></div>`;
+                    letzteSparGruppe = gruppenKey;
+                }
                 const isEdit = String(state.editSparenInvestierenId) === String(e.id);
-                if (isEdit) return `
+                if (isEdit) return gruppenHeader + `
                     <div class="item" style="align-items:stretch;">
                         <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
                             <select id="editSparenTyp-${e.id}">
@@ -3782,7 +4506,7 @@
                             </div>
                         </div>
                     </div>`;
-                return `
+                return gruppenHeader + `
                     <div class="item" style="align-items:center;">
                         <div style="min-width:0;flex:1;">
                             <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
@@ -4008,7 +4732,14 @@
                 listeEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><div class="empty-state-title">Keine geplanten Ausgaben</div><div class="empty-state-text">Plane größere oder kommende Ausgaben vorab. Am Folgetag werden sie automatisch in den gewählten Bereich übernommen.</div></div>`;
                 return;
             }
+            let letzteGeplantGruppe = null;
             listeEl.innerHTML = items.map(e => {
+                let gruppenHeader = "";
+                const gruppenKey = e.datum || "ohne-datum";
+                if (gruppenKey !== letzteGeplantGruppe) {
+                    gruppenHeader = `<div class="date-group-title${letzteGeplantGruppe === null ? " first" : ""}">${formatDateGroupLabel(e.datum)}<small>Geplant</small></div>`;
+                    letzteGeplantGruppe = gruppenKey;
+                }
                 const isEdit = String(state.editGeplanteAusgabeId) === String(e.id);
                 if (isEdit) {
                     const bereich = ["haushalt","freizeit","reisen"].includes(e.bereich) ? e.bereich : "haushalt";
@@ -4016,7 +4747,7 @@
                     const land = bereich === "reisen" && laender.includes(e.land) ? e.land : (laender[0] || "");
                     const kategorien = editGeplantKategorienFuer(bereich, land);
                     const kategorie = kategorien.includes(e.kategorie) ? e.kategorie : (kategorien[0] || "Sonstiges");
-                    return `
+                    return gruppenHeader + `
                         <div class="item" style="align-items:stretch;">
                             <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
                                 <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
@@ -4047,7 +4778,7 @@
                         </div>`;
                 }
                 const ziel = e.bereich === "reisen" ? `✈️ ${escapeHtml(e.land || "Reise")} · ${escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${escapeHtml(e.kategorie || "Sonstiges")}`;
-                return `
+                return gruppenHeader + `
                     <div class="item" style="align-items:center;">
                         <div style="min-width:0;flex:1;">
                             <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
@@ -4514,7 +5245,13 @@
                 // Einträge
                 if (state.offeneKategorie === k) {
 
+                    let letzteReiseDatumsGruppe = null;
                     gefilterteEintraege.forEach((e, i) => {
+                        const gruppenKey = e.datum || "ohne-datum";
+                        if (gruppenKey !== letzteReiseDatumsGruppe) {
+                            appendDateGroupHeader(div, e.datum, { first: false, inset: true });
+                            letzteReiseDatumsGruppe = gruppenKey;
+                        }
 
                         let sub = document.createElement("div");
                         sub.className = "item";
@@ -4547,7 +5284,7 @@
                                 <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}')` : `toggleReiseDetails('${e.id}')`}"
                                      style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                     ${state.multiSelect.reisen ? `
-                                        <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? '#0a84ff' : 'transparent'};flex-shrink:0;">
+                                        <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                             ${reiseAusgewaehlt ? '✓' : ''}
                                         </div>` : ''}
                                     <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -4662,7 +5399,6 @@
             updateDropdown();
             renderListe();
         }
-
 
 
         function selectionLabel(type) {
@@ -4859,9 +5595,16 @@
                     return String(a.datum || '').localeCompare(String(b.datum || ''));
                 });
 
+            let letzteFixkostenGruppe = null;
             sortierteFixkosten.forEach(k => {
 
                 const datum = k.datum || datumAusTagAktuellerMonat(k.tag);
+                const gruppenTermin = terminImGehaltszeitraum(k);
+                const gruppenKey = gruppenTermin ? gruppenTermin.toISOString().slice(0,10) : datum;
+                if (gruppenKey !== letzteFixkostenGruppe) {
+                    appendDateGroupHeader(div, gruppenTermin || datum, { first: letzteFixkostenGruppe === null, note: "Abbuchung" });
+                    letzteFixkostenGruppe = gruppenKey;
+                }
                 const tag = tagAusDatum(datum);
 
                 // Für alte gespeicherte Einträge: Tag und Datum im Speicherobjekt ergänzen.
@@ -4902,7 +5645,7 @@
                             <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}')` : `toggleFixkostenDetails('${k.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect.fixkosten ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? '#0a84ff' : 'transparent'};flex-shrink:0;">
+                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>
                                 ` : ''}
@@ -5244,8 +5987,15 @@
                     return (da?.getTime() || Number.MAX_SAFE_INTEGER) - (db?.getTime() || Number.MAX_SAFE_INTEGER);
                 });
 
+            let letzteVersicherungsGruppe = null;
             versicherungenSortiert.forEach((v) => {
 
+                const naechsteDatum = naechsteZahlungDatum(v);
+                const gruppenKey = naechsteDatum ? naechsteDatum.toISOString().slice(0,10) : (v.datum || "ohne-datum");
+                if (gruppenKey !== letzteVersicherungsGruppe) {
+                    appendDateGroupHeader(div, naechsteDatum || v.datum, { first: letzteVersicherungsGruppe === null, note: "Nächste Zahlung" });
+                    letzteVersicherungsGruppe = gruppenKey;
+                }
                 const naechste = naechsteZahlung(v);
                 const isEdit = String(state.editVersicherungId) === String(v.id);
                 const istOffen = !!state.offeneVersicherungen[String(v.id)];
@@ -5415,100 +6165,7 @@
             return formatDatum(datum.toISOString().split("T")[0]);
         }
 
-        function naechsteZahlung_ALT_UNUSED(v) {
-
-            if (!v.datum) return "-";
-
-            const heute = new Date();
-            const start = new Date(v.datum);
-
-            const tag = start.getDate();
-
-            let datum = new Date(start);
-
-            function addInterval(months = 0, years = 0) {
-
-                if (months) datum.setMonth(datum.getMonth() + months);
-                if (years) datum.setFullYear(datum.getFullYear() + years);
-
-                datum.setDate(tag);
-            }
-
-            if (v.intervall === "monatlich") {
-
-                while (datum <= heute) addInterval(1);
-
-            } else if (v.intervall === "vierteljährlich") {
-
-                while (datum <= heute) addInterval(3);
-
-            } else if (v.intervall === "halbjährlich") {
-
-                while (datum <= heute) addInterval(6);
-
-            } else if (v.intervall === "jährlich") {
-
-                while (datum <= heute) addInterval(0, 1);
-
-            } else {
-                return "-";
-            }
-
-            return formatDatum(datum.toISOString().split("T")[0]);
-        }
-
-        //Versicherung Bearbeiten ✏️
-        function editVersicherung(i) {
-
-            let v = daten.Versicherungen[i];
-            if (!v) return;
-
-            let nameInput = prompt("Name:", v.name);
-            if (nameInput === null) return;
-            let name = formatText(nameInput);
-
-            let betragInput = prompt("Betrag:", v.betrag);
-            if (betragInput === null) return;
-
-            let betrag = parseBetrag(betragInput);
-            if (isNaN(betrag)) return;
-
-            let anbieterInput = prompt("Anbieter:", v.anbieter || "");
-            if (anbieterInput === null) return;
-            let anbieter = formatText(anbieterInput);
-
-            let versicherungsnummer = prompt("Versicherungsnummer:", v.versicherungsnummer || "");
-            if (versicherungsnummer === null) return;
-
-            let intervall = prompt(
-                "Intervall (monatlich / vierteljährlich / halbjährlich / jährlich):",
-                v.intervall || "monatlich"
-            );
-            if (intervall === null) return;
-
-            let monatInput = prompt(
-                "Monat (z.B. April):",
-                getMonatName(v.monat || 1)
-            );
-            if (monatInput === null) return;
-
-            let monat = monatZuZahl(monatInput);
-
-            daten.Versicherungen[i] = {
-                ...v, // 🔥 wichtig: ID bleibt erhalten
-                name,
-                betrag,
-                anbieter,
-                versicherungsnummer,
-                intervall,
-                monat: parseInt(monat)
-            };
-
-            speichern();
-            renderVersicherungen();
-        }
-
-        //Versicherung löschen 🗑️
+                        //Versicherung löschen 🗑️
         function deleteVersicherung(id) {
 
             if (!confirm("Versicherung löschen?")) return;
@@ -5914,7 +6571,13 @@
                 return;
             }
 
+            let letzteEinnahmenGruppe = null;
             liste.forEach(e => {
+                const gruppenKey = e.datum || "ohne-datum";
+                if (gruppenKey !== letzteEinnahmenGruppe) {
+                    appendDateGroupHeader(container, e.datum, { first: letzteEinnahmenGruppe === null, note: e.wiederholung === "monatlich" ? "Startdatum" : "Datum" });
+                    letzteEinnahmenGruppe = gruppenKey;
+                }
                 const isEdit = String(state.editEinnahmeId) === String(e.id);
                 let html;
                 if (isEdit) {
@@ -6576,8 +7239,14 @@
             }
 
             const offenMap = istFreizeit ? state.offeneFreizeitEintraege : state.offeneHaushaltEintraege;
+            let letzterTag = null;
 
             liste.forEach(e => {
+                const tagKey = e.datum || "ohne-datum";
+                if (tagKey !== letzterTag) {
+                    appendDateGroupHeader(container, e.datum, { first: letzterTag === null });
+                    letzterTag = tagKey;
+                }
                 const isEdit = istFreizeit ? String(state.editFreizeitId) === String(e.id) : String(state.editHaushaltId) === String(e.id);
                 let html;
                 if (isEdit) {
@@ -6603,7 +7272,7 @@
                             <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect?.[typ] ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? '#0a84ff' : 'transparent'};flex-shrink:0;">
+                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
@@ -7061,14 +7730,7 @@
         }
 
 
-        function cancelEditVersicherung() {
-
-            state.editVersicherungId = null;
-
-            renderVersicherungen();
-        }
-
-        function saveEditReise(id) {
+                function saveEditReise(id) {
 
             if (!aktuellesLand || !daten.Reisen?.[aktuellesLand]) return;
 
