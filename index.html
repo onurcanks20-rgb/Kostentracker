@@ -9373,10 +9373,10 @@
             if (activeItem && swipeOpened && activeItem.closest('.gesture-swipe-shell') === swipeShell) {
                 /* Von der bereits geoeffneten Position aus weiterwischen koennen. */
                 swipeStartOffset = swipeMax;
-            } else if (activeItem) {
-                prepareSwipeActions(activeItem);
-                swipeStartOffset = 0;
             } else {
+                /* Wichtig fuer einen normalen Tap: Die Karte auf touchstart NICHT im DOM umhaengen.
+                   Erst wenn wirklich horizontal gewischt wird, werden die Swipe-Aktionen erzeugt.
+                   Sonst unterdrueckt iOS teilweise den anschliessenden click und ein Eintrag wirkt wie Doppeltipp. */
                 swipeStartOffset = 0;
             }
             holdFired = false; tracking = edgeSwipe || !!activeItem;
@@ -9405,7 +9405,13 @@
                 edgeLastX = t.clientX; edgeLastTime = now;
                 queueInteractiveBack(dx);
             }
-            if (activeItem && !holdFired && swipeShell && (dx < 0 || swipeStartOffset > 0)) {
+            if (activeItem && !holdFired && (dx < -MOVE_CANCEL || swipeStartOffset > 0)) {
+                /* Swipe-Huelle erst nach eindeutigem horizontalem Wischen erzeugen.
+                   Dadurch bleibt ein einfacher Tap ein echter einfacher Tap. */
+                if (!swipeShell || activeItem.closest('.gesture-swipe-shell') !== swipeShell) {
+                    prepareSwipeActions(activeItem);
+                }
+                if (!swipeShell) return;
                 swipeShell.classList.add('dragging');
                 const width = Math.max(window.innerWidth, 320);
                 const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
