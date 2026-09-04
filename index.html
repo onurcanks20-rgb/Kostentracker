@@ -4672,11 +4672,11 @@
                     </div>`;
                 return gruppenHeader + `
                     <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
-                            <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)}</div>
-                            ${e.text ? `<div class="info-text" style="margin-top:3px;">${escapeHtml(e.text)}</div>` : ""}
-                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)} / Gehaltsperiode</div>
+                        <div style="min-width:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;">
+                            <div style="font-weight:750;min-width:0;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
+                            <div style="font-weight:800;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</div>
+                            <div class="info-text" style="margin-top:4px;grid-column:1/-1;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)} · pro Gehaltsperiode</div>
+                            ${e.text ? `<div class="info-text" style="margin-top:3px;grid-column:1/-1;">${escapeHtml(e.text)}</div>` : ""}
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')">✏️</button>
@@ -4944,11 +4944,11 @@
                 const ziel = e.bereich === "reisen" ? `✈️ ${escapeHtml(e.land || "Reise")} · ${escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${escapeHtml(e.kategorie || "Sonstiges")}`;
                 return gruppenHeader + `
                     <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                            <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
-                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
+                        <div style="min-width:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;">
+                            <div style="font-weight:750;min-width:0;overflow-wrap:anywhere;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
+                            <div style="font-weight:800;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</div>
+                            <div class="info-text" style="margin-top:4px;grid-column:1/-1;">${formatDatum(e.datum)} · ${ziel}</div>
+                            <div class="info-text" style="margin-top:3px;grid-column:1/-1;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
@@ -5453,9 +5453,9 @@
                                         <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                             ${reiseAusgewaehlt ? '✓' : ''}
                                         </div>` : ''}
-                                    <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                        <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k)}</span>
-                                        <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
+                                    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
+                                        <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(k)}</span>
+                                        <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</strong>
                                     </div>
                                 </div>
                                 ${!state.multiSelect.reisen ? `
@@ -5815,12 +5815,10 @@
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>
                                 ` : ''}
-                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
-                                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
-                                        <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
-                                        <span style="font-size:14px;opacity:.72;">· am ${String(tag).padStart(2, "0")}.</span>
-                                    </div>
+                                <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;min-width:0;width:100%;">
+                                    <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(k.text || k.name || "-")}</span>
+                                    <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(k.betrag)}</strong>
+                                    <span style="font-size:14px;opacity:.72;grid-column:1/-1;">am ${String(tag).padStart(2, "0")}.</span>
                                 </div>
                             </div>
                             ${!state.multiSelect.fixkosten ? `
@@ -6178,9 +6176,9 @@
                         <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}')` : `toggleVersicherungDetails('${v.id}')`}"
                              style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                             ${selectionDot('versicherungen', v.id)}
-                            <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
-                                <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
+                            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
+                                <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(v.name || "Versicherung")}</span>
+                                <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(v.betrag)}</strong>
                             </div>
                         </div>
                         ${!state.multiSelect.versicherungen ? `
@@ -6762,9 +6760,9 @@
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
                             <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}')` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${selectionDot('einnahmen', e.id)}
-                                <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
-                                    <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
-                                    <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
+                                <span style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
+                                    <strong style="overflow-wrap:anywhere;min-width:0;">${escapeHtml(e.text || 'Einnahme')}</strong>
+                                    <strong style="font-size:18px;text-align:right;white-space:nowrap;">+${formatBetrag(e.betrag)}</strong>
                                 </span>
                             </div>
                             ${!state.multiSelect.einnahmen ? `<div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>` : ''}
@@ -7441,14 +7439,14 @@
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
                             <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
-                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
+                                 style="display:flex; align-items:center; gap:10px; min-width:0; width:100%; cursor:pointer;">
                                 ${state.multiSelect?.[typ] ? `
                                     <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>` : ''}
-                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
-                                    <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
+                                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0;">
+                                    <span style="font-weight:700; overflow-wrap:anywhere; min-width:0;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    <strong style="font-size:18px; flex-shrink:0; text-align:right; white-space:nowrap;">${formatBetrag(e.betrag)}</strong>
                                 </div>
                             </div>
                             ${!state.multiSelect?.[typ] ? `
@@ -9065,6 +9063,14 @@
             display: none !important;
         }
         .gesture-swipe-shell.dragging > .item { transition: none !important; }
+
+        /* Ohne sichtbare Aktionsbuttons nutzt der Inhalt die volle Kartenbreite. */
+        .item:has(.actions) > div[style*="flex-direction:column"] > div[style*="grid-template-columns"] {
+            grid-template-columns: minmax(0,1fr) !important;
+        }
+        .item:has(.actions) > div[style*="flex-direction:column"] > div[style*="grid-template-columns"] > :first-child {
+            width: 100%;
+        }
         .gesture-swipe-actions {
             position: absolute;
             z-index: 1;
@@ -9133,7 +9139,7 @@
         let startX = 0, startY = 0, currentX = 0;
         let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
         let edgeView = null, edgeUnderlay = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0, edgeFrame = 0, edgePendingDx = 0;
-        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false, swipeFullDelete = false;
+        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false, swipeFullDelete = false, swipeStartOffset = 0;
 
         const menuBackdrop = document.getElementById('gestureMenuBackdrop');
         const menuActions = document.getElementById('gestureMenuActions');
@@ -9151,7 +9157,8 @@
             return actionButtons(item).find(b => /↪|verschieben/i.test((b.textContent || '') + ' ' + (b.title || '')));
         }
         function entryFromTarget(target) {
-            const item = target?.closest?.('.item');
+            const shell = target?.closest?.('.gesture-swipe-shell');
+            const item = shell?.querySelector(':scope > .item') || target?.closest?.('.item');
             if (!item || !item.querySelector('.actions')) return null;
             return item;
         }
@@ -9364,9 +9371,13 @@
 
             activeItem = edgeSwipe ? null : entryFromTarget(e.target);
             if (activeItem && swipeOpened && activeItem.closest('.gesture-swipe-shell') === swipeShell) {
-                /* Offene Aktionsflaeche bleibt fuer Button-Taps stehen. */
+                /* Von der bereits geoeffneten Position aus weiterwischen koennen. */
+                swipeStartOffset = swipeMax;
             } else if (activeItem) {
                 prepareSwipeActions(activeItem);
+                swipeStartOffset = 0;
+            } else {
+                swipeStartOffset = 0;
             }
             holdFired = false; tracking = edgeSwipe || !!activeItem;
             clearHold();
@@ -9394,19 +9405,15 @@
                 edgeLastX = t.clientX; edgeLastTime = now;
                 queueInteractiveBack(dx);
             }
-            if (activeItem && dx < 0 && !holdFired && swipeShell) {
+            if (activeItem && !holdFired && swipeShell && (dx < 0 || swipeStartOffset > 0)) {
                 swipeShell.classList.add('dragging');
                 const width = Math.max(window.innerWidth, 320);
                 const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
-                const distance = Math.abs(dx);
+                const distance = Math.max(0, Math.min(width, swipeStartOffset - dx));
                 swipeFullDelete = distance >= fullDeleteThreshold;
 
-                /* Kurzer Swipe: kompakte Aktionen. Kompletter Swipe: rote Loeschflaeche uebernimmt. */
-                let amount = dx;
-                if (!swipeFullDelete && distance > swipeMax) {
-                    amount = -swipeMax - (distance - swipeMax) * .18;
-                }
-                activeItem.style.transform = `translate3d(${Math.max(amount, -width)}px,0,0)`;
+                /* Geoeffnete Aktionen lassen sich ohne Einrasten weiterziehen - bis zum Full-Swipe-Loeschen. */
+                activeItem.style.transform = `translate3d(${-distance}px,0,0)`;
 
                 if (swipeTray) {
                     const del = swipeTray.querySelector('.gesture-action-delete');
@@ -9435,9 +9442,9 @@
                     const averageVelocity = dx / elapsed;
                     const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 36 && Math.max(edgeVelocity, averageVelocity) > 0.45);
                     shouldGoBack ? finishInteractiveBack() : cancelInteractiveBack();
-                } else if (activeItem && dx < 0 && swipeShell) {
-                    const distance = Math.abs(dx);
+                } else if (activeItem && swipeShell && (dx < 0 || swipeStartOffset > 0)) {
                     const width = Math.max(window.innerWidth, 320);
+                    const distance = Math.max(0, Math.min(width, swipeStartOffset - dx));
                     const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
                     if (swipeFullDelete || distance >= fullDeleteThreshold) {
                         const del = findDelete(activeItem);
@@ -9459,14 +9466,14 @@
                     settleSwipe(false);
                 }
             }
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false;
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false; swipeStartOffset = 0;
         }, { passive: true });
 
         document.addEventListener('touchcancel', () => {
             clearHold();
             if (edgeSwipe) cancelInteractiveBack();
             else if (swipeShell) settleSwipe(false);
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false;
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false; swipeStartOffset = 0;
         }, { passive: true });
     })();
     </script>
