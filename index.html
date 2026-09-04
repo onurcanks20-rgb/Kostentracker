@@ -1456,7 +1456,7 @@
             min-height: 44px;
             margin: 0;
             padding: 10px 12px;
-            border-radius: 13px;
+            border-radius: 12px;
             font-size: 14px;
         }
 
@@ -9059,8 +9059,9 @@
             will-change: transform;
             transition: transform .22s cubic-bezier(.22,.72,.18,1);
         }
-        /* Die alten Inline-Aktionsbuttons bleiben als Logik im DOM, sind aber optisch weg. */
-        .gesture-swipe-shell > .item .actions {
+        /* Bearbeiten / Verschieben / Loeschen bleiben nur als unsichtbare Logik im DOM.
+           Sichtbar sind sie ausschliesslich ueber Swipe oder Long-Press. */
+        .item .actions {
             display: none !important;
         }
         .gesture-swipe-shell.dragging > .item { transition: none !important; }
@@ -9071,16 +9072,16 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            gap: 6px;
-            padding: 6px;
+            gap: 5px;
+            padding: 5px;
             overflow: hidden;
             border-radius: 0 16px 16px 0;
         }
         .gesture-swipe-actions button {
-            width: 54px;
-            min-width: 54px;
-            height: calc(100% - 12px);
-            min-height: 44px;
+            width: 46px;
+            min-width: 46px;
+            height: 46px;
+            min-height: 42px;
             margin: 0;
             padding: 0;
             border-radius: 13px;
@@ -9091,7 +9092,7 @@
             background: #636366;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
         }
-        .gesture-swipe-actions button .gesture-action-icon { font-size: 21px; line-height: 1; }
+        .gesture-swipe-actions button .gesture-action-icon { font-size: 19px; line-height: 1; }
         .gesture-swipe-actions button .gesture-action-label { display:none; }
         .gesture-swipe-actions button.gesture-action-move { background: var(--action-move); }
         .gesture-swipe-actions button.gesture-action-edit { background: var(--action-edit); }
@@ -9127,7 +9128,7 @@
         const EDGE_TRIGGER = 84;
         const EDGE_ZONE = 26;
         const MOVE_CANCEL = 12;
-        const ACTION_WIDTH = 60;
+        const ACTION_WIDTH = 52;
 
         let startX = 0, startY = 0, currentX = 0;
         let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
