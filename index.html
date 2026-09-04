@@ -2480,12 +2480,12 @@
                 <h3>Freizeitausgabe hinzufügen</h3>
                 <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Essen" onclick="setQuickCategory('freizeit','Essen',this)">🍽️ Essen</button>
-                    <button class="quick-category-btn" data-category="Trinken" onclick="setQuickCategory('freizeit','Trinken',this)">🥤 Trinken</button>
+                    <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setQuickCategory('freizeit','Essen / Trinken',this)">🍽️ Essen / Trinken</button>
                     <button class="quick-category-btn" data-category="Aktivität" onclick="setQuickCategory('freizeit','Aktivität',this)">🎯 Aktivität</button>
+                    <button class="quick-category-btn" data-category="Geschenke" onclick="setQuickCategory('freizeit','Geschenke',this)">🎁 Geschenke</button>
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
-                <input id="freizeitKategorie" type="hidden" value="Essen">
+                <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
@@ -2646,7 +2646,7 @@
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 schnellbetraege: [5, 10, 20, 50],
-                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
+                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} },
                 designModus: "system",
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
@@ -2783,10 +2783,11 @@
         }
 
         if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
-            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
         }
         daten.Einstellungen.letzteKategorien.haushalt ||= "Einkauf";
-        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen";
+        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen / Trinken";
+        if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(daten.Einstellungen.letzteKategorien.freizeit)) daten.Einstellungen.letzteKategorien.freizeit = "Essen / Trinken";
         if (!daten.Einstellungen.letzteKategorien.reisen || typeof daten.Einstellungen.letzteKategorien.reisen !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien.reisen)) {
             daten.Einstellungen.letzteKategorien.reisen = {};
         }
@@ -2857,10 +2858,8 @@
             if (!Array.isArray(liste)) return;
             liste.forEach(e => {
                 if (!e) return;
-                if (e.kategorie === "Essen gehen") e.kategorie = "Essen";
-                if (e.kategorie === "Café") e.kategorie = "Trinken";
+                if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(e.kategorie)) e.kategorie = "Essen / Trinken";
                 if (e.kategorie === "Kino/Event" || e.kategorie === "Kino / Event") e.kategorie = "Aktivität";
-                if (e.kategorie === "Snacks") e.kategorie = "Essen";
             });
         });
         const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=Math.max(0,parseInt(e.warnTage,10)||14); };
@@ -4516,7 +4515,7 @@
             if (!select) return;
             let kategorien;
             if (bereich === "freizeit") {
-                kategorien = ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+                kategorien = ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             } else if (bereich === "reisen") {
                 const land = document.getElementById("geplantReise")?.value || "";
                 const reise = daten.Reisen?.[land] || {};
@@ -4812,7 +4811,7 @@
         }
 
         function editGeplantKategorienFuer(bereich, land = "") {
-            if (bereich === "freizeit") return ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+            if (bereich === "freizeit") return ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             if (bereich === "reisen") {
                 const reise = daten.Reisen?.[land] || {};
                 const kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
@@ -6902,7 +6901,7 @@
 
         function merkeLetzteKategorie(bereich, kategorie) {
             daten.Einstellungen ??= {};
-            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
             if (bereich === "reisen") {
                 daten.Einstellungen.letzteKategorien.reisen ??= {};
                 if (aktuellesLand) daten.Einstellungen.letzteKategorien.reisen[aktuellesLand] = kategorie;
@@ -6914,7 +6913,7 @@
         function applyLetzteAlltagsKategorie(bereich) {
             const isHaus = bereich === "haushalt";
             const prefix = isHaus ? "haus" : "freizeit";
-            const fallback = isHaus ? "Einkauf" : "Essen";
+            const fallback = isHaus ? "Einkauf" : "Essen / Trinken";
             const kat = getLetzteKategorie(bereich, fallback);
             const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
@@ -8852,12 +8851,12 @@
 
         function grafikSubcategories(category){
             if(category==="haushalt")return ["Einkauf","Tanken","Drogerie","Sonstiges"];
-            if(category==="freizeit")return ["Essen","Trinken","Aktivität","Sonstiges"];
+            if(category==="freizeit")return ["Essen / Trinken","Aktivität","Geschenke","Sonstiges"];
             if(category==="reisen"){
                 const set=new Set(); Object.values(daten.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
                 return [...set].sort((a,b)=>a.localeCompare(b,"de"));
             }
-            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
+            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen / Trinken","Geschenke","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
             if(category==="sparen")return ["Sparen","Investieren"];
             return [];
         }
