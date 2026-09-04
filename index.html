@@ -1456,18 +1456,18 @@
             min-height: 44px;
             margin: 0;
             padding: 10px 12px;
-            border-radius: 12px;
+            border-radius: 13px;
             font-size: 14px;
         }
 
         .date-group-title {
-            margin: 20px 4px 8px;
+            margin: 26px 4px 10px;
             font-size: 15px;
             font-weight: 800;
             color: #f2f2f7;
             letter-spacing: .01em;
         }
-        .date-group-title.first { margin-top: 6px; }
+        .date-group-title.first { margin-top: 10px; }
         .date-group-title small {
             font-size: 11px;
             font-weight: 650;
@@ -1483,10 +1483,35 @@
         #geplanteAusgabenView .item,
         #sparenInvestierenView .item,
         #land .item {
-            margin: 7px 0;
-            padding: 13px 14px;
-            border-radius: 16px;
+            margin: 5px 0;
+            padding: 10px 13px;
+            min-height: 58px;
+            border-radius: 15px;
             border: 1px solid rgba(255,255,255,.055);
+        }
+
+        #haushaltView .item > :first-child,
+        #freizeitView .item > :first-child,
+        #kostenView .item > :first-child,
+        #versicherungenView .item > :first-child,
+        #einnahmenView .item > :first-child,
+        #geplanteAusgabenView .item > :first-child,
+        #sparenInvestierenView .item > :first-child,
+        #land .item > :first-child {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        #haushaltView .item > :last-child,
+        #freizeitView .item > :last-child,
+        #kostenView .item > :last-child,
+        #versicherungenView .item > :last-child,
+        #einnahmenView .item > :last-child,
+        #geplanteAusgabenView .item > :last-child,
+        #sparenInvestierenView .item > :last-child,
+        #land .item > :last-child {
+            white-space: nowrap;
         }
         #haushaltView .actions,
         #freizeitView .actions,
@@ -2235,6 +2260,12 @@
                 <input id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <label for="geplantDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Geplantes Datum</label>
                 <input id="geplantDatum" type="date">
+                <label for="geplantWiederholung" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Wiederholung</label>
+                <select id="geplantWiederholung">
+                    <option value="einmalig">Einmalig</option>
+                    <option value="monatlich">Monatlich</option>
+                    <option value="jaehrlich">Jährlich</option>
+                </select>
                 <label for="geplantBereich" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Später buchen nach</label>
                 <select id="geplantBereich" onchange="updateGeplantBereichUI(true)">
                     <option value="haushalt">Haushalt</option>
@@ -2252,7 +2283,7 @@
                     <option value="ja">Ja, Betrag reservieren</option>
                     <option value="nein">Nein, nur vormerken</option>
                 </select>
-                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen.</div>
+                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen. Monatliche und jährliche Einträge werden danach auf den nächsten Termin gesetzt.</div>
                 <button onclick="addGeplanteAusgabe()" class="btn btn-primary">Planen</button>
             </div>
         </div>
@@ -2474,12 +2505,12 @@
                 <h3>Freizeitausgabe hinzufügen</h3>
                 <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Essen" onclick="setQuickCategory('freizeit','Essen',this)">🍽️ Essen</button>
-                    <button class="quick-category-btn" data-category="Trinken" onclick="setQuickCategory('freizeit','Trinken',this)">🥤 Trinken</button>
+                    <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setQuickCategory('freizeit','Essen / Trinken',this)">🍽️ Essen / Trinken</button>
                     <button class="quick-category-btn" data-category="Aktivität" onclick="setQuickCategory('freizeit','Aktivität',this)">🎯 Aktivität</button>
+                    <button class="quick-category-btn" data-category="Geschenke" onclick="setQuickCategory('freizeit','Geschenke',this)">🎁 Geschenke</button>
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
-                <input id="freizeitKategorie" type="hidden" value="Essen">
+                <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
@@ -2640,7 +2671,7 @@
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 schnellbetraege: [5, 10, 20, 50],
-                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
+                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} },
                 designModus: "system",
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
@@ -2708,6 +2739,8 @@
                 text: e.text || "Geplante Ausgabe",
                 betrag: parseBetrag(e.betrag) || 0,
                 datum: e.datum || heuteISO(),
+                wiederholung: ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig",
+                wiederholungStart: e.wiederholungStart || e.datum || heuteISO(),
                 bereich,
                 land: bereich === "reisen" ? (e.land || "") : "",
                 kategorie: e.kategorie || "Sonstiges",
@@ -2775,10 +2808,11 @@
         }
 
         if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
-            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
         }
         daten.Einstellungen.letzteKategorien.haushalt ||= "Einkauf";
-        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen";
+        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen / Trinken";
+        if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(daten.Einstellungen.letzteKategorien.freizeit)) daten.Einstellungen.letzteKategorien.freizeit = "Essen / Trinken";
         if (!daten.Einstellungen.letzteKategorien.reisen || typeof daten.Einstellungen.letzteKategorien.reisen !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien.reisen)) {
             daten.Einstellungen.letzteKategorien.reisen = {};
         }
@@ -2849,10 +2883,8 @@
             if (!Array.isArray(liste)) return;
             liste.forEach(e => {
                 if (!e) return;
-                if (e.kategorie === "Essen gehen") e.kategorie = "Essen";
-                if (e.kategorie === "Café") e.kategorie = "Trinken";
+                if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(e.kategorie)) e.kategorie = "Essen / Trinken";
                 if (e.kategorie === "Kino/Event" || e.kategorie === "Kino / Event") e.kategorie = "Aktivität";
-                if (e.kategorie === "Snacks") e.kategorie = "Essen";
             });
         });
         const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=Math.max(0,parseInt(e.warnTage,10)||14); };
@@ -4508,7 +4540,7 @@
             if (!select) return;
             let kategorien;
             if (bereich === "freizeit") {
-                kategorien = ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+                kategorien = ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             } else if (bereich === "reisen") {
                 const land = document.getElementById("geplantReise")?.value || "";
                 const reise = daten.Reisen?.[land] || {};
@@ -4672,11 +4704,11 @@
                     </div>`;
                 return gruppenHeader + `
                     <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;">
-                            <div style="font-weight:750;min-width:0;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
-                            <div style="font-weight:800;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</div>
-                            <div class="info-text" style="margin-top:4px;grid-column:1/-1;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)} · pro Gehaltsperiode</div>
-                            ${e.text ? `<div class="info-text" style="margin-top:3px;grid-column:1/-1;">${escapeHtml(e.text)}</div>` : ""}
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
+                            <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${formatDatum(e.datum)}</div>
+                            ${e.text ? `<div class="info-text" style="margin-top:3px;">${escapeHtml(e.text)}</div>` : ""}
+                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)} / Gehaltsperiode</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')">✏️</button>
@@ -4686,11 +4718,47 @@
             }).join("");
         }
 
+        function geplantDatumZuISO(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+        }
+
+        function geplantNaechstesDatum(datum, wiederholung, ankerDatum = datum) {
+            const d = parseISODate(datum);
+            const anker = parseISODate(ankerDatum) || d;
+            if (!d || !anker) return "";
+            const ankerTag = anker.getDate();
+            if (wiederholung === "monatlich") {
+                const ziel = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+                const letzterTag = new Date(ziel.getFullYear(), ziel.getMonth() + 1, 0).getDate();
+                ziel.setDate(Math.min(ankerTag, letzterTag));
+                return geplantDatumZuISO(ziel);
+            }
+            if (wiederholung === "jaehrlich") {
+                const zielJahr = d.getFullYear() + 1;
+                const zielMonat = anker.getMonth();
+                const letzterTag = new Date(zielJahr, zielMonat + 1, 0).getDate();
+                return geplantDatumZuISO(new Date(zielJahr, zielMonat, Math.min(ankerTag, letzterTag)));
+            }
+            return "";
+        }
+
         function geplanteAusgabenImZeitraum(von, bis) {
-            return (daten["Geplante Ausgaben"] || []).filter(e => {
-                const d = parseISODate(e.datum);
-                return d && d >= von && d <= bis;
-            }).map(e => ({ ...e, betrag: parseBetrag(e.betrag) || 0 }));
+            const out = [];
+            (daten["Geplante Ausgaben"] || []).forEach(e => {
+                let datum = e.datum || "";
+                const wiederholung = ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig";
+                let guard = 0;
+                while (datum && guard++ < 240) {
+                    const d = parseISODate(datum);
+                    if (!d || d > bis) break;
+                    if (d >= von) out.push({ ...e, datum, betrag: parseBetrag(e.betrag) || 0 });
+                    if (wiederholung === "einmalig") break;
+                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
+                    if (!next || next === datum) break;
+                    datum = next;
+                }
+            });
+            return out;
         }
 
         function geplanteReservierungenImZeitraum(von, bis) {
@@ -4701,6 +4769,8 @@
             const text = formatText(document.getElementById("geplantText")?.value);
             const betrag = parseBetrag(document.getElementById("geplantBetrag")?.value);
             const datum = document.getElementById("geplantDatum")?.value || "";
+            const wiederholungRaw = document.getElementById("geplantWiederholung")?.value || "einmalig";
+            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById("geplantBereich")?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById("geplantReise")?.value || "") : "";
@@ -4713,11 +4783,12 @@
             }
 
             daten["Geplante Ausgaben"] ??= [];
-            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
+            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
             speichern();
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
             document.getElementById("geplantDatum").value = heuteISO();
+            if (document.getElementById("geplantWiederholung")) document.getElementById("geplantWiederholung").value = "einmalig";
             if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
             updateGeplantBereichUI(false);
@@ -4765,7 +4836,7 @@
         }
 
         function editGeplantKategorienFuer(bereich, land = "") {
-            if (bereich === "freizeit") return ["Essen", "Trinken", "Aktivität", "Sonstiges"];
+            if (bereich === "freizeit") return ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
             if (bereich === "reisen") {
                 const reise = daten.Reisen?.[land] || {};
                 const kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
@@ -4807,6 +4878,8 @@
             const text = formatText(document.getElementById(`editGeplantText-${id}`)?.value);
             const betrag = parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
             const datum = document.getElementById(`editGeplantDatum-${id}`)?.value || "";
+            const wiederholungRaw = document.getElementById(`editGeplantWiederholung-${id}`)?.value || "einmalig";
+            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById(`editGeplantReise-${id}`)?.value || "") : "";
@@ -4814,7 +4887,7 @@
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
             if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
+            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
             state.editGeplanteAusgabeId = null;
             speichern();
             verarbeiteFaelligeGeplanteAusgaben();
@@ -4831,49 +4904,59 @@
             let geaendert = false;
 
             daten["Geplante Ausgaben"].forEach(e => {
-                if (!e?.datum || e.datum >= heute) {
-                    offen.push(e);
-                    return;
-                }
-                const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
-                const d = parseISODate(e.datum);
-                if (!d) { offen.push(e); return; }
+                let datum = e?.datum || "";
+                const wiederholung = ["monatlich", "jaehrlich"].includes(e?.wiederholung) ? e.wiederholung : "einmalig";
+                if (!datum) { offen.push(e); return; }
 
-                if (bereich === "reisen") {
-                    const land = e.land || "";
-                    const reise = daten.Reisen?.[land];
-                    if (!reise) { offen.push(e); return; }
-                    const kategorie = e.kategorie || "Sonstiges";
-                    reise[kategorie] ??= [];
-                    const exists = reise[kategorie].some(x => String(x.geplantId || "") === String(e.id));
-                    if (!exists) {
-                        reise[kategorie].push({
-                            id: generateId(),
-                            geplantId: e.id,
-                            ausGeplant: true,
-                            text: e.text || kategorie || "Geplante Ausgabe",
-                            betrag: parseBetrag(e.betrag) || 0,
-                            datum: e.datum
-                        });
+                let guard = 0;
+                while (datum && datum < heute && guard++ < 240) {
+                    const d = parseISODate(datum);
+                    if (!d) break;
+                    const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+                    const occurrenceKey = `${e.id}:${datum}`;
+                    let konnteBuchen = true;
+
+                    if (bereich === "reisen") {
+                        const land = e.land || "";
+                        const reise = daten.Reisen?.[land];
+                        if (!reise) { konnteBuchen = false; }
+                        else {
+                            const kategorie = e.kategorie || "Sonstiges";
+                            reise[kategorie] ??= [];
+                            const exists = reise[kategorie].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
+                            if (!exists) {
+                                reise[kategorie].push({
+                                    id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
+                                    text: e.text || kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0, datum
+                                });
+                            }
+                        }
+                    } else {
+                        const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
+                        const monat = d.getMonth() + 1;
+                        store[monat] ??= [];
+                        const exists = store[monat].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
+                        if (!exists) {
+                            store[monat].push({
+                                id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
+                                text: e.text || e.kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0,
+                                datum, kategorie: e.kategorie || "Sonstiges"
+                            });
+                        }
                     }
-                } else {
-                    const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
-                    const monat = d.getMonth() + 1;
-                    store[monat] ??= [];
-                    const exists = store[monat].some(x => String(x.geplantId || "") === String(e.id));
-                    if (!exists) {
-                        store[monat].push({
-                            id: generateId(),
-                            geplantId: e.id,
-                            ausGeplant: true,
-                            text: e.text || e.kategorie || "Geplante Ausgabe",
-                            betrag: parseBetrag(e.betrag) || 0,
-                            datum: e.datum,
-                            kategorie: e.kategorie || "Sonstiges"
-                        });
-                    }
+
+                    if (!konnteBuchen) break;
+                    geaendert = true;
+                    if (wiederholung === "einmalig") { datum = ""; break; }
+                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
+                    if (!next || next === datum) break;
+                    datum = next;
                 }
-                geaendert = true;
+
+                if (datum) {
+                    if (datum !== e.datum) { e.datum = datum; geaendert = true; }
+                    offen.push(e);
+                }
             });
 
             if (geaendert) {
@@ -4917,6 +5000,11 @@
                                 <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
                                 <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <select id="editGeplantWiederholung-${e.id}">
+                                    <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
+                                    <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
+                                    <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
+                                </select>
                                 <select id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
                                     <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
                                     <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
@@ -4944,11 +5032,11 @@
                 const ziel = e.bereich === "reisen" ? `✈️ ${escapeHtml(e.land || "Reise")} · ${escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${escapeHtml(e.kategorie || "Sonstiges")}`;
                 return gruppenHeader + `
                     <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;">
-                            <div style="font-weight:750;min-width:0;overflow-wrap:anywhere;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                            <div style="font-weight:800;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</div>
-                            <div class="info-text" style="margin-top:4px;grid-column:1/-1;">${formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;grid-column:1/-1;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
+                            <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
+                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                            <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
                             <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
@@ -5453,9 +5541,9 @@
                                         <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                             ${reiseAusgewaehlt ? '✓' : ''}
                                         </div>` : ''}
-                                    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
-                                        <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(k)}</span>
-                                        <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(e.betrag)}</strong>
+                                    <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                        <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k)}</span>
+                                        <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                     </div>
                                 </div>
                                 ${!state.multiSelect.reisen ? `
@@ -5815,10 +5903,12 @@
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>
                                 ` : ''}
-                                <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;min-width:0;width:100%;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(k.text || k.name || "-")}</span>
-                                    <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(k.betrag)}</strong>
-                                    <span style="font-size:14px;opacity:.72;grid-column:1/-1;">am ${String(tag).padStart(2, "0")}.</span>
+                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
+                                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
+                                        <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
+                                        <span style="font-size:14px;opacity:.72;">· am ${String(tag).padStart(2, "0")}.</span>
+                                    </div>
                                 </div>
                             </div>
                             ${!state.multiSelect.fixkosten ? `
@@ -6176,9 +6266,9 @@
                         <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}')` : `toggleVersicherungDetails('${v.id}')`}"
                              style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                             ${selectionDot('versicherungen', v.id)}
-                            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
-                                <span style="font-weight:700; overflow-wrap:anywhere;min-width:0;">${escapeHtml(v.name || "Versicherung")}</span>
-                                <strong style="font-size:18px;text-align:right;white-space:nowrap;">${formatBetrag(v.betrag)}</strong>
+                            <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
+                                <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
                             </div>
                         </div>
                         ${!state.multiSelect.versicherungen ? `
@@ -6760,9 +6850,9 @@
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
                             <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}')` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${selectionDot('einnahmen', e.id)}
-                                <span style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;width:100%;">
-                                    <strong style="overflow-wrap:anywhere;min-width:0;">${escapeHtml(e.text || 'Einnahme')}</strong>
-                                    <strong style="font-size:18px;text-align:right;white-space:nowrap;">+${formatBetrag(e.betrag)}</strong>
+                                <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
+                                    <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
+                                    <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
                                 </span>
                             </div>
                             ${!state.multiSelect.einnahmen ? `<div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>` : ''}
@@ -6836,7 +6926,7 @@
 
         function merkeLetzteKategorie(bereich, kategorie) {
             daten.Einstellungen ??= {};
-            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
+            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
             if (bereich === "reisen") {
                 daten.Einstellungen.letzteKategorien.reisen ??= {};
                 if (aktuellesLand) daten.Einstellungen.letzteKategorien.reisen[aktuellesLand] = kategorie;
@@ -6848,7 +6938,7 @@
         function applyLetzteAlltagsKategorie(bereich) {
             const isHaus = bereich === "haushalt";
             const prefix = isHaus ? "haus" : "freizeit";
-            const fallback = isHaus ? "Einkauf" : "Essen";
+            const fallback = isHaus ? "Einkauf" : "Essen / Trinken";
             const kat = getLetzteKategorie(bereich, fallback);
             const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
@@ -7439,14 +7529,14 @@
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
                             <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
-                                 style="display:flex; align-items:center; gap:10px; min-width:0; width:100%; cursor:pointer;">
+                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 ${state.multiSelect?.[typ] ? `
                                     <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
                                         ${ausgewaehlt ? '✓' : ''}
                                     </div>` : ''}
-                                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere; min-width:0;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
-                                    <strong style="font-size:18px; flex-shrink:0; text-align:right; white-space:nowrap;">${formatBetrag(e.betrag)}</strong>
+                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
+                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
+                                    <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                 </div>
                             </div>
                             ${!state.multiSelect?.[typ] ? `
@@ -8786,12 +8876,12 @@
 
         function grafikSubcategories(category){
             if(category==="haushalt")return ["Einkauf","Tanken","Drogerie","Sonstiges"];
-            if(category==="freizeit")return ["Essen","Trinken","Aktivität","Sonstiges"];
+            if(category==="freizeit")return ["Essen / Trinken","Aktivität","Geschenke","Sonstiges"];
             if(category==="reisen"){
                 const set=new Set(); Object.values(daten.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
                 return [...set].sort((a,b)=>a.localeCompare(b,"de"));
             }
-            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
+            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen / Trinken","Geschenke","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
             if(category==="sparen")return ["Sparen","Investieren"];
             return [];
         }
@@ -9018,471 +9108,6 @@
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
 
-    <!-- ===== iPHONE GESTEN: nur Bedienung, keine Datenlogik ===== -->
-    <div id="gestureMenuBackdrop" class="gesture-menu-backdrop hidden" aria-hidden="true">
-        <div class="gesture-menu" role="dialog" aria-modal="true" aria-label="Eintrag Aktionen">
-            <div id="gestureMenuActions"></div>
-            <button type="button" class="gesture-menu-cancel">Abbrechen</button>
-        </div>
-    </div>
-
-    <style>
-        .gesture-menu-backdrop {
-            position: fixed; inset: 0; z-index: 10050;
-            display: flex; align-items: flex-end; justify-content: center;
-            padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-            background: rgba(0,0,0,.48);
-        }
-        .gesture-menu-backdrop.hidden { display: none; }
-        .gesture-menu { width: min(100%, 520px); }
-        .gesture-menu button {
-            margin: 0 0 8px; min-height: 54px; border-radius: 15px;
-            font-size: 17px; background: #2c2c2e; color: #fff;
-        }
-        .gesture-menu-cancel { font-weight: 800; }
-        :root[data-theme="light"] .gesture-menu button { background: #fff; color: #111; }
-
-        /* Swipe-Aktionen wie iOS Mail/Notizen */
-        .gesture-swipe-shell {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            isolation: isolate;
-        }
-        .gesture-swipe-shell > .item {
-            position: relative;
-            z-index: 2;
-            margin: 0 !important;
-            width: 100%;
-            will-change: transform;
-            transition: transform .22s cubic-bezier(.22,.72,.18,1);
-        }
-        /* Bearbeiten / Verschieben / Loeschen bleiben nur als unsichtbare Logik im DOM.
-           Sichtbar sind sie ausschliesslich ueber Swipe oder Long-Press. */
-        .item .actions {
-            display: none !important;
-        }
-        .gesture-swipe-shell.dragging > .item { transition: none !important; }
-
-        /* Ohne sichtbare Aktionsbuttons nutzt der Inhalt die volle Kartenbreite. */
-        .item:has(.actions) > div[style*="flex-direction:column"] > div[style*="grid-template-columns"] {
-            grid-template-columns: minmax(0,1fr) !important;
-        }
-        .item:has(.actions) > div[style*="flex-direction:column"] > div[style*="grid-template-columns"] > :first-child {
-            width: 100%;
-        }
-        .gesture-swipe-actions {
-            position: absolute;
-            z-index: 1;
-            top: 0; right: 0; bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 5px;
-            padding: 5px;
-            overflow: hidden;
-            border-radius: 0 16px 16px 0;
-        }
-        .gesture-swipe-actions button {
-            width: 46px;
-            min-width: 46px;
-            height: 46px;
-            min-height: 42px;
-            margin: 0;
-            padding: 0;
-            border-radius: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            background: #636366;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
-        }
-        .gesture-swipe-actions button .gesture-action-icon { font-size: 19px; line-height: 1; }
-        .gesture-swipe-actions button .gesture-action-label { display:none; }
-        .gesture-swipe-actions button.gesture-action-move { background: var(--action-move); }
-        .gesture-swipe-actions button.gesture-action-edit { background: var(--action-edit); }
-        .gesture-swipe-actions button.gesture-action-delete { background: #ff3b30; }
-
-        /* Interaktives Zurueckwischen: Zielseite liegt bereits darunter. */
-        .gesture-edge-view {
-            will-change: transform;
-            position: relative;
-            z-index: 90 !important;
-            box-shadow: -8px 0 18px rgba(0,0,0,.22);
-            touch-action: pan-y;
-            background: var(--bg);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            transform: translateZ(0);
-        }
-        .gesture-edge-view.dragging { transition: none !important; }
-        .gesture-edge-view.settling { transition: transform .25s cubic-bezier(.22,.72,.18,1) !important; }
-        .gesture-edge-underlay {
-            display: block !important;
-            position: relative;
-            z-index: 1;
-            transform: translate3d(-12px,0,0);
-            will-change: transform;
-            transition: none !important;
-        }
-    </style>
-
-    <script>
-    (() => {
-        const HOLD_MS = 550;
-        const EDGE_TRIGGER = 84;
-        const EDGE_ZONE = 26;
-        const MOVE_CANCEL = 12;
-        const ACTION_WIDTH = 52;
-
-        let startX = 0, startY = 0, currentX = 0;
-        let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
-        let edgeView = null, edgeUnderlay = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0, edgeFrame = 0, edgePendingDx = 0;
-        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false, swipeFullDelete = false, swipeStartOffset = 0;
-
-        const menuBackdrop = document.getElementById('gestureMenuBackdrop');
-        const menuActions = document.getElementById('gestureMenuActions');
-
-        function actionButtons(item) {
-            return item ? Array.from(item.querySelectorAll('.actions button')) : [];
-        }
-        function findDelete(item) {
-            return actionButtons(item).find(b => b.classList.contains('delete') || /🗑|löschen/i.test((b.textContent || '') + ' ' + (b.title || '')));
-        }
-        function findEdit(item) {
-            return actionButtons(item).find(b => b.classList.contains('edit') || /✏|bearbeiten/i.test((b.textContent || '') + ' ' + (b.title || '')));
-        }
-        function findMove(item) {
-            return actionButtons(item).find(b => /↪|verschieben/i.test((b.textContent || '') + ' ' + (b.title || '')));
-        }
-        function entryFromTarget(target) {
-            const shell = target?.closest?.('.gesture-swipe-shell');
-            const item = shell?.querySelector(':scope > .item') || target?.closest?.('.item');
-            if (!item || !item.querySelector('.actions')) return null;
-            return item;
-        }
-        function closeMenu() {
-            menuBackdrop?.classList.add('hidden');
-            menuBackdrop?.setAttribute('aria-hidden', 'true');
-            if (menuActions) menuActions.innerHTML = '';
-        }
-        function runExisting(button) {
-            closeMenu();
-            closeSwipeActions(true);
-            setTimeout(() => button?.click(), 0);
-        }
-        function openMenu(item) {
-            if (!menuBackdrop || !menuActions) return;
-            const edit = findEdit(item), move = findMove(item);
-            if (!edit && !move) return;
-            menuActions.innerHTML = '';
-            if (edit) {
-                const b = document.createElement('button');
-                b.type = 'button'; b.textContent = '✏️ Bearbeiten';
-                b.addEventListener('click', () => runExisting(edit), { once: true });
-                menuActions.appendChild(b);
-            }
-            if (move) {
-                const b = document.createElement('button');
-                b.type = 'button'; b.textContent = '↪️ Verschieben';
-                b.addEventListener('click', () => runExisting(move), { once: true });
-                menuActions.appendChild(b);
-            }
-            menuBackdrop.classList.remove('hidden');
-            menuBackdrop.setAttribute('aria-hidden', 'false');
-        }
-
-        function makeActionButton(icon, label, cls, existing) {
-            if (!existing) return null;
-            const b = document.createElement('button');
-            b.type = 'button'; b.className = cls;
-            b.innerHTML = `<span class="gesture-action-icon">${icon}</span><span class="gesture-action-label">${label}</span>`;
-            b.setAttribute('aria-label', label);
-            b.title = label;
-            b.addEventListener('click', e => {
-                e.stopPropagation();
-                runExisting(existing);
-            });
-            return b;
-        }
-        function prepareSwipeActions(item) {
-            if (!item || item.closest('.gesture-swipe-shell')) return item?.closest('.gesture-swipe-shell') || null;
-            closeSwipeActions(true);
-            const cs = getComputedStyle(item);
-            const shell = document.createElement('div');
-            shell.className = 'gesture-swipe-shell';
-            shell.style.marginTop = cs.marginTop;
-            shell.style.marginRight = cs.marginRight;
-            shell.style.marginBottom = cs.marginBottom;
-            shell.style.marginLeft = cs.marginLeft;
-            const tray = document.createElement('div');
-            tray.className = 'gesture-swipe-actions';
-            const edit = makeActionButton('✏️','Bearbeiten','gesture-action-edit',findEdit(item));
-            const move = makeActionButton('↪️','Verschieben','gesture-action-move',findMove(item));
-            const del = makeActionButton('🗑️','Löschen','gesture-action-delete',findDelete(item));
-            [edit, move, del].forEach(b => b && tray.appendChild(b));
-            if (!tray.children.length) return null;
-            item.parentNode.insertBefore(shell, item);
-            shell.appendChild(tray);
-            shell.appendChild(item);
-            swipeShell = shell; swipeTray = tray;
-            swipeMax = tray.children.length * ACTION_WIDTH;
-            return shell;
-        }
-        function closeSwipeActions(immediate = false) {
-            if (!swipeShell) return;
-            const shell = swipeShell, item = shell.querySelector(':scope > .item');
-            if (item) {
-                shell.classList.remove('dragging');
-                item.style.transform = 'translate3d(0,0,0)';
-            }
-            const cleanup = () => {
-                if (shell.isConnected && item) {
-                    shell.parentNode.insertBefore(item, shell);
-                    shell.remove();
-                }
-                if (swipeShell === shell) {
-                    swipeShell = null; swipeTray = null; swipeMax = 0; swipeOpened = false;
-                }
-            };
-            immediate ? cleanup() : setTimeout(cleanup, 230);
-        }
-        function settleSwipe(open) {
-            if (!swipeShell || !activeItem) return;
-            swipeShell.classList.remove('dragging');
-            activeItem.style.transform = open ? `translate3d(${-swipeMax}px,0,0)` : 'translate3d(0,0,0)';
-            swipeOpened = open;
-            if (!open) setTimeout(() => closeSwipeActions(true), 230);
-        }
-
-        function getVisibleBackView() {
-            return Array.from(document.body.children).find(el =>
-                el instanceof HTMLElement && el.id && !el.classList.contains('hidden') && el.querySelector?.('.back-btn')
-            ) || null;
-        }
-        function getVisiblePrimaryView(exclude = null) {
-            return Array.from(document.body.children).find(el =>
-                el instanceof HTMLElement && el.id && el !== exclude && !el.classList.contains('hidden') &&
-                !['undoToast','gestureMenuBackdrop','weekPreviewSheet','addSheet','startQuickAddSheet','reiseAuswahlSheet','moveSheet'].includes(el.id)
-            ) || null;
-        }
-        function beginInteractiveBack(view) {
-            const back = view?.querySelector('.back-btn');
-            if (!view || !back) return false;
-            view.classList.add('gesture-edge-view','dragging');
-            /* Zielseite jetzt schon anzeigen. Danach aktuelle Seite wieder oben sichtbar machen. */
-            back.click();
-            const target = getVisiblePrimaryView(view);
-            if (!target) {
-                view.classList.remove('gesture-edge-view','dragging');
-                view.classList.remove('hidden');
-                return false;
-            }
-            edgeUnderlay = target;
-            target.classList.add('gesture-edge-underlay');
-            view.classList.remove('hidden');
-            return true;
-        }
-        function paintInteractiveBack() {
-            edgeFrame = 0;
-            if (!edgeView) return;
-            const width = Math.max(window.innerWidth, 320);
-            const dx = Math.max(0, Math.min(edgePendingDx, width));
-            const progress = Math.min(dx / width, 1);
-            edgeView.style.transform = `translate3d(${dx}px,0,0)`;
-            /* Nur leichte Parallaxe; keine Skalierung/Opacity pro Frame = deutlich fluessiger auf iOS. */
-            if (edgeUnderlay) edgeUnderlay.style.transform = `translate3d(${-12 * (1-progress)}px,0,0)`;
-        }
-        function queueInteractiveBack(dx) {
-            edgePendingDx = dx;
-            if (!edgeFrame) edgeFrame = requestAnimationFrame(paintInteractiveBack);
-        }
-
-        function cleanEdgeStyles() {
-            if (edgeFrame) { cancelAnimationFrame(edgeFrame); edgeFrame = 0; }
-            edgePendingDx = 0;
-            if (edgeView) {
-                edgeView.classList.remove('gesture-edge-view','dragging','settling');
-                edgeView.style.transform = '';
-            }
-            if (edgeUnderlay) {
-                edgeUnderlay.classList.remove('gesture-edge-underlay');
-                edgeUnderlay.style.transform = '';
-                edgeUnderlay.style.opacity = '';
-            }
-        }
-        function cancelInteractiveBack() {
-            if (!edgeView) return;
-            const view = edgeView, under = edgeUnderlay;
-            view.classList.remove('dragging');
-            view.classList.add('settling');
-            view.style.transform = 'translate3d(0,0,0)';
-            if (under) {
-                under.style.transform = 'translate3d(-12px,0,0)';
-            }
-            setTimeout(() => {
-                under?.classList.add('hidden');
-                cleanEdgeStyles();
-                edgeView = null; edgeUnderlay = null;
-            }, 260);
-        }
-        function finishInteractiveBack() {
-            if (!edgeView) return;
-            const view = edgeView, under = edgeUnderlay;
-            const width = Math.max(window.innerWidth, 320);
-            view.classList.remove('dragging');
-            view.classList.add('settling');
-            view.style.transform = `translate3d(${width}px,0,0)`;
-            if (under) {
-                under.style.transform = 'translate3d(0,0,0)';
-            }
-            setTimeout(() => {
-                view.classList.add('hidden');
-                cleanEdgeStyles();
-                edgeView = null; edgeUnderlay = null;
-            }, 210);
-        }
-        function clearHold() {
-            if (holdTimer) clearTimeout(holdTimer);
-            holdTimer = null;
-        }
-
-        menuBackdrop?.addEventListener('click', e => { if (e.target === menuBackdrop) closeMenu(); });
-        menuBackdrop?.querySelector('.gesture-menu-cancel')?.addEventListener('click', closeMenu);
-        document.addEventListener('click', e => {
-            if (swipeOpened && swipeShell && !swipeShell.contains(e.target)) closeSwipeActions(false);
-        }, true);
-
-        document.addEventListener('touchstart', e => {
-            if (e.touches.length !== 1 || !menuBackdrop?.classList.contains('hidden')) return;
-            const t = e.touches[0];
-            startX = currentX = t.clientX; startY = t.clientY;
-            edgeSwipe = startX <= EDGE_ZONE;
-            edgeView = edgeSwipe ? getVisibleBackView() : null;
-            if (edgeSwipe && edgeView) {
-                closeSwipeActions(true);
-                if (!beginInteractiveBack(edgeView)) { edgeSwipe = false; edgeView = null; }
-                else {
-                    edgeStartTime = edgeLastTime = performance.now();
-                    edgeLastX = startX; edgeVelocity = 0;
-                }
-            } else edgeSwipe = false;
-
-            activeItem = edgeSwipe ? null : entryFromTarget(e.target);
-            if (activeItem && swipeOpened && activeItem.closest('.gesture-swipe-shell') === swipeShell) {
-                /* Von der bereits geoeffneten Position aus weiterwischen koennen. */
-                swipeStartOffset = swipeMax;
-            } else {
-                /* Wichtig fuer einen normalen Tap: Die Karte auf touchstart NICHT im DOM umhaengen.
-                   Erst wenn wirklich horizontal gewischt wird, werden die Swipe-Aktionen erzeugt.
-                   Sonst unterdrueckt iOS teilweise den anschliessenden click und ein Eintrag wirkt wie Doppeltipp. */
-                swipeStartOffset = 0;
-            }
-            holdFired = false; tracking = edgeSwipe || !!activeItem;
-            clearHold();
-            if (activeItem) {
-                holdTimer = setTimeout(() => {
-                    holdFired = true;
-                    closeSwipeActions(true);
-                    if (navigator.vibrate) navigator.vibrate(20);
-                    openMenu(activeItem);
-                }, HOLD_MS);
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchmove', e => {
-            if (!tracking || e.touches.length !== 1) return;
-            const t = e.touches[0], dx = t.clientX - startX, dy = t.clientY - startY;
-            currentX = t.clientX;
-            if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) clearHold();
-            if (Math.abs(dx) <= Math.abs(dy)) return;
-            if ((edgeSwipe && dx > 0) || (activeItem && dx < 0)) e.preventDefault();
-
-            if (edgeSwipe && edgeView && dx > 0) {
-                const now = performance.now(), dt = Math.max(now - edgeLastTime, 1);
-                edgeVelocity = (t.clientX - edgeLastX) / dt;
-                edgeLastX = t.clientX; edgeLastTime = now;
-                queueInteractiveBack(dx);
-            }
-            if (activeItem && !holdFired && (dx < -MOVE_CANCEL || swipeStartOffset > 0)) {
-                /* Swipe-Huelle erst nach eindeutigem horizontalem Wischen erzeugen.
-                   Dadurch bleibt ein einfacher Tap ein echter einfacher Tap. */
-                if (!swipeShell || activeItem.closest('.gesture-swipe-shell') !== swipeShell) {
-                    prepareSwipeActions(activeItem);
-                }
-                if (!swipeShell) return;
-                swipeShell.classList.add('dragging');
-                const width = Math.max(window.innerWidth, 320);
-                const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
-                const distance = Math.max(0, Math.min(width, swipeStartOffset - dx));
-                swipeFullDelete = distance >= fullDeleteThreshold;
-
-                /* Geoeffnete Aktionen lassen sich ohne Einrasten weiterziehen - bis zum Full-Swipe-Loeschen. */
-                activeItem.style.transform = `translate3d(${-distance}px,0,0)`;
-
-                if (swipeTray) {
-                    const del = swipeTray.querySelector('.gesture-action-delete');
-                    const others = swipeTray.querySelectorAll('button:not(.gesture-action-delete)');
-                    if (swipeFullDelete && del) {
-                        swipeTray.style.width = `${Math.min(distance, width)}px`;
-                        del.style.width = '100%';
-                        del.style.minWidth = '100%';
-                        others.forEach(b => b.style.display = 'none');
-                    } else {
-                        swipeTray.style.width = '';
-                        if (del) { del.style.width = ''; del.style.minWidth = ''; }
-                        others.forEach(b => b.style.display = '');
-                    }
-                }
-            }
-        }, { passive: false });
-
-        document.addEventListener('touchend', () => {
-            if (!tracking) return;
-            clearHold();
-            const dx = currentX - startX;
-            if (!holdFired) {
-                if (edgeSwipe) {
-                    const elapsed = Math.max(performance.now() - edgeStartTime, 1);
-                    const averageVelocity = dx / elapsed;
-                    const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 36 && Math.max(edgeVelocity, averageVelocity) > 0.45);
-                    shouldGoBack ? finishInteractiveBack() : cancelInteractiveBack();
-                } else if (activeItem && swipeShell && (dx < 0 || swipeStartOffset > 0)) {
-                    const width = Math.max(window.innerWidth, 320);
-                    const distance = Math.max(0, Math.min(width, swipeStartOffset - dx));
-                    const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
-                    if (swipeFullDelete || distance >= fullDeleteThreshold) {
-                        const del = findDelete(activeItem);
-                        if (del) {
-                            activeItem.style.transition = 'transform .18s cubic-bezier(.22,.72,.18,1), opacity .18s ease';
-                            activeItem.style.transform = `translate3d(${-width}px,0,0)`;
-                            activeItem.style.opacity = '0';
-                            setTimeout(() => runExisting(del), 155);
-                        } else {
-                            settleSwipe(false);
-                        }
-                    } else {
-                        const openThreshold = Math.min(78, swipeMax * .35);
-                        settleSwipe(distance >= openThreshold);
-                    }
-                } else if (activeItem && swipeOpened) {
-                    /* geoeffnet lassen */
-                } else if (swipeShell) {
-                    settleSwipe(false);
-                }
-            }
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false; swipeStartOffset = 0;
-        }, { passive: true });
-
-        document.addEventListener('touchcancel', () => {
-            clearHold();
-            if (edgeSwipe) cancelInteractiveBack();
-            else if (swipeShell) settleSwipe(false);
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false; swipeStartOffset = 0;
-        }, { passive: true });
-    })();
-    </script>
 </body>
 
 </html>
