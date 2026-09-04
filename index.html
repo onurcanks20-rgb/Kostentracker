@@ -2235,12 +2235,6 @@
                 <input id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <label for="geplantDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Geplantes Datum</label>
                 <input id="geplantDatum" type="date">
-                <label for="geplantWiederholung" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Wiederholung</label>
-                <select id="geplantWiederholung">
-                    <option value="einmalig">Einmalig</option>
-                    <option value="monatlich">Monatlich</option>
-                    <option value="jaehrlich">Jährlich</option>
-                </select>
                 <label for="geplantBereich" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Später buchen nach</label>
                 <select id="geplantBereich" onchange="updateGeplantBereichUI(true)">
                     <option value="haushalt">Haushalt</option>
@@ -2258,7 +2252,7 @@
                     <option value="ja">Ja, Betrag reservieren</option>
                     <option value="nein">Nein, nur vormerken</option>
                 </select>
-                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen. Monatliche und jährliche Einträge werden danach auf den nächsten Termin gesetzt.</div>
+                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen.</div>
                 <button onclick="addGeplanteAusgabe()" class="btn btn-primary">Planen</button>
             </div>
         </div>
@@ -2480,12 +2474,12 @@
                 <h3>Freizeitausgabe hinzufügen</h3>
                 <input id="freizeitBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <div class="quick-category-grid" id="freizeitKategorieGrid">
-                    <button class="quick-category-btn selected" data-category="Essen / Trinken" onclick="setQuickCategory('freizeit','Essen / Trinken',this)">🍽️ Essen / Trinken</button>
+                    <button class="quick-category-btn selected" data-category="Essen" onclick="setQuickCategory('freizeit','Essen',this)">🍽️ Essen</button>
+                    <button class="quick-category-btn" data-category="Trinken" onclick="setQuickCategory('freizeit','Trinken',this)">🥤 Trinken</button>
                     <button class="quick-category-btn" data-category="Aktivität" onclick="setQuickCategory('freizeit','Aktivität',this)">🎯 Aktivität</button>
-                    <button class="quick-category-btn" data-category="Geschenke" onclick="setQuickCategory('freizeit','Geschenke',this)">🎁 Geschenke</button>
                     <button class="quick-category-btn" data-category="Sonstiges" onclick="setQuickCategory('freizeit','Sonstiges',this)">🎉 Sonstiges</button>
                 </div>
-                <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
+                <input id="freizeitKategorie" type="hidden" value="Essen">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                 <input id="freizeitDatum" type="date">
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
@@ -2646,7 +2640,7 @@
                 startgehaelter: {},
                 quickAddFavoriten: ["haushalt", "freizeit", "einnahmen", "fixkosten", "versicherungen", "geplant", "sparen", "reisen"],
                 schnellbetraege: [5, 10, 20, 50],
-                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} },
+                letzteKategorien: { haushalt: "Einkauf", freizeit: "Essen", reisen: {} },
                 designModus: "system",
                 warnungen: { aktiv:true, schwelle:100, tage:14, kategorien:{ haushalt:false, freizeit:false, fixkosten:true, versicherungen:true, einnahmen:false, reisen:true, geplant:true, sparen:true } }
             },
@@ -2714,8 +2708,6 @@
                 text: e.text || "Geplante Ausgabe",
                 betrag: parseBetrag(e.betrag) || 0,
                 datum: e.datum || heuteISO(),
-                wiederholung: ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig",
-                wiederholungStart: e.wiederholungStart || e.datum || heuteISO(),
                 bereich,
                 land: bereich === "reisen" ? (e.land || "") : "",
                 kategorie: e.kategorie || "Sonstiges",
@@ -2783,11 +2775,10 @@
         }
 
         if (!daten.Einstellungen.letzteKategorien || typeof daten.Einstellungen.letzteKategorien !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien)) {
-            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
+            daten.Einstellungen.letzteKategorien = { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
         }
         daten.Einstellungen.letzteKategorien.haushalt ||= "Einkauf";
-        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen / Trinken";
-        if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(daten.Einstellungen.letzteKategorien.freizeit)) daten.Einstellungen.letzteKategorien.freizeit = "Essen / Trinken";
+        daten.Einstellungen.letzteKategorien.freizeit ||= "Essen";
         if (!daten.Einstellungen.letzteKategorien.reisen || typeof daten.Einstellungen.letzteKategorien.reisen !== "object" || Array.isArray(daten.Einstellungen.letzteKategorien.reisen)) {
             daten.Einstellungen.letzteKategorien.reisen = {};
         }
@@ -2858,8 +2849,10 @@
             if (!Array.isArray(liste)) return;
             liste.forEach(e => {
                 if (!e) return;
-                if (["Essen", "Trinken", "Essen gehen", "Café", "Snacks"].includes(e.kategorie)) e.kategorie = "Essen / Trinken";
+                if (e.kategorie === "Essen gehen") e.kategorie = "Essen";
+                if (e.kategorie === "Café") e.kategorie = "Trinken";
                 if (e.kategorie === "Kino/Event" || e.kategorie === "Kino / Event") e.kategorie = "Aktivität";
+                if (e.kategorie === "Snacks") e.kategorie = "Essen";
             });
         });
         const normalizeReminder = e => { if (!e || typeof e !== "object") return; e.warnung=!!e.warnung; e.warnTage=Math.max(0,parseInt(e.warnTage,10)||14); };
@@ -4515,7 +4508,7 @@
             if (!select) return;
             let kategorien;
             if (bereich === "freizeit") {
-                kategorien = ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
+                kategorien = ["Essen", "Trinken", "Aktivität", "Sonstiges"];
             } else if (bereich === "reisen") {
                 const land = document.getElementById("geplantReise")?.value || "";
                 const reise = daten.Reisen?.[land] || {};
@@ -4693,47 +4686,11 @@
             }).join("");
         }
 
-        function geplantDatumZuISO(d) {
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-        }
-
-        function geplantNaechstesDatum(datum, wiederholung, ankerDatum = datum) {
-            const d = parseISODate(datum);
-            const anker = parseISODate(ankerDatum) || d;
-            if (!d || !anker) return "";
-            const ankerTag = anker.getDate();
-            if (wiederholung === "monatlich") {
-                const ziel = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-                const letzterTag = new Date(ziel.getFullYear(), ziel.getMonth() + 1, 0).getDate();
-                ziel.setDate(Math.min(ankerTag, letzterTag));
-                return geplantDatumZuISO(ziel);
-            }
-            if (wiederholung === "jaehrlich") {
-                const zielJahr = d.getFullYear() + 1;
-                const zielMonat = anker.getMonth();
-                const letzterTag = new Date(zielJahr, zielMonat + 1, 0).getDate();
-                return geplantDatumZuISO(new Date(zielJahr, zielMonat, Math.min(ankerTag, letzterTag)));
-            }
-            return "";
-        }
-
         function geplanteAusgabenImZeitraum(von, bis) {
-            const out = [];
-            (daten["Geplante Ausgaben"] || []).forEach(e => {
-                let datum = e.datum || "";
-                const wiederholung = ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig";
-                let guard = 0;
-                while (datum && guard++ < 240) {
-                    const d = parseISODate(datum);
-                    if (!d || d > bis) break;
-                    if (d >= von) out.push({ ...e, datum, betrag: parseBetrag(e.betrag) || 0 });
-                    if (wiederholung === "einmalig") break;
-                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
-                    if (!next || next === datum) break;
-                    datum = next;
-                }
-            });
-            return out;
+            return (daten["Geplante Ausgaben"] || []).filter(e => {
+                const d = parseISODate(e.datum);
+                return d && d >= von && d <= bis;
+            }).map(e => ({ ...e, betrag: parseBetrag(e.betrag) || 0 }));
         }
 
         function geplanteReservierungenImZeitraum(von, bis) {
@@ -4744,8 +4701,6 @@
             const text = formatText(document.getElementById("geplantText")?.value);
             const betrag = parseBetrag(document.getElementById("geplantBetrag")?.value);
             const datum = document.getElementById("geplantDatum")?.value || "";
-            const wiederholungRaw = document.getElementById("geplantWiederholung")?.value || "einmalig";
-            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById("geplantBereich")?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById("geplantReise")?.value || "") : "";
@@ -4758,12 +4713,11 @@
             }
 
             daten["Geplante Ausgaben"] ??= [];
-            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
+            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
             speichern();
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
             document.getElementById("geplantDatum").value = heuteISO();
-            if (document.getElementById("geplantWiederholung")) document.getElementById("geplantWiederholung").value = "einmalig";
             if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
             updateGeplantBereichUI(false);
@@ -4811,7 +4765,7 @@
         }
 
         function editGeplantKategorienFuer(bereich, land = "") {
-            if (bereich === "freizeit") return ["Essen / Trinken", "Aktivität", "Geschenke", "Sonstiges"];
+            if (bereich === "freizeit") return ["Essen", "Trinken", "Aktivität", "Sonstiges"];
             if (bereich === "reisen") {
                 const reise = daten.Reisen?.[land] || {};
                 const kategorien = Object.keys(reise).filter(k => Array.isArray(reise[k]));
@@ -4853,8 +4807,6 @@
             const text = formatText(document.getElementById(`editGeplantText-${id}`)?.value);
             const betrag = parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
             const datum = document.getElementById(`editGeplantDatum-${id}`)?.value || "";
-            const wiederholungRaw = document.getElementById(`editGeplantWiederholung-${id}`)?.value || "einmalig";
-            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById(`editGeplantReise-${id}`)?.value || "") : "";
@@ -4862,7 +4814,7 @@
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
             if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
+            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
             state.editGeplanteAusgabeId = null;
             speichern();
             verarbeiteFaelligeGeplanteAusgaben();
@@ -4879,59 +4831,49 @@
             let geaendert = false;
 
             daten["Geplante Ausgaben"].forEach(e => {
-                let datum = e?.datum || "";
-                const wiederholung = ["monatlich", "jaehrlich"].includes(e?.wiederholung) ? e.wiederholung : "einmalig";
-                if (!datum) { offen.push(e); return; }
-
-                let guard = 0;
-                while (datum && datum < heute && guard++ < 240) {
-                    const d = parseISODate(datum);
-                    if (!d) break;
-                    const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
-                    const occurrenceKey = `${e.id}:${datum}`;
-                    let konnteBuchen = true;
-
-                    if (bereich === "reisen") {
-                        const land = e.land || "";
-                        const reise = daten.Reisen?.[land];
-                        if (!reise) { konnteBuchen = false; }
-                        else {
-                            const kategorie = e.kategorie || "Sonstiges";
-                            reise[kategorie] ??= [];
-                            const exists = reise[kategorie].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
-                            if (!exists) {
-                                reise[kategorie].push({
-                                    id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
-                                    text: e.text || kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0, datum
-                                });
-                            }
-                        }
-                    } else {
-                        const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
-                        const monat = d.getMonth() + 1;
-                        store[monat] ??= [];
-                        const exists = store[monat].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
-                        if (!exists) {
-                            store[monat].push({
-                                id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
-                                text: e.text || e.kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0,
-                                datum, kategorie: e.kategorie || "Sonstiges"
-                            });
-                        }
-                    }
-
-                    if (!konnteBuchen) break;
-                    geaendert = true;
-                    if (wiederholung === "einmalig") { datum = ""; break; }
-                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
-                    if (!next || next === datum) break;
-                    datum = next;
-                }
-
-                if (datum) {
-                    if (datum !== e.datum) { e.datum = datum; geaendert = true; }
+                if (!e?.datum || e.datum >= heute) {
                     offen.push(e);
+                    return;
                 }
+                const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+                const d = parseISODate(e.datum);
+                if (!d) { offen.push(e); return; }
+
+                if (bereich === "reisen") {
+                    const land = e.land || "";
+                    const reise = daten.Reisen?.[land];
+                    if (!reise) { offen.push(e); return; }
+                    const kategorie = e.kategorie || "Sonstiges";
+                    reise[kategorie] ??= [];
+                    const exists = reise[kategorie].some(x => String(x.geplantId || "") === String(e.id));
+                    if (!exists) {
+                        reise[kategorie].push({
+                            id: generateId(),
+                            geplantId: e.id,
+                            ausGeplant: true,
+                            text: e.text || kategorie || "Geplante Ausgabe",
+                            betrag: parseBetrag(e.betrag) || 0,
+                            datum: e.datum
+                        });
+                    }
+                } else {
+                    const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
+                    const monat = d.getMonth() + 1;
+                    store[monat] ??= [];
+                    const exists = store[monat].some(x => String(x.geplantId || "") === String(e.id));
+                    if (!exists) {
+                        store[monat].push({
+                            id: generateId(),
+                            geplantId: e.id,
+                            ausGeplant: true,
+                            text: e.text || e.kategorie || "Geplante Ausgabe",
+                            betrag: parseBetrag(e.betrag) || 0,
+                            datum: e.datum,
+                            kategorie: e.kategorie || "Sonstiges"
+                        });
+                    }
+                }
+                geaendert = true;
             });
 
             if (geaendert) {
@@ -4975,11 +4917,6 @@
                                 <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
                                 <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
-                                <select id="editGeplantWiederholung-${e.id}">
-                                    <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
-                                    <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
-                                    <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
-                                </select>
                                 <select id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
                                     <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
                                     <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
@@ -5010,7 +4947,7 @@
                         <div style="min-width:0;flex:1;">
                             <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
                             <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                            <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
                             <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
@@ -6901,7 +6838,7 @@
 
         function merkeLetzteKategorie(bereich, kategorie) {
             daten.Einstellungen ??= {};
-            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen / Trinken", reisen: {} };
+            daten.Einstellungen.letzteKategorien ??= { haushalt: "Einkauf", freizeit: "Essen", reisen: {} };
             if (bereich === "reisen") {
                 daten.Einstellungen.letzteKategorien.reisen ??= {};
                 if (aktuellesLand) daten.Einstellungen.letzteKategorien.reisen[aktuellesLand] = kategorie;
@@ -6913,7 +6850,7 @@
         function applyLetzteAlltagsKategorie(bereich) {
             const isHaus = bereich === "haushalt";
             const prefix = isHaus ? "haus" : "freizeit";
-            const fallback = isHaus ? "Einkauf" : "Essen / Trinken";
+            const fallback = isHaus ? "Einkauf" : "Essen";
             const kat = getLetzteKategorie(bereich, fallback);
             const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
@@ -8851,12 +8788,12 @@
 
         function grafikSubcategories(category){
             if(category==="haushalt")return ["Einkauf","Tanken","Drogerie","Sonstiges"];
-            if(category==="freizeit")return ["Essen / Trinken","Aktivität","Geschenke","Sonstiges"];
+            if(category==="freizeit")return ["Essen","Trinken","Aktivität","Sonstiges"];
             if(category==="reisen"){
                 const set=new Set(); Object.values(daten.Reisen||{}).forEach(r=>Object.keys(r||{}).forEach(k=>Array.isArray(r[k])&&set.add(k)));
                 return [...set].sort((a,b)=>a.localeCompare(b,"de"));
             }
-            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen / Trinken","Geschenke","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
+            if(category==="geplant")return ["Einkauf","Tanken","Drogerie","Essen","Trinken","Aktivität","Transport","Unterkunft","Sonstiges"];
             if(category==="sparen")return ["Sparen","Investieren"];
             return [];
         }
@@ -9082,6 +9019,169 @@
         <span id="undoToastText">Eintrag gelöscht</span>
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
+
+    <!-- ===== iPHONE GESTEN: nur Bedienung, keine Datenlogik ===== -->
+    <div id="gestureMenuBackdrop" class="gesture-menu-backdrop hidden" aria-hidden="true">
+        <div class="gesture-menu" role="dialog" aria-modal="true" aria-label="Eintrag Aktionen">
+            <div id="gestureMenuActions"></div>
+            <button type="button" class="gesture-menu-cancel">Abbrechen</button>
+        </div>
+    </div>
+
+    <style>
+        .gesture-menu-backdrop {
+            position: fixed; inset: 0; z-index: 10050;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+            background: rgba(0,0,0,.48);
+        }
+        .gesture-menu-backdrop.hidden { display: none; }
+        .gesture-menu { width: min(100%, 520px); }
+        .gesture-menu button {
+            margin: 0 0 8px; min-height: 54px; border-radius: 15px;
+            font-size: 17px; background: #2c2c2e; color: #fff;
+        }
+        .gesture-menu-cancel { font-weight: 800; }
+        :root[data-theme="light"] .gesture-menu button { background: #fff; color: #111; }
+        .gesture-swipe-item { will-change: transform; transition: transform .16s ease; }
+    </style>
+
+    <script>
+    (() => {
+        const HOLD_MS = 550;
+        const SWIPE_TRIGGER = 72;
+        const EDGE_TRIGGER = 72;
+        const EDGE_ZONE = 26;
+        const MOVE_CANCEL = 12;
+
+        let startX = 0, startY = 0, currentX = 0;
+        let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
+
+        const menuBackdrop = document.getElementById('gestureMenuBackdrop');
+        const menuActions = document.getElementById('gestureMenuActions');
+
+        function actionButtons(item) {
+            return item ? Array.from(item.querySelectorAll('.actions button')) : [];
+        }
+        function findDelete(item) {
+            return actionButtons(item).find(b => b.classList.contains('delete') || /🗑|löschen/i.test((b.textContent || '') + ' ' + (b.title || '')));
+        }
+        function findEdit(item) {
+            return actionButtons(item).find(b => b.classList.contains('edit') || /✏|bearbeiten/i.test((b.textContent || '') + ' ' + (b.title || '')));
+        }
+        function findMove(item) {
+            return actionButtons(item).find(b => /↪|verschieben/i.test((b.textContent || '') + ' ' + (b.title || '')));
+        }
+        function entryFromTarget(target) {
+            const item = target?.closest?.('.item');
+            if (!item || !item.querySelector('.actions')) return null;
+            return item;
+        }
+        function resetItem() {
+            if (activeItem) {
+                activeItem.style.transform = '';
+                activeItem.classList.remove('gesture-swipe-item');
+            }
+        }
+        function closeMenu() {
+            menuBackdrop?.classList.add('hidden');
+            menuBackdrop?.setAttribute('aria-hidden', 'true');
+            if (menuActions) menuActions.innerHTML = '';
+        }
+        function runExisting(button) {
+            closeMenu();
+            setTimeout(() => button?.click(), 0);
+        }
+        function openMenu(item) {
+            if (!menuBackdrop || !menuActions) return;
+            const edit = findEdit(item);
+            const move = findMove(item);
+            if (!edit && !move) return;
+            menuActions.innerHTML = '';
+            if (edit) {
+                const b = document.createElement('button');
+                b.type = 'button'; b.textContent = '✏️ Bearbeiten';
+                b.addEventListener('click', () => runExisting(edit), { once: true });
+                menuActions.appendChild(b);
+            }
+            if (move) {
+                const b = document.createElement('button');
+                b.type = 'button'; b.textContent = '↪️ Verschieben';
+                b.addEventListener('click', () => runExisting(move), { once: true });
+                menuActions.appendChild(b);
+            }
+            menuBackdrop.classList.remove('hidden');
+            menuBackdrop.setAttribute('aria-hidden', 'false');
+        }
+        function edgeBack() {
+            const visible = Array.from(document.body.children).find(el =>
+                el instanceof HTMLElement && el.id && !el.classList.contains('hidden') && el.querySelector?.('.back-btn')
+            );
+            const back = visible?.querySelector('.back-btn');
+            if (back) back.click();
+        }
+        function clearHold() {
+            if (holdTimer) clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+
+        menuBackdrop?.addEventListener('click', e => { if (e.target === menuBackdrop) closeMenu(); });
+        menuBackdrop?.querySelector('.gesture-menu-cancel')?.addEventListener('click', closeMenu);
+
+        document.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1 || !menuBackdrop?.classList.contains('hidden')) return;
+            const t = e.touches[0];
+            startX = currentX = t.clientX; startY = t.clientY;
+            edgeSwipe = startX <= EDGE_ZONE;
+            activeItem = edgeSwipe ? null : entryFromTarget(e.target);
+            holdFired = false; tracking = edgeSwipe || !!activeItem;
+            clearHold();
+            if (activeItem) {
+                holdTimer = setTimeout(() => {
+                    holdFired = true;
+                    resetItem();
+                    if (navigator.vibrate) navigator.vibrate(20);
+                    openMenu(activeItem);
+                }, HOLD_MS);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!tracking || e.touches.length !== 1) return;
+            const t = e.touches[0], dx = t.clientX - startX, dy = t.clientY - startY;
+            currentX = t.clientX;
+            if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) clearHold();
+            if (Math.abs(dx) <= Math.abs(dy)) return;
+            if ((edgeSwipe && dx > 0) || (activeItem && dx < 0)) e.preventDefault();
+            if (activeItem && dx < 0 && !holdFired) {
+                activeItem.classList.add('gesture-swipe-item');
+                activeItem.style.transform = `translateX(${Math.max(dx, -92)}px)`;
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (!tracking) return;
+            clearHold();
+            const dx = currentX - startX;
+            const item = activeItem;
+            resetItem();
+            if (!holdFired) {
+                if (edgeSwipe && dx >= EDGE_TRIGGER) {
+                    edgeBack();
+                } else if (item && dx <= -SWIPE_TRIGGER) {
+                    const del = findDelete(item);
+                    if (del) del.click();
+                }
+            }
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
+        }, { passive: true });
+
+        document.addEventListener('touchcancel', () => {
+            clearHold(); resetItem();
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
+        }, { passive: true });
+    })();
+    </script>
 
 </body>
 
