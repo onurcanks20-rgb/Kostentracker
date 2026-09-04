@@ -9043,29 +9043,91 @@
         }
         .gesture-menu-cancel { font-weight: 800; }
         :root[data-theme="light"] .gesture-menu button { background: #fff; color: #111; }
-        .gesture-swipe-item { will-change: transform; transition: transform .16s ease; }
+
+        /* Swipe-Aktionen wie iOS Mail/Notizen */
+        .gesture-swipe-shell {
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            isolation: isolate;
+        }
+        .gesture-swipe-shell > .item {
+            position: relative;
+            z-index: 2;
+            margin: 0 !important;
+            width: 100%;
+            will-change: transform;
+            transition: transform .22s cubic-bezier(.22,.72,.18,1);
+        }
+        .gesture-swipe-shell.dragging > .item { transition: none !important; }
+        .gesture-swipe-actions {
+            position: absolute;
+            z-index: 1;
+            top: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: stretch;
+            justify-content: flex-end;
+            overflow: hidden;
+            border-radius: 0 16px 16px 0;
+        }
+        .gesture-swipe-actions button {
+            width: 70px;
+            min-width: 70px;
+            height: 100%;
+            min-height: 100%;
+            margin: 0;
+            padding: 6px 4px;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 11px;
+            line-height: 1.05;
+            font-weight: 750;
+            color: #fff;
+            background: #636366;
+        }
+        .gesture-swipe-actions button .gesture-action-icon { font-size: 19px; line-height: 1; }
+        .gesture-swipe-actions button.gesture-action-move { background: var(--action-move); }
+        .gesture-swipe-actions button.gesture-action-edit { background: var(--action-edit); }
+        .gesture-swipe-actions button.gesture-action-delete { background: #ff3b30; }
+
+        /* Interaktives Zurueckwischen: Zielseite liegt bereits darunter. */
         .gesture-edge-view {
             will-change: transform;
             position: relative;
-            z-index: 70;
-            box-shadow: -14px 0 32px rgba(0,0,0,.28);
+            z-index: 90 !important;
+            box-shadow: -14px 0 34px rgba(0,0,0,.30);
             touch-action: pan-y;
+            background: var(--bg);
         }
         .gesture-edge-view.dragging { transition: none !important; }
-        .gesture-edge-view.settling { transition: transform .24s cubic-bezier(.22,.72,.18,1) !important; }
+        .gesture-edge-view.settling { transition: transform .25s cubic-bezier(.22,.72,.18,1) !important; }
+        .gesture-edge-underlay {
+            display: block !important;
+            position: relative;
+            z-index: 1;
+            transform: translate3d(-18px,0,0) scale(.985);
+            opacity: .92;
+            will-change: transform, opacity;
+            transition: none !important;
+        }
     </style>
 
     <script>
     (() => {
         const HOLD_MS = 550;
-        const SWIPE_TRIGGER = 72;
-        const EDGE_TRIGGER = 72;
+        const EDGE_TRIGGER = 84;
         const EDGE_ZONE = 26;
         const MOVE_CANCEL = 12;
+        const ACTION_WIDTH = 70;
 
         let startX = 0, startY = 0, currentX = 0;
         let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
-        let edgeView = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0;
+        let edgeView = null, edgeUnderlay = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0;
+        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false;
 
         const menuBackdrop = document.getElementById('gestureMenuBackdrop');
         const menuActions = document.getElementById('gestureMenuActions');
@@ -9087,12 +9149,6 @@
             if (!item || !item.querySelector('.actions')) return null;
             return item;
         }
-        function resetItem() {
-            if (activeItem) {
-                activeItem.style.transform = '';
-                activeItem.classList.remove('gesture-swipe-item');
-            }
-        }
         function closeMenu() {
             menuBackdrop?.classList.add('hidden');
             menuBackdrop?.setAttribute('aria-hidden', 'true');
@@ -9100,12 +9156,12 @@
         }
         function runExisting(button) {
             closeMenu();
+            closeSwipeActions(true);
             setTimeout(() => button?.click(), 0);
         }
         function openMenu(item) {
             if (!menuBackdrop || !menuActions) return;
-            const edit = findEdit(item);
-            const move = findMove(item);
+            const edit = findEdit(item), move = findMove(item);
             if (!edit && !move) return;
             menuActions.innerHTML = '';
             if (edit) {
@@ -9123,39 +9179,139 @@
             menuBackdrop.classList.remove('hidden');
             menuBackdrop.setAttribute('aria-hidden', 'false');
         }
+
+        function makeActionButton(icon, label, cls, existing) {
+            if (!existing) return null;
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = cls;
+            b.innerHTML = `<span class="gesture-action-icon">${icon}</span><span>${label}</span>`;
+            b.addEventListener('click', e => {
+                e.stopPropagation();
+                runExisting(existing);
+            });
+            return b;
+        }
+        function prepareSwipeActions(item) {
+            if (!item || item.closest('.gesture-swipe-shell')) return item?.closest('.gesture-swipe-shell') || null;
+            closeSwipeActions(true);
+            const cs = getComputedStyle(item);
+            const shell = document.createElement('div');
+            shell.className = 'gesture-swipe-shell';
+            shell.style.marginTop = cs.marginTop;
+            shell.style.marginRight = cs.marginRight;
+            shell.style.marginBottom = cs.marginBottom;
+            shell.style.marginLeft = cs.marginLeft;
+            const tray = document.createElement('div');
+            tray.className = 'gesture-swipe-actions';
+            const edit = makeActionButton('✏️','Bearbeiten','gesture-action-edit',findEdit(item));
+            const move = makeActionButton('↪️','Verschieben','gesture-action-move',findMove(item));
+            const del = makeActionButton('🗑️','Löschen','gesture-action-delete',findDelete(item));
+            [edit, move, del].forEach(b => b && tray.appendChild(b));
+            if (!tray.children.length) return null;
+            item.parentNode.insertBefore(shell, item);
+            shell.appendChild(tray);
+            shell.appendChild(item);
+            swipeShell = shell; swipeTray = tray;
+            swipeMax = tray.children.length * ACTION_WIDTH;
+            return shell;
+        }
+        function closeSwipeActions(immediate = false) {
+            if (!swipeShell) return;
+            const shell = swipeShell, item = shell.querySelector(':scope > .item');
+            if (item) {
+                shell.classList.remove('dragging');
+                item.style.transform = 'translate3d(0,0,0)';
+            }
+            const cleanup = () => {
+                if (shell.isConnected && item) {
+                    shell.parentNode.insertBefore(item, shell);
+                    shell.remove();
+                }
+                if (swipeShell === shell) {
+                    swipeShell = null; swipeTray = null; swipeMax = 0; swipeOpened = false;
+                }
+            };
+            immediate ? cleanup() : setTimeout(cleanup, 230);
+        }
+        function settleSwipe(open) {
+            if (!swipeShell || !activeItem) return;
+            swipeShell.classList.remove('dragging');
+            activeItem.style.transform = open ? `translate3d(${-swipeMax}px,0,0)` : 'translate3d(0,0,0)';
+            swipeOpened = open;
+            if (!open) setTimeout(() => closeSwipeActions(true), 230);
+        }
+
         function getVisibleBackView() {
             return Array.from(document.body.children).find(el =>
                 el instanceof HTMLElement && el.id && !el.classList.contains('hidden') && el.querySelector?.('.back-btn')
             ) || null;
         }
-        function resetEdgeView(animate = true) {
-            if (!edgeView) return;
-            const view = edgeView;
-            view.classList.remove('dragging');
-            if (animate) view.classList.add('settling');
-            view.style.transform = 'translate3d(0,0,0)';
-            const cleanup = () => {
-                view.classList.remove('gesture-edge-view','dragging','settling');
-                view.style.transform = '';
-                view.style.removeProperty('--edge-progress');
-            };
-            if (animate) setTimeout(cleanup, 250); else cleanup();
-            edgeView = null;
+        function getVisiblePrimaryView(exclude = null) {
+            return Array.from(document.body.children).find(el =>
+                el instanceof HTMLElement && el.id && el !== exclude && !el.classList.contains('hidden') &&
+                !['undoToast','gestureMenuBackdrop','weekPreviewSheet','addSheet','startQuickAddSheet','reiseAuswahlSheet','moveSheet'].includes(el.id)
+            ) || null;
         }
-        function edgeBack() {
-            const view = edgeView || getVisibleBackView();
+        function beginInteractiveBack(view) {
             const back = view?.querySelector('.back-btn');
-            if (!view || !back) { resetEdgeView(true); return; }
+            if (!view || !back) return false;
+            view.classList.add('gesture-edge-view','dragging');
+            /* Zielseite jetzt schon anzeigen. Danach aktuelle Seite wieder oben sichtbar machen. */
+            back.click();
+            const target = getVisiblePrimaryView(view);
+            if (!target) {
+                view.classList.remove('gesture-edge-view','dragging');
+                view.classList.remove('hidden');
+                return false;
+            }
+            edgeUnderlay = target;
+            target.classList.add('gesture-edge-underlay');
+            view.classList.remove('hidden');
+            return true;
+        }
+        function cleanEdgeStyles() {
+            if (edgeView) {
+                edgeView.classList.remove('gesture-edge-view','dragging','settling');
+                edgeView.style.transform = '';
+            }
+            if (edgeUnderlay) {
+                edgeUnderlay.classList.remove('gesture-edge-underlay');
+                edgeUnderlay.style.transform = '';
+                edgeUnderlay.style.opacity = '';
+            }
+        }
+        function cancelInteractiveBack() {
+            if (!edgeView) return;
+            const view = edgeView, under = edgeUnderlay;
+            view.classList.remove('dragging');
+            view.classList.add('settling');
+            view.style.transform = 'translate3d(0,0,0)';
+            if (under) {
+                under.style.transform = 'translate3d(-18px,0,0) scale(.985)';
+                under.style.opacity = '.92';
+            }
+            setTimeout(() => {
+                under?.classList.add('hidden');
+                cleanEdgeStyles();
+                edgeView = null; edgeUnderlay = null;
+            }, 260);
+        }
+        function finishInteractiveBack() {
+            if (!edgeView) return;
+            const view = edgeView, under = edgeUnderlay;
             const width = Math.max(window.innerWidth, 320);
             view.classList.remove('dragging');
-            view.classList.add('gesture-edge-view','settling');
+            view.classList.add('settling');
             view.style.transform = `translate3d(${width}px,0,0)`;
+            if (under) {
+                under.style.transform = 'translate3d(0,0,0) scale(1)';
+                under.style.opacity = '1';
+            }
             setTimeout(() => {
-                back.click();
-                view.classList.remove('gesture-edge-view','dragging','settling');
-                view.style.transform = '';
-                edgeView = null;
-            }, 190);
+                view.classList.add('hidden');
+                cleanEdgeStyles();
+                edgeView = null; edgeUnderlay = null;
+            }, 210);
         }
         function clearHold() {
             if (holdTimer) clearTimeout(holdTimer);
@@ -9164,6 +9320,9 @@
 
         menuBackdrop?.addEventListener('click', e => { if (e.target === menuBackdrop) closeMenu(); });
         menuBackdrop?.querySelector('.gesture-menu-cancel')?.addEventListener('click', closeMenu);
+        document.addEventListener('click', e => {
+            if (swipeOpened && swipeShell && !swipeShell.contains(e.target)) closeSwipeActions(false);
+        }, true);
 
         document.addEventListener('touchstart', e => {
             if (e.touches.length !== 1 || !menuBackdrop?.classList.contains('hidden')) return;
@@ -9171,19 +9330,27 @@
             startX = currentX = t.clientX; startY = t.clientY;
             edgeSwipe = startX <= EDGE_ZONE;
             edgeView = edgeSwipe ? getVisibleBackView() : null;
-            if (edgeSwipe && !edgeView) edgeSwipe = false;
             if (edgeSwipe && edgeView) {
-                edgeView.classList.add('gesture-edge-view','dragging');
-                edgeStartTime = edgeLastTime = performance.now();
-                edgeLastX = startX; edgeVelocity = 0;
-            }
+                closeSwipeActions(true);
+                if (!beginInteractiveBack(edgeView)) { edgeSwipe = false; edgeView = null; }
+                else {
+                    edgeStartTime = edgeLastTime = performance.now();
+                    edgeLastX = startX; edgeVelocity = 0;
+                }
+            } else edgeSwipe = false;
+
             activeItem = edgeSwipe ? null : entryFromTarget(e.target);
+            if (activeItem && swipeOpened && activeItem.closest('.gesture-swipe-shell') === swipeShell) {
+                /* Offene Aktionsflaeche bleibt fuer Button-Taps stehen. */
+            } else if (activeItem) {
+                prepareSwipeActions(activeItem);
+            }
             holdFired = false; tracking = edgeSwipe || !!activeItem;
             clearHold();
             if (activeItem) {
                 holdTimer = setTimeout(() => {
                     holdFired = true;
-                    resetItem();
+                    closeSwipeActions(true);
                     if (navigator.vibrate) navigator.vibrate(20);
                     openMenu(activeItem);
                 }, HOLD_MS);
@@ -9197,19 +9364,24 @@
             if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) clearHold();
             if (Math.abs(dx) <= Math.abs(dy)) return;
             if ((edgeSwipe && dx > 0) || (activeItem && dx < 0)) e.preventDefault();
+
             if (edgeSwipe && edgeView && dx > 0) {
-                const now = performance.now();
-                const dt = Math.max(now - edgeLastTime, 1);
+                const now = performance.now(), dt = Math.max(now - edgeLastTime, 1);
                 edgeVelocity = (t.clientX - edgeLastX) / dt;
                 edgeLastX = t.clientX; edgeLastTime = now;
                 const width = Math.max(window.innerWidth, 320);
                 const progress = Math.min(dx / width, 1);
-                const easedDx = dx * (0.96 - 0.10 * progress);
+                const easedDx = dx * (0.98 - 0.08 * progress);
                 edgeView.style.transform = `translate3d(${Math.min(easedDx, width)}px,0,0)`;
+                if (edgeUnderlay) {
+                    edgeUnderlay.style.transform = `translate3d(${-18 * (1-progress)}px,0,0) scale(${0.985 + 0.015*progress})`;
+                    edgeUnderlay.style.opacity = String(0.92 + 0.08*progress);
+                }
             }
-            if (activeItem && dx < 0 && !holdFired) {
-                activeItem.classList.add('gesture-swipe-item');
-                activeItem.style.transform = `translateX(${Math.max(dx, -92)}px)`;
+            if (activeItem && dx < 0 && !holdFired && swipeShell) {
+                swipeShell.classList.add('dragging');
+                const amount = Math.max(dx, -swipeMax - 20);
+                activeItem.style.transform = `translate3d(${amount}px,0,0)`;
             }
         }, { passive: false });
 
@@ -9217,30 +9389,32 @@
             if (!tracking) return;
             clearHold();
             const dx = currentX - startX;
-            const item = activeItem;
-            resetItem();
             if (!holdFired) {
                 if (edgeSwipe) {
                     const elapsed = Math.max(performance.now() - edgeStartTime, 1);
                     const averageVelocity = dx / elapsed;
-                    const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 34 && Math.max(edgeVelocity, averageVelocity) > 0.45);
-                    if (shouldGoBack) edgeBack();
-                    else resetEdgeView(true);
-                } else if (item && dx <= -SWIPE_TRIGGER) {
-                    const del = findDelete(item);
-                    if (del) del.click();
+                    const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 36 && Math.max(edgeVelocity, averageVelocity) > 0.45);
+                    shouldGoBack ? finishInteractiveBack() : cancelInteractiveBack();
+                } else if (activeItem && dx < 0 && swipeShell) {
+                    const openThreshold = Math.min(78, swipeMax * .35);
+                    settleSwipe(Math.abs(dx) >= openThreshold);
+                } else if (activeItem && swipeOpened) {
+                    /* geoeffnet lassen */
+                } else if (swipeShell) {
+                    settleSwipe(false);
                 }
             }
             tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
         }, { passive: true });
 
         document.addEventListener('touchcancel', () => {
-            clearHold(); resetItem(); resetEdgeView(true);
+            clearHold();
+            if (edgeSwipe) cancelInteractiveBack();
+            else if (swipeShell) settleSwipe(false);
             tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
         }, { passive: true });
     })();
     </script>
-
 </body>
 
 </html>
