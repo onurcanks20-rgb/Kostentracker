@@ -9059,37 +9059,40 @@
             will-change: transform;
             transition: transform .22s cubic-bezier(.22,.72,.18,1);
         }
+        /* Die alten Inline-Aktionsbuttons bleiben als Logik im DOM, sind aber optisch weg. */
+        .gesture-swipe-shell > .item .actions {
+            display: none !important;
+        }
         .gesture-swipe-shell.dragging > .item { transition: none !important; }
         .gesture-swipe-actions {
             position: absolute;
             z-index: 1;
             top: 0; right: 0; bottom: 0;
             display: flex;
-            align-items: stretch;
+            align-items: center;
             justify-content: flex-end;
+            gap: 6px;
+            padding: 6px;
             overflow: hidden;
             border-radius: 0 16px 16px 0;
         }
         .gesture-swipe-actions button {
-            width: 70px;
-            min-width: 70px;
-            height: 100%;
-            min-height: 100%;
+            width: 54px;
+            min-width: 54px;
+            height: calc(100% - 12px);
+            min-height: 44px;
             margin: 0;
-            padding: 6px 4px;
-            border-radius: 0;
+            padding: 0;
+            border-radius: 13px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            font-size: 11px;
-            line-height: 1.05;
-            font-weight: 750;
             color: #fff;
             background: #636366;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
         }
-        .gesture-swipe-actions button .gesture-action-icon { font-size: 19px; line-height: 1; }
+        .gesture-swipe-actions button .gesture-action-icon { font-size: 21px; line-height: 1; }
+        .gesture-swipe-actions button .gesture-action-label { display:none; }
         .gesture-swipe-actions button.gesture-action-move { background: var(--action-move); }
         .gesture-swipe-actions button.gesture-action-edit { background: var(--action-edit); }
         .gesture-swipe-actions button.gesture-action-delete { background: #ff3b30; }
@@ -9099,9 +9102,12 @@
             will-change: transform;
             position: relative;
             z-index: 90 !important;
-            box-shadow: -14px 0 34px rgba(0,0,0,.30);
+            box-shadow: -8px 0 18px rgba(0,0,0,.22);
             touch-action: pan-y;
             background: var(--bg);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform: translateZ(0);
         }
         .gesture-edge-view.dragging { transition: none !important; }
         .gesture-edge-view.settling { transition: transform .25s cubic-bezier(.22,.72,.18,1) !important; }
@@ -9109,9 +9115,8 @@
             display: block !important;
             position: relative;
             z-index: 1;
-            transform: translate3d(-18px,0,0) scale(.985);
-            opacity: .92;
-            will-change: transform, opacity;
+            transform: translate3d(-12px,0,0);
+            will-change: transform;
             transition: none !important;
         }
     </style>
@@ -9122,12 +9127,12 @@
         const EDGE_TRIGGER = 84;
         const EDGE_ZONE = 26;
         const MOVE_CANCEL = 12;
-        const ACTION_WIDTH = 70;
+        const ACTION_WIDTH = 60;
 
         let startX = 0, startY = 0, currentX = 0;
         let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
-        let edgeView = null, edgeUnderlay = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0;
-        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false;
+        let edgeView = null, edgeUnderlay = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0, edgeFrame = 0, edgePendingDx = 0;
+        let swipeShell = null, swipeTray = null, swipeMax = 0, swipeOpened = false, swipeFullDelete = false;
 
         const menuBackdrop = document.getElementById('gestureMenuBackdrop');
         const menuActions = document.getElementById('gestureMenuActions');
@@ -9184,7 +9189,9 @@
             if (!existing) return null;
             const b = document.createElement('button');
             b.type = 'button'; b.className = cls;
-            b.innerHTML = `<span class="gesture-action-icon">${icon}</span><span>${label}</span>`;
+            b.innerHTML = `<span class="gesture-action-icon">${icon}</span><span class="gesture-action-label">${label}</span>`;
+            b.setAttribute('aria-label', label);
+            b.title = label;
             b.addEventListener('click', e => {
                 e.stopPropagation();
                 runExisting(existing);
@@ -9269,7 +9276,24 @@
             view.classList.remove('hidden');
             return true;
         }
+        function paintInteractiveBack() {
+            edgeFrame = 0;
+            if (!edgeView) return;
+            const width = Math.max(window.innerWidth, 320);
+            const dx = Math.max(0, Math.min(edgePendingDx, width));
+            const progress = Math.min(dx / width, 1);
+            edgeView.style.transform = `translate3d(${dx}px,0,0)`;
+            /* Nur leichte Parallaxe; keine Skalierung/Opacity pro Frame = deutlich fluessiger auf iOS. */
+            if (edgeUnderlay) edgeUnderlay.style.transform = `translate3d(${-12 * (1-progress)}px,0,0)`;
+        }
+        function queueInteractiveBack(dx) {
+            edgePendingDx = dx;
+            if (!edgeFrame) edgeFrame = requestAnimationFrame(paintInteractiveBack);
+        }
+
         function cleanEdgeStyles() {
+            if (edgeFrame) { cancelAnimationFrame(edgeFrame); edgeFrame = 0; }
+            edgePendingDx = 0;
             if (edgeView) {
                 edgeView.classList.remove('gesture-edge-view','dragging','settling');
                 edgeView.style.transform = '';
@@ -9287,8 +9311,7 @@
             view.classList.add('settling');
             view.style.transform = 'translate3d(0,0,0)';
             if (under) {
-                under.style.transform = 'translate3d(-18px,0,0) scale(.985)';
-                under.style.opacity = '.92';
+                under.style.transform = 'translate3d(-12px,0,0)';
             }
             setTimeout(() => {
                 under?.classList.add('hidden');
@@ -9304,8 +9327,7 @@
             view.classList.add('settling');
             view.style.transform = `translate3d(${width}px,0,0)`;
             if (under) {
-                under.style.transform = 'translate3d(0,0,0) scale(1)';
-                under.style.opacity = '1';
+                under.style.transform = 'translate3d(0,0,0)';
             }
             setTimeout(() => {
                 view.classList.add('hidden');
@@ -9369,19 +9391,36 @@
                 const now = performance.now(), dt = Math.max(now - edgeLastTime, 1);
                 edgeVelocity = (t.clientX - edgeLastX) / dt;
                 edgeLastX = t.clientX; edgeLastTime = now;
-                const width = Math.max(window.innerWidth, 320);
-                const progress = Math.min(dx / width, 1);
-                const easedDx = dx * (0.98 - 0.08 * progress);
-                edgeView.style.transform = `translate3d(${Math.min(easedDx, width)}px,0,0)`;
-                if (edgeUnderlay) {
-                    edgeUnderlay.style.transform = `translate3d(${-18 * (1-progress)}px,0,0) scale(${0.985 + 0.015*progress})`;
-                    edgeUnderlay.style.opacity = String(0.92 + 0.08*progress);
-                }
+                queueInteractiveBack(dx);
             }
             if (activeItem && dx < 0 && !holdFired && swipeShell) {
                 swipeShell.classList.add('dragging');
-                const amount = Math.max(dx, -swipeMax - 20);
-                activeItem.style.transform = `translate3d(${amount}px,0,0)`;
+                const width = Math.max(window.innerWidth, 320);
+                const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
+                const distance = Math.abs(dx);
+                swipeFullDelete = distance >= fullDeleteThreshold;
+
+                /* Kurzer Swipe: kompakte Aktionen. Kompletter Swipe: rote Loeschflaeche uebernimmt. */
+                let amount = dx;
+                if (!swipeFullDelete && distance > swipeMax) {
+                    amount = -swipeMax - (distance - swipeMax) * .18;
+                }
+                activeItem.style.transform = `translate3d(${Math.max(amount, -width)}px,0,0)`;
+
+                if (swipeTray) {
+                    const del = swipeTray.querySelector('.gesture-action-delete');
+                    const others = swipeTray.querySelectorAll('button:not(.gesture-action-delete)');
+                    if (swipeFullDelete && del) {
+                        swipeTray.style.width = `${Math.min(distance, width)}px`;
+                        del.style.width = '100%';
+                        del.style.minWidth = '100%';
+                        others.forEach(b => b.style.display = 'none');
+                    } else {
+                        swipeTray.style.width = '';
+                        if (del) { del.style.width = ''; del.style.minWidth = ''; }
+                        others.forEach(b => b.style.display = '');
+                    }
+                }
             }
         }, { passive: false });
 
@@ -9396,22 +9435,37 @@
                     const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 36 && Math.max(edgeVelocity, averageVelocity) > 0.45);
                     shouldGoBack ? finishInteractiveBack() : cancelInteractiveBack();
                 } else if (activeItem && dx < 0 && swipeShell) {
-                    const openThreshold = Math.min(78, swipeMax * .35);
-                    settleSwipe(Math.abs(dx) >= openThreshold);
+                    const distance = Math.abs(dx);
+                    const width = Math.max(window.innerWidth, 320);
+                    const fullDeleteThreshold = Math.max(swipeMax + 72, width * .72);
+                    if (swipeFullDelete || distance >= fullDeleteThreshold) {
+                        const del = findDelete(activeItem);
+                        if (del) {
+                            activeItem.style.transition = 'transform .18s cubic-bezier(.22,.72,.18,1), opacity .18s ease';
+                            activeItem.style.transform = `translate3d(${-width}px,0,0)`;
+                            activeItem.style.opacity = '0';
+                            setTimeout(() => runExisting(del), 155);
+                        } else {
+                            settleSwipe(false);
+                        }
+                    } else {
+                        const openThreshold = Math.min(78, swipeMax * .35);
+                        settleSwipe(distance >= openThreshold);
+                    }
                 } else if (activeItem && swipeOpened) {
                     /* geoeffnet lassen */
                 } else if (swipeShell) {
                     settleSwipe(false);
                 }
             }
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false;
         }, { passive: true });
 
         document.addEventListener('touchcancel', () => {
             clearHold();
             if (edgeSwipe) cancelInteractiveBack();
             else if (swipeShell) settleSwipe(false);
-            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
+            tracking = false; activeItem = null; edgeSwipe = false; holdFired = false; swipeFullDelete = false;
         }, { passive: true });
     })();
     </script>
