@@ -9044,6 +9044,15 @@
         .gesture-menu-cancel { font-weight: 800; }
         :root[data-theme="light"] .gesture-menu button { background: #fff; color: #111; }
         .gesture-swipe-item { will-change: transform; transition: transform .16s ease; }
+        .gesture-edge-view {
+            will-change: transform;
+            position: relative;
+            z-index: 70;
+            box-shadow: -14px 0 32px rgba(0,0,0,.28);
+            touch-action: pan-y;
+        }
+        .gesture-edge-view.dragging { transition: none !important; }
+        .gesture-edge-view.settling { transition: transform .24s cubic-bezier(.22,.72,.18,1) !important; }
     </style>
 
     <script>
@@ -9056,6 +9065,7 @@
 
         let startX = 0, startY = 0, currentX = 0;
         let activeItem = null, holdTimer = null, holdFired = false, edgeSwipe = false, tracking = false;
+        let edgeView = null, edgeStartTime = 0, edgeLastX = 0, edgeLastTime = 0, edgeVelocity = 0;
 
         const menuBackdrop = document.getElementById('gestureMenuBackdrop');
         const menuActions = document.getElementById('gestureMenuActions');
@@ -9113,12 +9123,39 @@
             menuBackdrop.classList.remove('hidden');
             menuBackdrop.setAttribute('aria-hidden', 'false');
         }
-        function edgeBack() {
-            const visible = Array.from(document.body.children).find(el =>
+        function getVisibleBackView() {
+            return Array.from(document.body.children).find(el =>
                 el instanceof HTMLElement && el.id && !el.classList.contains('hidden') && el.querySelector?.('.back-btn')
-            );
-            const back = visible?.querySelector('.back-btn');
-            if (back) back.click();
+            ) || null;
+        }
+        function resetEdgeView(animate = true) {
+            if (!edgeView) return;
+            const view = edgeView;
+            view.classList.remove('dragging');
+            if (animate) view.classList.add('settling');
+            view.style.transform = 'translate3d(0,0,0)';
+            const cleanup = () => {
+                view.classList.remove('gesture-edge-view','dragging','settling');
+                view.style.transform = '';
+                view.style.removeProperty('--edge-progress');
+            };
+            if (animate) setTimeout(cleanup, 250); else cleanup();
+            edgeView = null;
+        }
+        function edgeBack() {
+            const view = edgeView || getVisibleBackView();
+            const back = view?.querySelector('.back-btn');
+            if (!view || !back) { resetEdgeView(true); return; }
+            const width = Math.max(window.innerWidth, 320);
+            view.classList.remove('dragging');
+            view.classList.add('gesture-edge-view','settling');
+            view.style.transform = `translate3d(${width}px,0,0)`;
+            setTimeout(() => {
+                back.click();
+                view.classList.remove('gesture-edge-view','dragging','settling');
+                view.style.transform = '';
+                edgeView = null;
+            }, 190);
         }
         function clearHold() {
             if (holdTimer) clearTimeout(holdTimer);
@@ -9133,6 +9170,13 @@
             const t = e.touches[0];
             startX = currentX = t.clientX; startY = t.clientY;
             edgeSwipe = startX <= EDGE_ZONE;
+            edgeView = edgeSwipe ? getVisibleBackView() : null;
+            if (edgeSwipe && !edgeView) edgeSwipe = false;
+            if (edgeSwipe && edgeView) {
+                edgeView.classList.add('gesture-edge-view','dragging');
+                edgeStartTime = edgeLastTime = performance.now();
+                edgeLastX = startX; edgeVelocity = 0;
+            }
             activeItem = edgeSwipe ? null : entryFromTarget(e.target);
             holdFired = false; tracking = edgeSwipe || !!activeItem;
             clearHold();
@@ -9153,6 +9197,16 @@
             if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) clearHold();
             if (Math.abs(dx) <= Math.abs(dy)) return;
             if ((edgeSwipe && dx > 0) || (activeItem && dx < 0)) e.preventDefault();
+            if (edgeSwipe && edgeView && dx > 0) {
+                const now = performance.now();
+                const dt = Math.max(now - edgeLastTime, 1);
+                edgeVelocity = (t.clientX - edgeLastX) / dt;
+                edgeLastX = t.clientX; edgeLastTime = now;
+                const width = Math.max(window.innerWidth, 320);
+                const progress = Math.min(dx / width, 1);
+                const easedDx = dx * (0.96 - 0.10 * progress);
+                edgeView.style.transform = `translate3d(${Math.min(easedDx, width)}px,0,0)`;
+            }
             if (activeItem && dx < 0 && !holdFired) {
                 activeItem.classList.add('gesture-swipe-item');
                 activeItem.style.transform = `translateX(${Math.max(dx, -92)}px)`;
@@ -9166,8 +9220,12 @@
             const item = activeItem;
             resetItem();
             if (!holdFired) {
-                if (edgeSwipe && dx >= EDGE_TRIGGER) {
-                    edgeBack();
+                if (edgeSwipe) {
+                    const elapsed = Math.max(performance.now() - edgeStartTime, 1);
+                    const averageVelocity = dx / elapsed;
+                    const shouldGoBack = dx >= EDGE_TRIGGER || (dx >= 34 && Math.max(edgeVelocity, averageVelocity) > 0.45);
+                    if (shouldGoBack) edgeBack();
+                    else resetEdgeView(true);
                 } else if (item && dx <= -SWIPE_TRIGGER) {
                     const del = findDelete(item);
                     if (del) del.click();
@@ -9177,7 +9235,7 @@
         }, { passive: true });
 
         document.addEventListener('touchcancel', () => {
-            clearHold(); resetItem();
+            clearHold(); resetItem(); resetEdgeView(true);
             tracking = false; activeItem = null; edgeSwipe = false; holdFired = false;
         }, { passive: true });
     })();
