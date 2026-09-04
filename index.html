@@ -2235,6 +2235,12 @@
                 <input id="geplantBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
                 <label for="geplantDatum" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Geplantes Datum</label>
                 <input id="geplantDatum" type="date">
+                <label for="geplantWiederholung" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Wiederholung</label>
+                <select id="geplantWiederholung">
+                    <option value="einmalig">Einmalig</option>
+                    <option value="monatlich">Monatlich</option>
+                    <option value="jaehrlich">Jährlich</option>
+                </select>
                 <label for="geplantBereich" style="display:block; opacity:.75; margin:8px 0 2px; font-size:14px;">Später buchen nach</label>
                 <select id="geplantBereich" onchange="updateGeplantBereichUI(true)">
                     <option value="haushalt">Haushalt</option>
@@ -2252,7 +2258,7 @@
                     <option value="ja">Ja, Betrag reservieren</option>
                     <option value="nein">Nein, nur vormerken</option>
                 </select>
-                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen.</div>
+                <div id="geplantBudgetHinweis" class="info-text">Der Betrag wird im Gehaltszeitraum des geplanten Datums reserviert. Ab dem Folgetag wird er automatisch als echte Ausgabe übernommen. Monatliche und jährliche Einträge werden danach auf den nächsten Termin gesetzt.</div>
                 <button onclick="addGeplanteAusgabe()" class="btn btn-primary">Planen</button>
             </div>
         </div>
@@ -2708,6 +2714,8 @@
                 text: e.text || "Geplante Ausgabe",
                 betrag: parseBetrag(e.betrag) || 0,
                 datum: e.datum || heuteISO(),
+                wiederholung: ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig",
+                wiederholungStart: e.wiederholungStart || e.datum || heuteISO(),
                 bereich,
                 land: bereich === "reisen" ? (e.land || "") : "",
                 kategorie: e.kategorie || "Sonstiges",
@@ -4686,11 +4694,47 @@
             }).join("");
         }
 
+        function geplantDatumZuISO(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+        }
+
+        function geplantNaechstesDatum(datum, wiederholung, ankerDatum = datum) {
+            const d = parseISODate(datum);
+            const anker = parseISODate(ankerDatum) || d;
+            if (!d || !anker) return "";
+            const ankerTag = anker.getDate();
+            if (wiederholung === "monatlich") {
+                const ziel = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+                const letzterTag = new Date(ziel.getFullYear(), ziel.getMonth() + 1, 0).getDate();
+                ziel.setDate(Math.min(ankerTag, letzterTag));
+                return geplantDatumZuISO(ziel);
+            }
+            if (wiederholung === "jaehrlich") {
+                const zielJahr = d.getFullYear() + 1;
+                const zielMonat = anker.getMonth();
+                const letzterTag = new Date(zielJahr, zielMonat + 1, 0).getDate();
+                return geplantDatumZuISO(new Date(zielJahr, zielMonat, Math.min(ankerTag, letzterTag)));
+            }
+            return "";
+        }
+
         function geplanteAusgabenImZeitraum(von, bis) {
-            return (daten["Geplante Ausgaben"] || []).filter(e => {
-                const d = parseISODate(e.datum);
-                return d && d >= von && d <= bis;
-            }).map(e => ({ ...e, betrag: parseBetrag(e.betrag) || 0 }));
+            const out = [];
+            (daten["Geplante Ausgaben"] || []).forEach(e => {
+                let datum = e.datum || "";
+                const wiederholung = ["monatlich", "jaehrlich"].includes(e.wiederholung) ? e.wiederholung : "einmalig";
+                let guard = 0;
+                while (datum && guard++ < 240) {
+                    const d = parseISODate(datum);
+                    if (!d || d > bis) break;
+                    if (d >= von) out.push({ ...e, datum, betrag: parseBetrag(e.betrag) || 0 });
+                    if (wiederholung === "einmalig") break;
+                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
+                    if (!next || next === datum) break;
+                    datum = next;
+                }
+            });
+            return out;
         }
 
         function geplanteReservierungenImZeitraum(von, bis) {
@@ -4701,6 +4745,8 @@
             const text = formatText(document.getElementById("geplantText")?.value);
             const betrag = parseBetrag(document.getElementById("geplantBetrag")?.value);
             const datum = document.getElementById("geplantDatum")?.value || "";
+            const wiederholungRaw = document.getElementById("geplantWiederholung")?.value || "einmalig";
+            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById("geplantBereich")?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById("geplantReise")?.value || "") : "";
@@ -4713,11 +4759,12 @@
             }
 
             daten["Geplante Ausgaben"] ??= [];
-            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
+            daten["Geplante Ausgaben"].push({ id: generateId(), text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl("add:geplant") });
             speichern();
             document.getElementById("geplantText").value = "";
             document.getElementById("geplantBetrag").value = "";
             document.getElementById("geplantDatum").value = heuteISO();
+            if (document.getElementById("geplantWiederholung")) document.getElementById("geplantWiederholung").value = "einmalig";
             if (document.getElementById("geplantBereich")) document.getElementById("geplantBereich").value = "haushalt";
             if (document.getElementById("geplantBudgetWirksam")) document.getElementById("geplantBudgetWirksam").value = "ja";
             updateGeplantBereichUI(false);
@@ -4807,6 +4854,8 @@
             const text = formatText(document.getElementById(`editGeplantText-${id}`)?.value);
             const betrag = parseBetrag(document.getElementById(`editGeplantBetrag-${id}`)?.value);
             const datum = document.getElementById(`editGeplantDatum-${id}`)?.value || "";
+            const wiederholungRaw = document.getElementById(`editGeplantWiederholung-${id}`)?.value || "einmalig";
+            const wiederholung = ["monatlich", "jaehrlich"].includes(wiederholungRaw) ? wiederholungRaw : "einmalig";
             const bereichRaw = document.getElementById(`editGeplantBereich-${id}`)?.value || "haushalt";
             const bereich = ["haushalt", "freizeit", "reisen"].includes(bereichRaw) ? bereichRaw : "haushalt";
             const land = bereich === "reisen" ? (document.getElementById(`editGeplantReise-${id}`)?.value || "") : "";
@@ -4814,7 +4863,7 @@
             const budgetWirksam = document.getElementById(`editGeplantBudget-${id}`)?.value !== "nein";
             if (!text || isNaN(betrag) || betrag <= 0 || !parseISODate(datum)) return;
             if (bereich === "reisen" && (!land || !daten.Reisen?.[land])) { alert("Bitte wähle eine vorhandene Reise aus."); return; }
-            Object.assign(e, { text, betrag, datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
+            Object.assign(e, { text, betrag, datum, wiederholung, wiederholungStart: datum, bereich, land, kategorie, budgetWirksam, ...readReminderControl(`edit:geplant:${id}`) });
             state.editGeplanteAusgabeId = null;
             speichern();
             verarbeiteFaelligeGeplanteAusgaben();
@@ -4831,49 +4880,59 @@
             let geaendert = false;
 
             daten["Geplante Ausgaben"].forEach(e => {
-                if (!e?.datum || e.datum >= heute) {
-                    offen.push(e);
-                    return;
-                }
-                const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
-                const d = parseISODate(e.datum);
-                if (!d) { offen.push(e); return; }
+                let datum = e?.datum || "";
+                const wiederholung = ["monatlich", "jaehrlich"].includes(e?.wiederholung) ? e.wiederholung : "einmalig";
+                if (!datum) { offen.push(e); return; }
 
-                if (bereich === "reisen") {
-                    const land = e.land || "";
-                    const reise = daten.Reisen?.[land];
-                    if (!reise) { offen.push(e); return; }
-                    const kategorie = e.kategorie || "Sonstiges";
-                    reise[kategorie] ??= [];
-                    const exists = reise[kategorie].some(x => String(x.geplantId || "") === String(e.id));
-                    if (!exists) {
-                        reise[kategorie].push({
-                            id: generateId(),
-                            geplantId: e.id,
-                            ausGeplant: true,
-                            text: e.text || kategorie || "Geplante Ausgabe",
-                            betrag: parseBetrag(e.betrag) || 0,
-                            datum: e.datum
-                        });
+                let guard = 0;
+                while (datum && datum < heute && guard++ < 240) {
+                    const d = parseISODate(datum);
+                    if (!d) break;
+                    const bereich = ["haushalt", "freizeit", "reisen"].includes(e.bereich) ? e.bereich : "haushalt";
+                    const occurrenceKey = `${e.id}:${datum}`;
+                    let konnteBuchen = true;
+
+                    if (bereich === "reisen") {
+                        const land = e.land || "";
+                        const reise = daten.Reisen?.[land];
+                        if (!reise) { konnteBuchen = false; }
+                        else {
+                            const kategorie = e.kategorie || "Sonstiges";
+                            reise[kategorie] ??= [];
+                            const exists = reise[kategorie].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
+                            if (!exists) {
+                                reise[kategorie].push({
+                                    id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
+                                    text: e.text || kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0, datum
+                                });
+                            }
+                        }
+                    } else {
+                        const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
+                        const monat = d.getMonth() + 1;
+                        store[monat] ??= [];
+                        const exists = store[monat].some(x => String(x.geplantOccurrenceKey || "") === occurrenceKey || (wiederholung === "einmalig" && String(x.geplantId || "") === String(e.id)));
+                        if (!exists) {
+                            store[monat].push({
+                                id: generateId(), geplantId: e.id, geplantOccurrenceKey: occurrenceKey, ausGeplant: true,
+                                text: e.text || e.kategorie || "Geplante Ausgabe", betrag: parseBetrag(e.betrag) || 0,
+                                datum, kategorie: e.kategorie || "Sonstiges"
+                            });
+                        }
                     }
-                } else {
-                    const store = bereich === "freizeit" ? daten.Freizeit : daten.Haushalt;
-                    const monat = d.getMonth() + 1;
-                    store[monat] ??= [];
-                    const exists = store[monat].some(x => String(x.geplantId || "") === String(e.id));
-                    if (!exists) {
-                        store[monat].push({
-                            id: generateId(),
-                            geplantId: e.id,
-                            ausGeplant: true,
-                            text: e.text || e.kategorie || "Geplante Ausgabe",
-                            betrag: parseBetrag(e.betrag) || 0,
-                            datum: e.datum,
-                            kategorie: e.kategorie || "Sonstiges"
-                        });
-                    }
+
+                    if (!konnteBuchen) break;
+                    geaendert = true;
+                    if (wiederholung === "einmalig") { datum = ""; break; }
+                    const next = geplantNaechstesDatum(datum, wiederholung, e.wiederholungStart || e.datum);
+                    if (!next || next === datum) break;
+                    datum = next;
                 }
-                geaendert = true;
+
+                if (datum) {
+                    if (datum !== e.datum) { e.datum = datum; geaendert = true; }
+                    offen.push(e);
+                }
             });
 
             if (geaendert) {
@@ -4917,6 +4976,11 @@
                                 <input id="editGeplantText-${e.id}" value="${escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
                                 <input id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <input id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
+                                <select id="editGeplantWiederholung-${e.id}">
+                                    <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
+                                    <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
+                                    <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
+                                </select>
                                 <select id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
                                     <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
                                     <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
@@ -4947,7 +5011,7 @@
                         <div style="min-width:0;flex:1;">
                             <div style="font-weight:750;">${escapeHtml(e.text || "Geplante Ausgabe")}</div>
                             <div class="info-text" style="margin-top:4px;">${formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
+                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
                             <div style="font-weight:800;margin-top:5px;">${formatBetrag(e.betrag)}</div>
                         </div>
                         <div class="actions" style="display:flex;gap:5px;">
