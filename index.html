@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Kostentracker">
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="manifest.webmanifest?v=20260905-2200">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -2633,10 +2633,17 @@
         }
 
         // PWA / Offline-Unterstützung
+        // updateViaCache:none sorgt dafuer, dass der Browser beim Service Worker nicht
+        // an einer alten HTTP-Cache-Version festhaelt. registration.update() prueft
+        // zusaetzlich bei jedem App-Start sofort auf eine neue Version.
         if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js")
-                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
+            window.addEventListener("load", async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register("./service-worker.js?v=20260905-2200", { updateViaCache: "none" });
+                    await registration.update();
+                } catch (error) {
+                    console.warn("Service Worker konnte nicht registriert/aktualisiert werden:", error);
+                }
             });
         }
 
