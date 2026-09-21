@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -2624,34 +2621,11 @@
     <script>
 
         // PWA / Offline-Unterstützung
-        // Browser-Versionen sollen beim normalen Aufruf nicht dauerhaft an einer alten App-Datei hängen.
         if ("serviceWorker" in navigator) {
-            window.addEventListener("load", function () {
-                navigator.serviceWorker.register("./service-worker.js?v=20260921", { updateViaCache: "none" })
-                    .then(function (registration) {
-                        try { registration.update(); } catch (_) {}
-                    })
-                    .catch(function (error) {
-                        console.warn("Service Worker konnte nicht registriert werden:", error);
-                    });
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./service-worker.js")
+                    .catch(error => console.warn("Service Worker konnte nicht registriert werden:", error));
             });
-        }
-
-        // Kompatibilitätshelfer für Safari/iOS-Versionen ohne structuredClone oder CSS.escape.
-        // Die App-Daten bestehen nur aus JSON-kompatiblen Werten, daher ist der Fallback hier passend.
-        function cloneKompatibel(value) {
-            if (typeof structuredClone === "function") {
-                try { return structuredClone(value); } catch (_) {}
-            }
-            return JSON.parse(JSON.stringify(value));
-        }
-
-        function cssEscapeKompatibel(value) {
-            const text = String(value);
-            if (window.CSS && typeof window.CSS.escape === "function") {
-                return window.CSS.escape(text);
-            }
-            return text.replace(/[^a-zA-Z0-9_-]/g, function (ch) { return "\\" + ch; });
         }
 
         /* DATEN */
@@ -2681,10 +2655,10 @@
 
         function ladeDaten() {
             try {
-                return JSON.parse(localStorage.getItem("kostenApp")) || cloneKompatibel(STANDARD_DATEN);
+                return JSON.parse(localStorage.getItem("kostenApp")) || structuredClone(STANDARD_DATEN);
             } catch (error) {
                 console.error("Gespeicherte Daten konnten nicht gelesen werden:", error);
-                return cloneKompatibel(STANDARD_DATEN);
+                return structuredClone(STANDARD_DATEN);
             }
         }
 
@@ -2694,7 +2668,7 @@
         // Falls "Laufende Kosten" früher als Array gespeichert wurde, wird es jetzt sauber
         // in { fix: [...] } umgewandelt. Sonst würde JSON.stringify die fix-Einträge verlieren.
         if (!daten || typeof daten !== "object" || Array.isArray(daten)) {
-            daten = cloneKompatibel(STANDARD_DATEN);
+            daten = structuredClone(STANDARD_DATEN);
         }
 
         if (!daten.Reisen || typeof daten.Reisen !== "object" || Array.isArray(daten.Reisen)) {
@@ -2782,7 +2756,7 @@
             daten.Einstellungen = {};
         }
         if (!["dunkel", "hell", "system"].includes(daten.Einstellungen.designModus)) daten.Einstellungen.designModus = "system";
-        const standardWarnungen = cloneKompatibel(STANDARD_DATEN.Einstellungen.warnungen);
+        const standardWarnungen = structuredClone(STANDARD_DATEN.Einstellungen.warnungen);
         if (!daten.Einstellungen.warnungen || typeof daten.Einstellungen.warnungen !== "object") daten.Einstellungen.warnungen = standardWarnungen;
         daten.Einstellungen.warnungen = { ...standardWarnungen, ...daten.Einstellungen.warnungen, kategorien:{...standardWarnungen.kategorien,...(daten.Einstellungen.warnungen.kategorien||{})} };
 
@@ -2847,6 +2821,14 @@
             console.error("Migration konnte nicht gespeichert werden:", error);
         }
 
+
+        const DEFAULT_ACTION_COLOR = "#3498db";
+        const DEFAULT_ACTION_COLORS = {
+            hinzufuegen: DEFAULT_ACTION_COLOR,
+            bearbeiten: DEFAULT_ACTION_COLOR,
+            verschieben: DEFAULT_ACTION_COLOR,
+            schalter: DEFAULT_ACTION_COLOR
+        };
 
         applyDesignTheme();
         if (window.matchMedia) {
@@ -3000,7 +2982,7 @@
         let undoDeleteTimer = null;
 
         function cloneDatenForUndo() {
-            try { return cloneKompatibel(daten); }
+            try { return structuredClone(daten); }
             catch (_) { return JSON.parse(JSON.stringify(daten)); }
         }
 
@@ -3047,14 +3029,14 @@
         }
 
         const WARN_KATEGORIEN = [["haushalt","Haushalt"],["freizeit","Freizeit"],["fixkosten","Fixkosten"],["versicherungen","Versicherungen"],["einnahmen","Einnahmen"],["reisen","Reisen"],["geplant","Geplante Ausgaben"],["sparen","Sparen & Investieren"]];
-        function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=cloneKompatibel(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
+        function getWarnSettings(){ daten.Einstellungen??={}; daten.Einstellungen.warnungen??=structuredClone(STANDARD_DATEN.Einstellungen.warnungen); return daten.Einstellungen.warnungen; }
         function reminderControlHtml(key,value={}){ const on=!!value.warnung,tage=Math.max(0,parseInt(value.warnTage,10)||14); return `<div class="reminder-control" data-reminder-key="${escapeHtml(key)}"><button type="button" class="reminder-toggle ${on?'on':''}" role="switch" aria-checked="${on?'true':'false'}" onclick="toggleReminderControl('${escapeHtml(key)}')"><span>🔔 Auf Startseite erinnern</span><span class="ios-switch ${on?'on':''}" aria-hidden="true"></span></button><div class="reminder-days ${on?'':'hidden'}"><label>Warnzeit vorher (Tage)</label><input type="number" min="0" max="365" value="${tage}"></div></div>`; }
-        function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${cssEscapeKompatibel(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
-        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${cssEscapeKompatibel(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
+        function toggleReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return; const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),on=!btn.classList.contains('on'); btn.classList.toggle('on',on); btn.setAttribute('aria-checked',on?'true':'false'); btn.querySelector('.ios-switch')?.classList.toggle('on',on); days?.classList.toggle('hidden',!on); }
+        function resetReminderControl(key){const box=document.querySelector(`.reminder-control[data-reminder-key=\"${CSS.escape(key)}\"]`);if(!box)return;const btn=box.querySelector('.reminder-toggle'),days=box.querySelector('.reminder-days'),inp=days?.querySelector('input');btn?.classList.remove('on');btn?.setAttribute('aria-checked','false');btn?.querySelector('.ios-switch')?.classList.remove('on');days?.classList.add('hidden');if(inp)inp.value=Math.max(0,parseInt(getWarnSettings().tage,10)||14);}
         function resetAddReminderForPanel(panelId){const map={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'};if(map[panelId])resetReminderControl(`add:${map[panelId]}`);}
-        function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${cssEscapeKompatibel(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
+        function readReminderControl(key){ const box=document.querySelector(`.reminder-control[data-reminder-key="${CSS.escape(key)}"]`); if(!box)return {warnung:false,warnTage:14}; return {warnung:!!box.querySelector('.reminder-toggle')?.classList.contains('on'),warnTage:Math.max(0,parseInt(box.querySelector('.reminder-days input')?.value,10)||14)}; }
         function findReminderEntry(type,id){ const sid=String(id); if(type==='sparen')return(daten['Sparen & Investieren']||[]).find(e=>String(e.id)===sid); if(type==='geplant')return(daten['Geplante Ausgaben']||[]).find(e=>String(e.id)===sid); if(type==='fixkosten')return(daten['Laufende Kosten']?.fix||[]).find(e=>String(e.id)===sid); if(type==='versicherungen')return(daten.Versicherungen||[]).find(e=>String(e.id)===sid); if(type==='einnahmen')return(daten.Einnahmen||[]).find(e=>String(e.id)===sid); if(type==='haushalt'){for(const l of Object.values(daten.Haushalt||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='freizeit'){for(const l of Object.values(daten.Freizeit||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} if(type==='reisen'){for(const r of Object.values(daten.Reisen||{}))for(const l of Object.values(r||{})){const e=Array.isArray(l)&&l.find(x=>String(x.id)===sid);if(e)return e;}} return null; }
-        function decorateReminderControls(){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); document.querySelectorAll('input[type="date"][id^="edit"]').forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${cssEscapeKompatibel(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
+        function decorateReminderControls(){ const addMap={sparenInvestierenAddPanel:'sparen',geplantAddPanel:'geplant',reiseAddPanel:'reisen',versAddPanel:'versicherungen',hausAddPanel:'haushalt',freizeitAddPanel:'freizeit',einnahmenAddPanel:'einnahmen',kostenAddPanel:'fixkosten'}; Object.entries(addMap).forEach(([pid,type])=>{const p=document.getElementById(pid);if(!p||p.querySelector('[data-reminder-key]'))return;const b=p.querySelector('button.btn-primary');if(b)b.insertAdjacentHTML('beforebegin',reminderControlHtml(`add:${type}`,{warnTage:getWarnSettings().tage||14}));}); document.querySelectorAll('input[type="date"][id^="edit"]').forEach(inp=>{let type=null,id=null,m;if((m=inp.id.match(/^editSparenDatum-(.+)$/))){type='sparen';id=m[1];}else if((m=inp.id.match(/^editGeplantDatum-(.+)$/))){type='geplant';id=m[1];}else if((m=inp.id.match(/^editKostenDatum-(.+)$/))){type='fixkosten';id=m[1];}else if((m=inp.id.match(/^editEinnahmenDatum-(.+)$/))){type='einnahmen';id=m[1];}else if((m=inp.id.match(/^editFreizeitDatum-(.+)$/))){type='freizeit';id=m[1];}else if((m=inp.id.match(/^editDatum-(.+)$/))){id=m[1];if(inp.closest('#versicherungenView'))type='versicherungen';else if(inp.closest('#land'))type='reisen';else if(inp.closest('#haushaltView'))type='haushalt';} if(!type||!id)return;const key=`edit:${type}:${id}`,parent=inp.parentElement;if(parent?.querySelector(`[data-reminder-key="${CSS.escape(key)}"]`))return;inp.insertAdjacentHTML('afterend',reminderControlHtml(key,findReminderEntry(type,id)||{}));}); }
         function renderWarnSettings(){ const w=getWarnSettings(),a=document.getElementById('warnungenAktiv');if(a){const on=w.aktiv!==false;a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);}const s=document.getElementById('warnSchwelle');if(s)s.value=formatInputBetrag(w.schwelle??100);const t=document.getElementById('warnTage');if(t)t.value=Math.max(0,parseInt(w.tage,10)||14);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',w.aktiv===false);const g=document.getElementById('warnKategorieGrid');if(g)g.innerHTML=WARN_KATEGORIEN.map(([k,l])=>`<label class="warning-cat"><input type="checkbox" data-warn-cat="${k}" ${w.kategorien?.[k]?'checked':''} onchange="saveWarnSettings(false)"><span>${l}</span></label>`).join(''); }
         function toggleWarnungenAktiv(){ const a=document.getElementById('warnungenAktiv');if(!a)return;const on=a.getAttribute('aria-checked')!=='true';a.setAttribute('aria-checked',on?'true':'false');a.querySelector('.ios-switch')?.classList.toggle('on',on);saveWarnSettings();renderWarnSettings();renderHomeWarnings(); }
         function saveWarnSettings(doSave=true){ const w=getWarnSettings();const a=document.getElementById('warnungenAktiv');if(a)w.aktiv=a.getAttribute('aria-checked')!=='false';const s=parseBetrag(document.getElementById('warnSchwelle')?.value);if(!isNaN(s)&&s>=0)w.schwelle=s;const t=parseInt(document.getElementById('warnTage')?.value,10);if(!isNaN(t)&&t>=0)w.tage=Math.min(365,t);w.kategorien??={};document.querySelectorAll('[data-warn-cat]').forEach(el=>w.kategorien[el.dataset.warnCat]=el.checked);document.getElementById('warnGlobalFields')?.classList.toggle('hidden',!w.aktiv);if(doSave)speichern(); }
@@ -3510,13 +3492,6 @@
             applyDesignTheme();
         }
 
-        const DEFAULT_ACTION_COLOR = "#3498db";
-        const DEFAULT_ACTION_COLORS = {
-            hinzufuegen: DEFAULT_ACTION_COLOR,
-            bearbeiten: DEFAULT_ACTION_COLOR,
-            verschieben: DEFAULT_ACTION_COLOR,
-            schalter: DEFAULT_ACTION_COLOR
-        };
 
         function normalizeActionColor(value) {
             const color = String(value || "").trim();
@@ -6941,7 +6916,7 @@
             const prefix = isHaus ? "haus" : "freizeit";
             const fallback = isHaus ? "Einkauf" : "Essen / Trinken";
             const kat = getLetzteKategorie(bereich, fallback);
-            const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${cssEscapeKompatibel(kat)}"]`)
+            const btn = document.querySelector(`#${prefix}KategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#${prefix}KategorieGrid [data-category="${fallback}"]`);
             setQuickCategory(prefix, btn?.dataset.category || fallback, btn);
         }
@@ -6981,7 +6956,7 @@
         function applyLetzteReiseKategorie(focusBetrag = false) {
             const fallback = "Essen";
             const kat = getLetzteKategorie("reisen", fallback);
-            const btn = document.querySelector(`#reiseKategorieGrid [data-category="${cssEscapeKompatibel(kat)}"]`)
+            const btn = document.querySelector(`#reiseKategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#reiseKategorieGrid [data-category="${fallback}"]`);
             setReiseKategorie(btn?.dataset.category || fallback, btn, focusBetrag);
         }
