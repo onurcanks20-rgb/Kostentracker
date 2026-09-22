@@ -9084,6 +9084,317 @@
         <button type="button" onclick="undoDelete()">↩️ Rückgängig</button>
     </div>
 
+    <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
+    <style>
+        /* Die Karte selbst liegt als Vordergrund ueber der Aktionsleiste.
+           Beim Wischen bewegt sich dadurch wirklich der komplette Kasten
+           inklusive Beschreibung, Datum und Betrag nach links. */
+        .swipe-entry-shell {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            width: 100%;
+        }
+        .swipe-entry-shell > .item.swipe-entry-ready {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            will-change: transform;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transition: transform .22s cubic-bezier(.22,.61,.36,1);
+        }
+        .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready {
+            transition: none !important;
+        }
+        .swipe-entry-shell > .swipe-action-rail {
+            position: absolute;
+            z-index: 1;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 5px 6px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .12s ease;
+        }
+        .swipe-entry-shell.swipe-entry-open > .swipe-action-rail,
+        .swipe-entry-shell.swipe-entry-dragging > .swipe-action-rail {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* Beim deutlichen Weiterwischen wird der freigelegte Bereich rot.
+           Loslassen in diesem Zustand loescht den Eintrag direkt. */
+        .swipe-entry-shell.swipe-delete-progress,
+        .swipe-entry-shell.swipe-delete-armed {
+            background: #ff3b30;
+        }
+        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button:not(.delete) {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button.delete {
+            transform: scale(1.08);
+        }
+        .swipe-action-rail button {
+            width: 46px !important;
+            min-width: 46px !important;
+            height: 46px !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 13px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px !important;
+            flex: 0 0 46px;
+        }
+        .swipe-entry-ready .swipe-original-actions {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    </style>
+    <script>
+        (() => {
+            const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+            if (!touchDevice) return;
+
+            let activeShell = null;
+            let startX = 0;
+            let startY = 0;
+            let startOffset = 0;
+            let horizontal = false;
+            let openShell = null;
+            let activeRailWidth = 0;
+            let activeShellWidth = 0;
+            let activeDeleteThreshold = 0;
+            let latestOffset = 0;
+            let framePending = false;
+            let deleteProgressState = false;
+            let deleteArmedState = false;
+
+            function setCardOffset(shell, offset) {
+                latestOffset = offset;
+                if (framePending) return;
+                framePending = true;
+                requestAnimationFrame(() => {
+                    framePending = false;
+                    const card = cardOf(shell);
+                    if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
+                });
+            }
+
+            function setDeleteStates(shell, progress, armed) {
+                if (progress !== deleteProgressState) {
+                    deleteProgressState = progress;
+                    shell.classList.toggle('swipe-delete-progress', progress);
+                }
+                if (armed !== deleteArmedState) {
+                    deleteArmedState = armed;
+                    shell.classList.toggle('swipe-delete-armed', armed);
+                }
+            }
+
+            function cardOf(shell) {
+                return shell?.querySelector(':scope > .item.swipe-entry-ready') || null;
+            }
+
+            function closeSwipe(shell = openShell, animate = true) {
+                if (!shell) return;
+                const card = cardOf(shell);
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+                if (card) {
+                    if (!animate) card.style.transition = 'none';
+                    card.style.transform = 'translate3d(0,0,0)';
+                    if (!animate) requestAnimationFrame(() => { card.style.transition = ''; });
+                }
+                if (openShell === shell) openShell = null;
+            }
+
+            function railWidth(shell) {
+                const rail = shell.querySelector(':scope > .swipe-action-rail');
+                return Math.max(58, rail ? rail.getBoundingClientRect().width : 0);
+            }
+
+            function enhanceItem(item) {
+                if (!item || item.classList.contains('swipe-entry-ready')) return;
+                if (item.querySelector('input, select, textarea')) return;
+
+                const actions = item.querySelector('.actions');
+                if (!actions || !actions.querySelector('button')) return;
+
+                const computed = getComputedStyle(item);
+                const shell = document.createElement('div');
+                shell.className = 'swipe-entry-shell';
+                shell.style.marginTop = computed.marginTop;
+                shell.style.marginRight = computed.marginRight;
+                shell.style.marginBottom = computed.marginBottom;
+                shell.style.marginLeft = computed.marginLeft;
+                shell.style.borderRadius = computed.borderRadius;
+
+                const parent = item.parentNode;
+                parent.insertBefore(shell, item);
+                shell.appendChild(item);
+
+                /* Die bisherigen Aussenabstaende liegen nun auf der Shell,
+                   damit die komplette sichtbare Karte ohne Layoutsprung gleitet. */
+                item.style.margin = '0';
+
+                const rail = document.createElement('div');
+                rail.className = 'swipe-action-rail';
+                rail.setAttribute('aria-hidden', 'true');
+                actions.querySelectorAll('button').forEach(btn => {
+                    const clone = btn.cloneNode(true);
+                    clone.addEventListener('click', () => closeSwipe(shell));
+                    rail.appendChild(clone);
+                });
+
+                actions.classList.add('swipe-original-actions');
+                item.classList.add('swipe-entry-ready');
+                shell.appendChild(rail);
+            }
+
+            function enhanceAll(root = document) {
+                root.querySelectorAll('.item').forEach(enhanceItem);
+            }
+
+            document.addEventListener('touchstart', event => {
+                if (event.touches.length !== 1) return;
+                const shell = event.target.closest('.swipe-entry-shell');
+
+                if (!shell) {
+                    if (openShell) closeSwipe(openShell);
+                    activeShell = null;
+                    return;
+                }
+
+                if (event.target.closest('.swipe-action-rail')) return;
+                if (openShell && openShell !== shell) closeSwipe(openShell);
+
+                const touch = event.touches[0];
+                activeShell = shell;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                activeRailWidth = railWidth(shell);
+                activeShellWidth = Math.max(activeRailWidth, shell.getBoundingClientRect().width);
+                activeDeleteThreshold = Math.max(activeRailWidth + 56, activeShellWidth * 0.72);
+                startOffset = shell.classList.contains('swipe-entry-open') ? activeRailWidth : 0;
+                latestOffset = startOffset;
+                deleteProgressState = shell.classList.contains('swipe-delete-progress');
+                deleteArmedState = shell.classList.contains('swipe-delete-armed');
+                horizontal = false;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', event => {
+                if (!activeShell || event.touches.length !== 1) return;
+                const touch = event.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+
+                if (!horizontal) {
+                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                    if (Math.abs(dy) > Math.abs(dx)) {
+                        activeShell = null;
+                        return;
+                    }
+                    horizontal = true;
+                    activeShell.classList.add('swipe-entry-dragging');
+                }
+
+                event.preventDefault();
+                const offset = Math.max(0, Math.min(activeShellWidth, startOffset - dx));
+                const deleteProgress = offset > activeRailWidth + 18;
+                const deleteArmed = !!activeShell.querySelector('.swipe-action-rail .delete') && offset >= activeDeleteThreshold;
+                setDeleteStates(activeShell, deleteProgress, deleteArmed);
+                setCardOffset(activeShell, offset);
+            }, { passive: false });
+
+            document.addEventListener('touchend', event => {
+                if (!activeShell) return;
+                const shell = activeShell;
+                const touch = event.changedTouches && event.changedTouches[0];
+                const dx = touch ? touch.clientX - startX : 0;
+                const max = activeRailWidth || railWidth(shell);
+                const shellWidth = activeShellWidth || Math.max(max, shell.getBoundingClientRect().width);
+                const offset = Math.max(0, Math.min(shellWidth, startOffset - dx));
+                const deleteThreshold = activeDeleteThreshold || Math.max(max + 56, shellWidth * 0.72);
+                const deleteButton = shell.querySelector('.swipe-action-rail .delete');
+                const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
+                const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
+
+                shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+
+                if (shouldDelete) {
+                    /* Voll-Swipe: dieselbe Loeschlogik wie beim roten Button,
+                       aber die Sicherheitsabfrage wird fuer genau diesen Aufruf uebersprungen.
+                       Dadurch bleiben bestehendes Rendering und Rueckgaengig-Funktion erhalten. */
+                    const oldConfirm = window.confirm;
+                    try {
+                        window.confirm = () => true;
+                        deleteButton.click();
+                    } finally {
+                        window.confirm = oldConfirm;
+                    }
+                    openShell = null;
+                } else {
+                    const card = cardOf(shell);
+                    if (card) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
+                    shell.classList.toggle('swipe-entry-open', shouldOpen);
+                    openShell = shouldOpen ? shell : null;
+                }
+
+                activeShell = null;
+                horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+                deleteProgressState = false;
+                deleteArmedState = false;
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                if (activeShell) closeSwipe(activeShell);
+                activeShell = null;
+                horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+                deleteProgressState = false;
+                deleteArmedState = false;
+            }, { passive: true });
+
+            document.addEventListener('click', event => {
+                if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
+            }, true);
+
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (!(node instanceof Element)) return;
+                        if (node.matches('.item')) enhanceItem(node);
+                        enhanceAll(node);
+                    });
+                });
+            });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    enhanceAll();
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }, { once: true });
+            } else {
+                enhanceAll();
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+    </script>
+
 </body>
 
 </html>
