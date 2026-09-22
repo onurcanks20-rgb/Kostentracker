@@ -255,6 +255,14 @@
             transform: scale(0.98);
         }
 
+        /* Long-Press auf Listen-Eintraegen: iOS-Textauswahl und Touch-Menue unterdruecken. */
+        .item,
+        .item * {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
+
         /* Reisen: kompakte, ruhige Karten mit kleinen Aktionen rechts oben */
         .reise-row {
             margin: 8px 0;
@@ -1049,34 +1057,7 @@
             box-sizing:border-box;
         }
         .list-search::placeholder { color:rgba(255,255,255,.45); }
-
-        .delete-tools {
-            display:flex;
-            gap:10px;
-            align-items:center;
-            flex-wrap:wrap;
-            margin-top:12px;
-        }
-        .delete-tools button {
-            flex:1;
-            min-width:140px;
-        }
-        .select-dot {
-            width:24px;
-            height:24px;
-            border-radius:50%;
-            border:2px solid #fff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-shrink:0;
-            cursor:pointer;
-            font-size:14px;
-            font-weight:700;
-        }
-        .select-dot.selected { background:var(--action-switch); }
-    
-        /* ===== COMPACT BOTTOM NAV ===== */
+/* ===== COMPACT BOTTOM NAV ===== */
         @media (max-width: 600px) {
             .container.app-shell {
                 padding-bottom: calc(86px + env(safe-area-inset-bottom));
@@ -1448,19 +1429,7 @@
             background: #2c2c2e;
             border: 1px solid rgba(255,255,255,.07);
         }
-        .delete-tools {
-            gap: 8px;
-            margin: 0 0 12px;
-        }
-        .delete-tools button {
-            min-height: 44px;
-            margin: 0;
-            padding: 10px 12px;
-            border-radius: 13px;
-            font-size: 14px;
-        }
-
-        .date-group-title {
+.date-group-title {
             margin: 20px 4px 8px;
             font-size: 15px;
             font-weight: 800;
@@ -2400,10 +2369,6 @@
 
         <div class="container">
             <input id="versicherungenSuche" class="list-search" type="search" placeholder="🔎 Versicherungen durchsuchen" oninput="renderVersicherungen()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('versicherungen')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedVersicherungen" onclick="deleteSelected('versicherungen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="versicherungenListe"></div>
             <div class="total" id="versicherungenGesamt"></div>
             <div id="versicherungenFooter"></div>
@@ -2453,10 +2418,6 @@
                 <button onclick="openAusgabenArchiv('haushalt')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
             </div>
             <input id="haushaltSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderHaushalt()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('haushalt')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedHaushalt" onclick="deleteSelected('haushalt')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="haushaltListe"></div>
         </div>
 
@@ -2505,10 +2466,6 @@
                 <button onclick="openAusgabenArchiv('freizeit')" style="width:auto; margin:0; padding:9px 12px; background:#3a3a3c;">📁 Alle Einträge</button>
             </div>
             <input id="freizeitSuche" class="list-search" type="search" placeholder="🔎 Letzte 7 Tage durchsuchen" oninput="renderFreizeit()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('freizeit')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedFreizeit" onclick="deleteSelected('freizeit')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="freizeitListe"></div>
         </div>
 
@@ -2558,10 +2515,6 @@
 
         <div class="container">
             <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Einnahmen durchsuchen" oninput="renderEinnahmen()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('einnahmen')" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedEinnahmen" onclick="deleteSelected('einnahmen')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
             <div id="einnahmenListe"></div>
             <div class="total" id="einnahmenGesamt"></div>
         </div>
@@ -2597,11 +2550,6 @@
             </div>
 
             <input id="fixkostenSuche" class="list-search" type="search" placeholder="🔎 Fixkosten durchsuchen" oninput="renderLaufendeKosten()">
-            <div class="delete-tools">
-                <button onclick="toggleMultiSelect('fixkosten')" class="btn btn-primary" style="background:#3a3a3c;">☑️ Auswählen</button>
-                <button id="deleteSelectedFixkosten" onclick="deleteSelected('fixkosten')" style="background:#ff453a; display:none;">🗑️ 0 ausgewählte löschen</button>
-            </div>
-            <div id="kostenAuswahlAktionen"></div>
         </div>
 
         <div class="container">
@@ -2926,10 +2874,6 @@
             homeWarnungenOffen: false,
             homeFaelligOffen: false,
             freiDetailsOffen: false,
-            kostenAuswahlModus: false,
-            ausgewaehlteKosten: [],
-            multiSelect: { haushalt:false, freizeit:false, einnahmen:false, versicherungen:false, fixkosten:false, reisen:false },
-            selected: { haushalt:[], freizeit:[], einnahmen:[], versicherungen:[], fixkosten:[], reisen:[] },
             offeneVersicherungen: {},
             offeneFixkosten: {},
             offeneEinnahmen: {},
@@ -5506,28 +5450,22 @@
 
                         else {
                             const reiseOffen = !!state.offeneReiseEintraege[String(e.id)];
-                            const reiseAusgewaehlt = (state.selected.reisen || []).includes(String(e.id));
                             const reiseBeschreibung = escapeHtml(e.text || '');
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                             <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                                <div onclick="${state.multiSelect.reisen ? `toggleSelected('reisen','${e.id}')` : `toggleReiseDetails('${e.id}')`}"
+                                <div onclick="toggleReiseDetails('${e.id}')"
                                      style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                    ${state.multiSelect.reisen ? `
-                                        <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${reiseAusgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
-                                            ${reiseAusgewaehlt ? '✓' : ''}
-                                        </div>` : ''}
                                     <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                         <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k)}</span>
                                         <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                     </div>
                                 </div>
-                                ${!state.multiSelect.reisen ? `
-                                    <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                        <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
-                                        <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
-                                        <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
-                                    </div>` : ''}
+                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteEintrag('${k}', ${i})">🗑️</button>
+                                </div>
                             </div>
                             ${reiseOffen ? `
                                 <div onclick="toggleReiseDetails('${e.id}')" style="background:#48484a;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -5560,7 +5498,6 @@
             const gesamtEl = document.getElementById("gesamt");
             if (gesamtEl) gesamtEl.innerText = "Gesamt: " + formatBetragText(gesamt);
             renderReiseBudget();
-            updateSelectionButton('reisen');
         }
 
         function toggleReiseDetails(id) {
@@ -5631,128 +5568,6 @@
         }
 
 
-        function selectionLabel(type) {
-            return ({haushalt:'Haushalt', freizeit:'Freizeit', einnahmen:'Einnahmen', versicherungen:'Versicherungen', fixkosten:'Fixkosten', reisen:'Reisen'})[type] || type;
-        }
-
-        function toggleMultiSelect(type) {
-            state.multiSelect[type] = !state.multiSelect[type];
-            if (!state.multiSelect[type]) state.selected[type] = [];
-            renderForSelection(type);
-        }
-
-        function toggleSelected(type, id) {
-            const key = String(id);
-            const list = state.selected[type] || (state.selected[type] = []);
-            const i = list.indexOf(key);
-            if (i === -1) list.push(key); else list.splice(i, 1);
-            renderForSelection(type);
-        }
-
-        function selectionDot(type, id) {
-            if (!state.multiSelect[type]) return '';
-            const selected = (state.selected[type] || []).includes(String(id));
-            return `<div class="select-dot ${selected ? 'selected' : ''}" onclick="event.stopPropagation(); toggleSelected('${type}','${String(id).replace(/'/g,"\'")}')">${selected ? '✓' : ''}</div>`;
-        }
-
-        function updateSelectionButton(type) {
-            const map = {haushalt:'Haushalt',freizeit:'Freizeit',einnahmen:'Einnahmen',versicherungen:'Versicherungen',fixkosten:'Fixkosten',reisen:'Reisen'};
-            const el = document.getElementById('deleteSelected' + map[type]);
-            if (!el) return;
-            const n = (state.selected[type] || []).length;
-            el.style.display = state.multiSelect[type] ? '' : 'none';
-            el.textContent = `🗑️ ${n} ausgewählte löschen`;
-            el.disabled = n === 0;
-            el.style.opacity = n === 0 ? '.55' : '1';
-        }
-
-        function renderForSelection(type) {
-            if (type === 'haushalt') renderHaushalt();
-            else if (type === 'freizeit') renderFreizeit();
-            else if (type === 'einnahmen') renderEinnahmen();
-            else if (type === 'versicherungen') renderVersicherungen();
-            else if (type === 'fixkosten') renderLaufendeKosten();
-            else if (type === 'reisen') renderListe();
-            updateSelectionButton(type);
-        }
-
-        function deleteSelected(type) {
-            const ids = state.selected[type] || [];
-            if (!ids.length) return;
-            if (!confirm(`${ids.length} ausgewählte ${selectionLabel(type)}-Einträge wirklich löschen?`)) return;
-            const set = new Set(ids.map(String));
-            beginUndoDelete(`${ids.length} Einträge gelöscht`);
-
-            if (type === 'haushalt') {
-                Object.keys(daten.Haushalt || {}).forEach(m => { if (Array.isArray(daten.Haushalt[m])) daten.Haushalt[m] = daten.Haushalt[m].filter(e => !set.has(String(e.id))); });
-            } else if (type === 'freizeit') {
-                Object.keys(daten.Freizeit || {}).forEach(m => { if (Array.isArray(daten.Freizeit[m])) daten.Freizeit[m] = daten.Freizeit[m].filter(e => !set.has(String(e.id))); });
-            } else if (type === 'einnahmen') {
-                daten.Einnahmen = (daten.Einnahmen || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'versicherungen') {
-                daten.Versicherungen = (daten.Versicherungen || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'fixkosten') {
-                daten['Laufende Kosten'] ??= {fix:[]};
-                daten['Laufende Kosten'].fix = (daten['Laufende Kosten'].fix || []).filter(e => !set.has(String(e.id)));
-            } else if (type === 'reisen' && aktuellesLand && daten.Reisen?.[aktuellesLand]) {
-                Object.keys(daten.Reisen[aktuellesLand]).forEach(k => {
-                    if (Array.isArray(daten.Reisen[aktuellesLand][k])) daten.Reisen[aktuellesLand][k] = daten.Reisen[aktuellesLand][k].filter(e => !set.has(String(e.id)));
-                });
-            }
-
-            state.selected[type] = [];
-            state.multiSelect[type] = false;
-            speichern();
-            renderForSelection(type);
-            renderHomeUebersicht();
-            finishUndoDelete(`${ids.length} Einträge gelöscht`);
-        }
-
-        function toggleKostenAuswahlModus() {
-            state.kostenAuswahlModus = !state.kostenAuswahlModus;
-
-            if (!state.kostenAuswahlModus) {
-                state.ausgewaehlteKosten = [];
-            }
-
-            renderLaufendeKosten();
-        }
-
-        function toggleKostenAuswahl(id) {
-
-            const index = state.ausgewaehlteKosten.indexOf(String(id));
-
-            if (index === -1) {
-                state.ausgewaehlteKosten.push(String(id));
-            } else {
-                state.ausgewaehlteKosten.splice(index, 1);
-            }
-
-            renderLaufendeKosten();
-        }
-
-        function deleteAusgewaehlteKosten() {
-
-            if (state.ausgewaehlteKosten.length === 0) return;
-
-            if (!confirm("Ausgewählte Fixkosten löschen?")) return;
-            beginUndoDelete(`${state.ausgewaehlteKosten.length} Fixkosten gelöscht`);
-
-            daten["Laufende Kosten"].fix =
-                daten["Laufende Kosten"].fix.filter(
-                    e => !state.ausgewaehlteKosten.includes(String(e.id))
-                );
-
-            state.ausgewaehlteKosten = [];
-            state.kostenAuswahlModus = false;
-
-            speichern();
-            renderLaufendeKosten();
-            renderHomeUebersicht();
-            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
-            finishUndoDelete("Ausgewählte Fixkosten gelöscht");
-        }
-
         function renderLaufendeKosten() {
 
             const div = document.getElementById("kostenListe");
@@ -5760,20 +5575,6 @@
             if (!div) return;
 
             div.innerHTML = "";
-
-            const auswahlBox = document.getElementById("kostenAuswahlAktionen");
-
-            if (auswahlBox) {
-                if (false && state.kostenAuswahlModus) {
-                    auswahlBox.innerHTML = `
-                        <button onclick="deleteAusgewaehlteKosten()" style="background:#ff453a;">
-                            🗑️ ${state.ausgewaehlteKosten.length} ausgewählte löschen
-                        </button>
-                    `;
-                } else {
-                    auswahlBox.innerHTML = "";
-                }
-            }
 
             daten["Laufende Kosten"] ??= { fix: [] };
             daten["Laufende Kosten"].fix ??= [];
@@ -5866,19 +5667,12 @@
                     setTimeout(() => setupKostenEditEnterFlow(k.id), 0);
                 } else {
 
-                    const ausgewaehlt = (state.selected.fixkosten || []).includes(String(k.id));
-
                     const istOffen = !!state.offeneFixkosten[String(k.id)];
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.fixkosten ? `toggleSelected('fixkosten','${k.id}')` : `toggleFixkostenDetails('${k.id}')`}"
+                            <div onclick="toggleFixkostenDetails('${k.id}')"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${state.multiSelect.fixkosten ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
-                                        ${ausgewaehlt ? '✓' : ''}
-                                    </div>
-                                ` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                     <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
                                     <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
@@ -5887,13 +5681,11 @@
                                     </div>
                                 </div>
                             </div>
-                            ${!state.multiSelect.fixkosten ? `
-                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
-                                </div>
-                            ` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
+                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
+                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
+                            </div>
                         </div>
                         ${istOffen ? `
                             <div onclick="toggleFixkostenDetails('${k.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -5912,7 +5704,6 @@
             if (total) {
                 total.innerHTML = "Gesamt: " + formatBetrag(summe);
             }
-            updateSelectionButton('fixkosten');
         }
 
         function toggleFixkostenDetails(id) {
@@ -6239,21 +6030,18 @@
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
                     <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; width:100%; gap:10px;">
-                        <div onclick="${state.multiSelect.versicherungen ? `toggleSelected('versicherungen','${v.id}')` : `toggleVersicherungDetails('${v.id}')`}"
+                        <div onclick="toggleVersicherungDetails('${v.id}')"
                              style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                            ${selectionDot('versicherungen', v.id)}
                             <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                 <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
                                 <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
                             </div>
                         </div>
-                        ${!state.multiSelect.versicherungen ? `
-                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
-                                <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
-                                <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
-                            </div>
-                        ` : ''}
+                        <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
+                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
+                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
+                        </div>
                     </div>
 
                     ${istOffen ? `
@@ -6353,7 +6141,6 @@
             if (total) {
                 total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + formatBetrag(berechneGesamtFixkosten());
             }
-            updateSelectionButton('versicherungen');
         }
 
         function toggleVersicherungDetails(id) {
@@ -6797,7 +6584,6 @@
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
                 if (total) total.innerHTML = "";
-                updateSelectionButton('einnahmen');
                 return;
             }
 
@@ -6824,14 +6610,13 @@
                     const istOffen = !!state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect.einnahmen ? `toggleSelected('einnahmen','${e.id}')` : `toggleEinnahmeDetails('${e.id}')`}" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${selectionDot('einnahmen', e.id)}
+                            <div onclick="toggleEinnahmeDetails('${e.id}')" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
                                 <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
                                     <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
                                     <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
                                 </span>
                             </div>
-                            ${!state.multiSelect.einnahmen ? `<div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
                         </div>
                         ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
                             <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Art</span><span style="font-weight:600;text-align:right;">${escapeHtml(info)}</span></div>
@@ -6847,7 +6632,6 @@
             const z = getGehaltszeitraum();
             const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
             if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
-            updateSelectionButton('einnahmen');
         }
 
         function toggleEinnahmeDetails(id) {
@@ -7464,7 +7248,6 @@
 
             if (!liste.length) {
                 container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${istFreizeit ? '🎉' : '🛒'}</div><div class="empty-state-title">Keine Ausgaben in den letzten 7 Tagen</div><div class="empty-state-text">${istFreizeit ? 'Deine neuen Freizeit-Ausgaben erscheinen hier.' : 'Deine neuen Haushalts-Ausgaben erscheinen hier.'}</div></div>`;
-                updateSelectionButton(typ);
                 return;
             }
 
@@ -7500,27 +7283,21 @@
                         </div>`;
                 } else {
                     const beschreibung = escapeHtml(e.text || e.name || '');
-                    const ausgewaehlt = (state.selected?.[typ] || []).includes(String(e.id));
                     const istOffen = !!offenMap?.[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="${state.multiSelect?.[typ] ? `toggleSelected('${typ}','${e.id}')` : `toggleAlltagsDetails('${typ}','${e.id}')`}"
+                            <div onclick="toggleAlltagsDetails('${typ}','${e.id}')"
                                  style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                ${state.multiSelect?.[typ] ? `
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid white;margin-top:2px;display:flex;align-items:center;justify-content:center;background:${ausgewaehlt ? getAccentColor() : 'transparent'};flex-shrink:0;">
-                                        ${ausgewaehlt ? '✓' : ''}
-                                    </div>` : ''}
                                 <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
                                     <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(e.kategorie || 'Sonstiges')}</span>
                                     <strong style="font-size:18px;">${formatBetrag(e.betrag)}</strong>
                                 </div>
                             </div>
-                            ${!state.multiSelect?.[typ] ? `
-                                <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
-                                </div>` : ''}
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
+                                <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
+                                <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
+                                <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
+                            </div>
                         </div>
                         ${istOffen ? `
                             <div onclick="toggleAlltagsDetails('${typ}','${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -7534,7 +7311,6 @@
                 container.appendChild(item);
                 if (isEdit) setTimeout(() => istFreizeit ? setupFreizeitEditEnterFlow(e.id) : setupHaushaltEditEnterFlow(e.id), 0);
             });
-            updateSelectionButton(typ);
         }
 
         function toggleAlltagsDetails(typ, id) {
@@ -9094,6 +8870,17 @@
             overflow: hidden;
             isolation: isolate;
             width: 100%;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .swipe-entry-shell *,
+        .swipe-entry-ready,
+        .swipe-entry-ready * {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
         .swipe-entry-shell > .item.swipe-entry-ready {
             position: relative;
@@ -9128,18 +8915,23 @@
             opacity: 1;
             pointer-events: auto;
         }
-        /* Beim deutlichen Weiterwischen wird der freigelegte Bereich rot.
-           Loslassen in diesem Zustand loescht den Eintrag direkt. */
-        .swipe-entry-shell.swipe-delete-progress,
-        .swipe-entry-shell.swipe-delete-armed {
+        /* Voll-Swipe zum Loeschen: Die rote Flaeche wird kontinuierlich per
+           CSS-Variable aufgebaut. Dadurch gibt es waehrend des Ziehens keine
+           abrupten Klassen-/Layoutwechsel mehr. */
+        .swipe-entry-shell {
+            --swipe-delete-progress: 0;
+        }
+        .swipe-entry-shell::before {
+            content: "";
+            position: absolute;
+            z-index: 0;
+            inset: 0;
             background: #ff3b30;
-        }
-        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button:not(.delete) {
-            opacity: 0;
+            opacity: var(--swipe-delete-progress);
+            transform: translateZ(0) scaleX(var(--swipe-delete-progress));
+            transform-origin: right center;
             pointer-events: none;
-        }
-        .swipe-entry-shell.swipe-delete-armed > .swipe-action-rail button.delete {
-            transform: scale(1.08);
+            will-change: transform, opacity;
         }
         .swipe-action-rail button {
             width: 46px !important;
@@ -9159,6 +8951,101 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
+
+        /* ===== LONG PRESS AUSWAHLMODUS =====
+           Die Auswahl liegt nur als DOM-Schicht ueber den bestehenden Karten.
+           Es wird beim An-/Abwaehlen NICHT neu gerendert. */
+        .swipe-entry-shell.swipe-selection-mode > .item.swipe-entry-ready {
+            padding-left: 50px !important;
+        }
+        .swipe-selection-dot {
+            position: absolute;
+            z-index: 4;
+            left: 14px;
+            top: 50%;
+            width: 25px;
+            height: 25px;
+            transform: translateY(-50%);
+            border: 2px solid rgba(255,255,255,.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            background: transparent;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 850;
+            line-height: 1;
+            box-shadow: 0 1px 4px rgba(0,0,0,.22);
+        }
+        .swipe-selection-dot::after {
+            content: "✓";
+            opacity: 0;
+            transform: scale(.7);
+            transition: opacity .12s ease, transform .12s ease;
+        }
+        .swipe-entry-shell.swipe-selection-selected .swipe-selection-dot {
+            background: var(--action-switch);
+            border-color: var(--action-switch);
+        }
+        .swipe-entry-shell.swipe-selection-selected .swipe-selection-dot::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .swipe-entry-shell.swipe-selection-mode > .swipe-action-rail {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .long-select-toolbar {
+            position: fixed;
+            z-index: 10020;
+            left: 50%;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            width: min(calc(100% - 24px), 520px);
+            padding: 8px;
+            display: grid;
+            grid-template-columns: minmax(0,1fr) auto auto;
+            gap: 8px;
+            align-items: center;
+            border-radius: 18px;
+            background: rgba(28,28,30,.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.42);
+        }
+        .long-select-toolbar-count {
+            min-width: 0;
+            padding-left: 8px;
+            font-size: 14px;
+            font-weight: 750;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .long-select-toolbar button {
+            width: auto;
+            min-width: 0;
+            min-height: 42px;
+            margin: 0;
+            padding: 9px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .long-select-toolbar-delete { background: #ff3b30; }
+        .long-select-toolbar-done { background: #3a3a3c; }
+        .long-select-toolbar-delete:disabled { opacity: .45; }
+        :root[data-theme="light"] .swipe-selection-dot {
+            border-color: rgba(0,0,0,.65);
+            color: #fff;
+        }
+        :root[data-theme="light"] .long-select-toolbar {
+            background: rgba(250,250,252,.97);
+            color: #111;
+            box-shadow: 0 10px 30px rgba(0,0,0,.16);
+        }
     </style>
     <script>
         (() => {
@@ -9175,13 +9062,26 @@
             let activeShellWidth = 0;
             let activeDeleteThreshold = 0;
             let latestOffset = 0;
+            let latestDeleteVisualProgress = 0;
             let framePending = false;
             let frameId = 0;
-            let deleteProgressState = false;
-            let deleteArmedState = false;
 
-            function setCardOffset(shell, offset) {
+
+            /* Long Press -> neuer, DOM-basierter Auswahlmodus.
+               Bewusst ohne App-Render beim Antippen, damit die Swipe-Wrapper stabil bleiben. */
+            let selectionMode = false;
+            const selectedShells = new Set();
+            let longPressTimer = 0;
+            let longPressStartX = 0;
+            let longPressStartY = 0;
+            let longPressShell = null;
+            let longPressTriggered = false;
+            let suppressClickUntil = 0;
+            let suppressClickShell = null;
+
+            function setCardOffset(shell, offset, deleteVisualProgress = 0) {
                 latestOffset = offset;
+                latestDeleteVisualProgress = Math.max(0, Math.min(1, deleteVisualProgress));
                 if (framePending) return;
                 framePending = true;
                 frameId = requestAnimationFrame(() => {
@@ -9189,6 +9089,9 @@
                     frameId = 0;
                     const card = cardOf(shell);
                     if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
+                    if (shell?.isConnected) {
+                        shell.style.setProperty('--swipe-delete-progress', latestDeleteVisualProgress.toFixed(3));
+                    }
                 });
             }
 
@@ -9197,17 +9100,6 @@
                 if (frameId) cancelAnimationFrame(frameId);
                 frameId = 0;
                 framePending = false;
-            }
-
-            function setDeleteStates(shell, progress, armed) {
-                if (progress !== deleteProgressState) {
-                    deleteProgressState = progress;
-                    shell.classList.toggle('swipe-delete-progress', progress);
-                }
-                if (armed !== deleteArmedState) {
-                    deleteArmedState = armed;
-                    shell.classList.toggle('swipe-delete-armed', armed);
-                }
             }
 
             function cardOf(shell) {
@@ -9219,6 +9111,8 @@
                 const card = cardOf(shell);
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+                shell.style.setProperty('--swipe-delete-progress', '0');
+                latestDeleteVisualProgress = 0;
                 if (card) {
                     if (!animate) card.style.transition = 'none';
                     card.style.transform = 'translate3d(0,0,0)';
@@ -9230,6 +9124,185 @@
             function railWidth(shell) {
                 const rail = shell.querySelector(':scope > .swipe-action-rail');
                 return Math.max(58, rail ? rail.getBoundingClientRect().width : 0);
+            }
+
+
+            function clearLongPressTimer() {
+                if (longPressTimer) clearTimeout(longPressTimer);
+                longPressTimer = 0;
+                longPressShell = null;
+            }
+
+            function isVisibleShell(shell) {
+                if (!shell || !shell.isConnected) return false;
+                const rect = shell.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            }
+
+            function isSelectableShell(shell) {
+                return !!(shell && shell.querySelector(':scope > .swipe-action-rail .delete'));
+            }
+
+            function ensureSelectionDot(shell) {
+                if (!shell || shell.querySelector(':scope > .swipe-selection-dot')) return;
+                const dot = document.createElement('span');
+                dot.className = 'swipe-selection-dot';
+                dot.setAttribute('aria-hidden', 'true');
+                shell.appendChild(dot);
+            }
+
+            function updateSelectionToolbar() {
+                const toolbar = document.getElementById('longSelectToolbar');
+                if (!toolbar) return;
+                for (const shell of [...selectedShells]) {
+                    if (!shell.isConnected || !shell.classList.contains('swipe-selection-mode')) selectedShells.delete(shell);
+                }
+                const count = selectedShells.size;
+                const countEl = toolbar.querySelector('.long-select-toolbar-count');
+                const deleteBtn = toolbar.querySelector('.long-select-toolbar-delete');
+                if (countEl) countEl.textContent = `${count} ausgewählt`;
+                if (deleteBtn) {
+                    deleteBtn.disabled = count === 0;
+                    deleteBtn.textContent = count ? `🗑️ ${count}` : '🗑️';
+                }
+            }
+
+            function setShellSelected(shell, selected) {
+                if (!shell || !shell.classList.contains('swipe-selection-mode')) return;
+                shell.classList.toggle('swipe-selection-selected', selected);
+                if (selected) selectedShells.add(shell);
+                else selectedShells.delete(shell);
+                updateSelectionToolbar();
+            }
+
+            function toggleShellSelected(shell) {
+                if (!selectionMode || !shell?.classList.contains('swipe-selection-mode')) return;
+                setShellSelected(shell, !selectedShells.has(shell));
+            }
+
+            function createSelectionToolbar() {
+                document.getElementById('longSelectToolbar')?.remove();
+                const toolbar = document.createElement('div');
+                toolbar.id = 'longSelectToolbar';
+                toolbar.className = 'long-select-toolbar';
+                toolbar.setAttribute('role', 'toolbar');
+                toolbar.setAttribute('aria-label', 'Auswahlaktionen');
+                toolbar.innerHTML = `
+                    <div class="long-select-toolbar-count" aria-live="polite">0 ausgewählt</div>
+                    <button type="button" class="long-select-toolbar-delete" disabled>🗑️</button>
+                    <button type="button" class="long-select-toolbar-done">Fertig</button>`;
+                toolbar.querySelector('.long-select-toolbar-delete')?.addEventListener('click', deleteSelectedEntries);
+                toolbar.querySelector('.long-select-toolbar-done')?.addEventListener('click', () => exitSelectionMode());
+                document.body.appendChild(toolbar);
+            }
+
+            function enterSelectionMode(initialShell) {
+                if (!initialShell || !isSelectableShell(initialShell)) return;
+                if (openShell) closeSwipe(openShell, false);
+                if (activeShell) closeSwipe(activeShell, false);
+                cancelPendingFrame();
+
+                selectionMode = true;
+                selectedShells.clear();
+                document.querySelectorAll('.swipe-entry-shell').forEach(shell => {
+                    if (!isVisibleShell(shell) || !isSelectableShell(shell)) return;
+                    closeSwipe(shell, false);
+                    shell.classList.add('swipe-selection-mode');
+                    ensureSelectionDot(shell);
+                });
+                createSelectionToolbar();
+                setShellSelected(initialShell, true);
+            }
+
+            function exitSelectionMode() {
+                clearLongPressTimer();
+                selectionMode = false;
+                selectedShells.clear();
+                document.querySelectorAll('.swipe-entry-shell.swipe-selection-mode').forEach(shell => {
+                    shell.classList.remove('swipe-selection-mode', 'swipe-selection-selected');
+                    shell.querySelector(':scope > .swipe-selection-dot')?.remove();
+                });
+                document.getElementById('longSelectToolbar')?.remove();
+                activeShell = null;
+                horizontal = false;
+                activeRailWidth = 0;
+                activeShellWidth = 0;
+                activeDeleteThreshold = 0;
+            }
+
+            function deleteSelectedEntries() {
+                const shells = [...selectedShells].filter(shell => shell.isConnected && shell.classList.contains('swipe-selection-mode'));
+                if (!shells.length) return;
+                const buttons = shells.map(shell => shell.querySelector(':scope > .swipe-action-rail .delete')).filter(Boolean);
+                if (!buttons.length) return;
+                const count = buttons.length;
+                if (!confirm(`${count} ausgewählte ${count === 1 ? 'Position' : 'Positionen'} löschen?`)) return;
+
+                /* Ein gemeinsamer Undo-Snapshot fuer die komplette Mehrfachloeschung.
+                   Die vorhandenen Delete-Handler werden weiterverwendet, ihre einzelnen
+                   Confirm-/Undo-Aufrufe werden nur fuer diesen Batch unterdrueckt. */
+                const oldConfirm = window.confirm;
+                const oldBeginUndo = window.beginUndoDelete;
+                const oldFinishUndo = window.finishUndoDelete;
+                try {
+                    if (typeof oldBeginUndo === 'function') oldBeginUndo(`${count} Einträge gelöscht`);
+                    window.confirm = () => true;
+                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = () => {};
+                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = () => {};
+                    exitSelectionMode();
+                    buttons.forEach(button => button.click());
+                } finally {
+                    window.confirm = oldConfirm;
+                    if (typeof oldBeginUndo === 'function') window.beginUndoDelete = oldBeginUndo;
+                    if (typeof oldFinishUndo === 'function') window.finishUndoDelete = oldFinishUndo;
+                }
+                if (typeof oldFinishUndo === 'function') oldFinishUndo(`${count} Einträge gelöscht`);
+            }
+
+            function clearNativeTextSelection() {
+                const selection = window.getSelection?.();
+                if (selection && selection.rangeCount) selection.removeAllRanges();
+            }
+
+            /* iOS/Safari kann trotz CSS bei langem Halten kurz eine Textauswahl starten.
+               Fuer unsere wischbaren Eintraege wird sie deshalb auch auf Event-Ebene blockiert. */
+            document.addEventListener('selectstart', event => {
+                if (event.target.closest?.('.swipe-entry-shell')) {
+                    event.preventDefault();
+                    clearNativeTextSelection();
+                }
+            }, true);
+
+            document.addEventListener('contextmenu', event => {
+                if (event.target.closest?.('.swipe-entry-shell')) {
+                    event.preventDefault();
+                    clearNativeTextSelection();
+                }
+            }, true);
+
+            document.addEventListener('selectionchange', () => {
+                if (activeShell || longPressShell || selectionMode) clearNativeTextSelection();
+            });
+
+            function startLongPress(shell, x, y) {
+                clearLongPressTimer();
+                longPressTriggered = false;
+                if (selectionMode || !isSelectableShell(shell)) return;
+                longPressShell = shell;
+                longPressStartX = x;
+                longPressStartY = y;
+                longPressTimer = window.setTimeout(() => {
+                    const target = longPressShell;
+                    if (!target || !target.isConnected) return;
+                    longPressTriggered = true;
+                    suppressClickUntil = Date.now() + 350;
+                    suppressClickShell = target;
+                    clearNativeTextSelection();
+                    enterSelectionMode(target);
+                    activeShell = null;
+                    horizontal = false;
+                    clearLongPressTimer();
+                }, 400);
             }
 
             function enhanceItem(item) {
@@ -9285,10 +9358,20 @@
                 }
 
                 if (event.target.closest('.swipe-action-rail')) return;
+
+                /* Im Auswahlmodus sind normale Taps nur Auswahl-Taps; Swipe bleibt aus. */
+                if (selectionMode) {
+                    activeShell = null;
+                    clearLongPressTimer();
+                    return;
+                }
+
                 if (openShell && openShell !== shell) closeSwipe(openShell);
 
                 const touch = event.touches[0];
+                clearNativeTextSelection();
                 activeShell = shell;
+                startLongPress(shell, touch.clientX, touch.clientY);
                 startX = touch.clientX;
                 startY = touch.clientY;
                 activeRailWidth = railWidth(shell);
@@ -9296,8 +9379,8 @@
                 activeDeleteThreshold = Math.max(activeRailWidth + 56, activeShellWidth * 0.72);
                 startOffset = shell.classList.contains('swipe-entry-open') ? activeRailWidth : 0;
                 latestOffset = startOffset;
-                deleteProgressState = shell.classList.contains('swipe-delete-progress');
-                deleteArmedState = shell.classList.contains('swipe-delete-armed');
+                latestDeleteVisualProgress = 0;
+                shell.style.setProperty('--swipe-delete-progress', '0');
                 horizontal = false;
             }, { passive: true });
 
@@ -9307,25 +9390,51 @@
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
 
+                if (longPressShell) {
+                    const ldx = touch.clientX - longPressStartX;
+                    const ldy = touch.clientY - longPressStartY;
+                    if (Math.hypot(ldx, ldy) > 10) clearLongPressTimer();
+                }
+
                 if (!horizontal) {
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     if (Math.abs(dy) > Math.abs(dx)) {
+                        clearLongPressTimer();
                         activeShell = null;
                         return;
                     }
+                    clearLongPressTimer();
                     horizontal = true;
                     activeShell.classList.add('swipe-entry-dragging');
                 }
 
                 event.preventDefault();
                 const offset = Math.max(0, Math.min(activeShellWidth, startOffset - dx));
-                const deleteProgress = offset > activeRailWidth + 18;
-                const deleteArmed = !!activeShell.querySelector('.swipe-action-rail .delete') && offset >= activeDeleteThreshold;
-                setDeleteStates(activeShell, deleteProgress, deleteArmed);
-                setCardOffset(activeShell, offset);
+
+                /* Hinter den normalen Aktionen beginnt die rote Voll-Swipe-Zone.
+                   Transform und Rot-Fortschritt werden gemeinsam nur einmal pro
+                   Animation-Frame aktualisiert. */
+                const hasDelete = !!activeShell.querySelector('.swipe-action-rail .delete');
+                const deleteVisualStart = activeRailWidth + 8;
+                const deleteVisualRange = Math.max(1, activeDeleteThreshold - deleteVisualStart);
+                const deleteVisualProgress = hasDelete
+                    ? Math.max(0, Math.min(1, (offset - deleteVisualStart) / deleteVisualRange))
+                    : 0;
+                setCardOffset(activeShell, offset, deleteVisualProgress);
             }, { passive: false });
 
             document.addEventListener('touchend', event => {
+                clearLongPressTimer();
+                if (longPressTriggered) {
+                    longPressTriggered = false;
+                    activeShell = null;
+                    horizontal = false;
+                    activeRailWidth = 0;
+                    activeShellWidth = 0;
+                    activeDeleteThreshold = 0;
+                    latestDeleteVisualProgress = 0;
+                    return;
+                }
                 if (!activeShell) return;
                 const shell = activeShell;
                 const touch = event.changedTouches && event.changedTouches[0];
@@ -9340,6 +9449,8 @@
 
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
+                shell.style.setProperty('--swipe-delete-progress', '0');
+                latestDeleteVisualProgress = 0;
 
                 if (shouldDelete) {
                     /* Voll-Swipe: dieselbe Loeschlogik wie beim roten Button,
@@ -9366,33 +9477,87 @@
                 activeRailWidth = 0;
                 activeShellWidth = 0;
                 activeDeleteThreshold = 0;
-                deleteProgressState = false;
-                deleteArmedState = false;
+                latestDeleteVisualProgress = 0;
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
+                clearLongPressTimer();
+                longPressTriggered = false;
                 if (activeShell) closeSwipe(activeShell);
                 activeShell = null;
                 horizontal = false;
                 activeRailWidth = 0;
                 activeShellWidth = 0;
                 activeDeleteThreshold = 0;
-                deleteProgressState = false;
-                deleteArmedState = false;
+                latestDeleteVisualProgress = 0;
             }, { passive: true });
 
             document.addEventListener('click', event => {
+                /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
+                   ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
+                const clickedShell = event.target.closest('.swipe-entry-shell');
+                if (Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
+                    suppressClickUntil = 0;
+                    suppressClickShell = null;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                if (Date.now() >= suppressClickUntil) suppressClickShell = null;
+
+                if (event.target.closest('#longSelectToolbar')) return;
+
+                if (selectionMode) {
+                    const shell = event.target.closest('.swipe-entry-shell.swipe-selection-mode');
+                    if (shell) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        toggleShellSelected(shell);
+                    }
+                    return;
+                }
+
+                /* Die komplette sichtbare Karte oeffnet/schliesst die Details.
+                   Ausgenommen bleiben echte Bedienelemente und die Swipe-Aktionsleiste.
+                   Klickt man bereits auf den bisherigen Detailbereich, darf dessen
+                   vorhandener onclick-Handler normal weiterlaufen. */
+                const card = event.target.closest('.item');
+                if (card && !event.target.closest('button, input, select, textarea, a, label, .actions, .swipe-action-rail')) {
+                    const detailSelector = [
+                        '[onclick*="toggleAlltagsDetails("]',
+                        '[onclick*="toggleFixkostenDetails("]',
+                        '[onclick*="toggleVersicherungDetails("]',
+                        '[onclick*="toggleEinnahmeDetails("]',
+                        '[onclick*="toggleReiseDetails("]'
+                    ].join(',');
+                    const directDetailTarget = event.target.closest(detailSelector);
+                    if (!directDetailTarget) {
+                        const detailTarget = card.querySelector(detailSelector);
+                        if (detailTarget) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            detailTarget.click();
+                            return;
+                        }
+                    }
+                }
+
                 if (openShell && !openShell.contains(event.target)) closeSwipe(openShell);
             }, true);
 
             const observer = new MutationObserver(mutations => {
+                let listWasRendered = false;
                 mutations.forEach(mutation => {
                     mutation.addedNodes.forEach(node => {
                         if (!(node instanceof Element)) return;
+                        if (node.matches('.item') || node.querySelector?.('.item')) listWasRendered = true;
                         if (node.matches('.item')) enhanceItem(node);
                         enhanceAll(node);
                     });
                 });
+                /* Suche, Bearbeiten oder andere Renderer koennen die Liste austauschen.
+                   Dann lieber den Auswahlmodus sauber beenden als tote Referenzen behalten. */
+                if (selectionMode && listWasRendered) exitSelectionMode();
             });
 
             if (document.readyState === 'loading') {
