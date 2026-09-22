@@ -9176,6 +9176,7 @@
             let activeDeleteThreshold = 0;
             let latestOffset = 0;
             let framePending = false;
+            let frameId = 0;
             let deleteProgressState = false;
             let deleteArmedState = false;
 
@@ -9183,11 +9184,19 @@
                 latestOffset = offset;
                 if (framePending) return;
                 framePending = true;
-                requestAnimationFrame(() => {
+                frameId = requestAnimationFrame(() => {
                     framePending = false;
+                    frameId = 0;
                     const card = cardOf(shell);
                     if (card) card.style.transform = `translate3d(${-latestOffset}px,0,0)`;
                 });
+            }
+
+
+            function cancelPendingFrame() {
+                if (frameId) cancelAnimationFrame(frameId);
+                frameId = 0;
+                framePending = false;
             }
 
             function setDeleteStates(shell, progress, armed) {
@@ -9208,6 +9217,7 @@
             function closeSwipe(shell = openShell, animate = true) {
                 if (!shell) return;
                 const card = cardOf(shell);
+                cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
                 if (card) {
                     if (!animate) card.style.transition = 'none';
@@ -9328,6 +9338,7 @@
                 const shouldDelete = horizontal && !!deleteButton && offset >= deleteThreshold;
                 const shouldOpen = !shouldDelete && horizontal && offset > Math.min(46, max * 0.32);
 
+                cancelPendingFrame();
                 shell.classList.remove('swipe-entry-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
 
                 if (shouldDelete) {
@@ -9344,6 +9355,7 @@
                     openShell = null;
                 } else {
                     const card = cardOf(shell);
+                    latestOffset = shouldOpen ? max : 0;
                     if (card) card.style.transform = `translate3d(${shouldOpen ? -max : 0}px,0,0)`;
                     shell.classList.toggle('swipe-entry-open', shouldOpen);
                     openShell = shouldOpen ? shell : null;
