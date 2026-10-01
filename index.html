@@ -3250,14 +3250,19 @@
         }
         document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{decorateReminderControls();renderWarnSettings();renderHomeWarnings();},0);new MutationObserver(()=>decorateReminderControls()).observe(document.body,{childList:true,subtree:true});});
 
-        function speichern() {
+        function speichernOhneHomeRender() {
             try {
                 localStorage.setItem("kostenApp", JSON.stringify(daten));
+                return true;
             } catch (error) {
                 console.error("Speichern fehlgeschlagen:", error);
                 alert("Speichern im Browser ist fehlgeschlagen. Öffne die heruntergeladene HTML-Datei direkt im Browser und nicht nur in einer Vorschau.");
+                return false;
             }
+        }
 
+        function speichern() {
+            speichernOhneHomeRender();
             renderHomeUebersicht();
         }
 
@@ -3777,20 +3782,50 @@
             else if (type === "reisen") renderListe();
         }
 
+        function cloneEintragFuerSichtbarkeit(eintrag) {
+            if (!eintrag || typeof eintrag !== "object") return null;
+            try { return structuredClone(eintrag); }
+            catch (_) { return JSON.parse(JSON.stringify(eintrag)); }
+        }
+
+        function restoreEintragNachSichtbarkeit(type, id, snapshot) {
+            if (!snapshot) return;
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            const ziel = gefunden?.eintrag;
+            if (!ziel || typeof ziel !== "object") return;
+
+            // Aus-/Einblenden darf niemals Buchungsdaten veraendern.
+            // Deshalb wird der komplette Eintrag exakt auf den Stand vor der
+            // Sichtbarkeitsaenderung zurueckgesetzt.
+            Object.keys(ziel).forEach(key => delete ziel[key]);
+            Object.assign(ziel, cloneEintragFuerSichtbarkeit(snapshot));
+        }
+
         function ausblendenEintrag(type, id) {
-            if (!findeAusgabeZumVerschieben(type, id)) return;
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            if (!gefunden?.eintrag) return;
+            const snapshot = cloneEintragFuerSichtbarkeit(gefunden.eintrag);
             beginUndoDelete("Eintrag ausgeblendet");
             setEintragAusgeblendet(type, id, true);
-            speichern();
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             renderNachEintragsAktion(type);
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             finishUndoDelete("Eintrag ausgeblendet");
         }
 
         function eintragEinblenden(type, id) {
+            const gefunden = findeAusgabeZumVerschieben(type, id);
+            if (!gefunden?.eintrag) return;
+            const snapshot = cloneEintragFuerSichtbarkeit(gefunden.eintrag);
             beginUndoDelete("Eintrag eingeblendet");
             setEintragAusgeblendet(type, id, false);
-            speichern();
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             renderNachEintragsAktion(type);
+            restoreEintragNachSichtbarkeit(type, id, snapshot);
+            speichernOhneHomeRender();
             finishUndoDelete("Eintrag eingeblendet");
         }
 
