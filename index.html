@@ -10597,7 +10597,7 @@
                 .replace(/:root/g, ':host').replace(/\bbody\b/g, '.edge-page-content').replace(/\bhtml\b/g, '.edge-page-content') + `
                 :host { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; }
                 .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; contain:paint; }
-                .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+                .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; animation:none !important; transition:none !important; }
                 .edge-back-front { box-shadow:-8px 0 24px rgba(0,0,0,.18); }
                 .edge-page-content { position:absolute; left:0; width:100%; margin:0; box-sizing:border-box; }
                 .edge-back-shade { position:absolute; inset:0; background:#000; pointer-events:none; will-change:opacity; }
@@ -10608,6 +10608,9 @@
             let frame = 0;
             let cleanupTimer = 0;
             let suppressClickUntil = 0;
+            let warmed = null;
+            let prepareFrame = 0;
+            let prepareIdle = 0;
             const activeView = () => viewIds.map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden'));
 
             function snapshot(view) {
@@ -10636,6 +10639,69 @@
                 if (gesture?.back) gesture.back.remove();
                 overlay.style.display = 'none';
                 gesture = null;
+                schedulePreparation();
+            }
+
+            function discardPrepared() {
+                warmed?.front.remove();
+                warmed?.back.remove();
+                warmed = null;
+            }
+
+            function syncPreviewTheme() {
+                overlay.dataset.theme = document.documentElement.dataset.theme;
+                const theme = getComputedStyle(document.documentElement);
+                for (let i = 0; i < theme.length; i++) {
+                    const key = theme[i];
+                    if (key.startsWith('--')) overlay.style.setProperty(key, theme.getPropertyValue(key));
+                }
+            }
+
+            function prepareViews() {
+                prepareIdle = 0;
+                if (gesture || document.hidden || document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
+                discardPrepared();
+                const view = activeView();
+                const button = view?.querySelector('.back-btn');
+                const targetId = button && destination(button);
+                const target = targetId && document.getElementById(targetId);
+                if (!target) return;
+                syncPreviewTheme();
+                const cached = cache.get(targetId);
+                const back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
+                const sourceSnapshot = snapshot(view);
+                const front = layer(sourceSnapshot, window.scrollY, true);
+                warmed = {view,button,targetId,target,back,front,sourceSnapshot,width:window.innerWidth,shade:back.querySelector('.edge-back-shade')};
+                front.style.transform = 'translate3d(0,0,0)';
+                back.style.transform = `translate3d(${-window.innerWidth*.22}px,0,0)`;
+                warmed.shade.style.opacity = '.22';
+            }
+
+            function cancelPreparation() {
+                cancelAnimationFrame(prepareFrame);
+                prepareFrame = 0;
+                if (prepareIdle) {
+                    if (window.cancelIdleCallback) window.cancelIdleCallback(prepareIdle);
+                    else clearTimeout(prepareIdle);
+                    prepareIdle = 0;
+                }
+            }
+
+            function schedulePreparation() {
+                if (prepareFrame || prepareIdle || gesture || document.hidden) return;
+                // Wait until the page renderer has completed, then copy in idle time.
+                prepareFrame = requestAnimationFrame(() => {
+                    prepareFrame = 0;
+                    prepareIdle = window.requestIdleCallback
+                        ? window.requestIdleCallback(prepareViews, {timeout:250})
+                        : setTimeout(prepareViews,40);
+                });
+            }
+
+            function invalidatePrepared() {
+                if (gesture) return;
+                discardPrepared();
+                schedulePreparation();
             }
 
             // Called before show() clears the outgoing travel lists.
@@ -10732,23 +10798,28 @@
                 const targetId = destination(button);
                 const target = document.getElementById(targetId);
                 if (!target) return;
-                overlay.dataset.theme = document.documentElement.dataset.theme;
-                const theme = getComputedStyle(document.documentElement);
-                for (let i = 0; i < theme.length; i++) {
-                    const key = theme[i];
-                    if (key.startsWith('--')) overlay.style.setProperty(key, theme.getPropertyValue(key));
-                }
+                cancelPreparation();
+                if (warmed && (warmed.view !== view || warmed.targetId !== targetId || warmed.width !== window.innerWidth)) discardPrepared();
+                const prepared = warmed;
+                warmed = null;
                 gesture = {view,button,targetId,target,startX:touch.clientX,startY:touch.clientY,lastX:touch.clientX,lastTime:performance.now(),velocity:0,distance:0,width:window.innerWidth,dragging:false,settling:false};
-                // Prepare and paint at first contact, before the finger starts moving.
-                const cached = cache.get(targetId);
-                gesture.back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
-                gesture.sourceSnapshot = snapshot(view);
+                if (prepared) {
+                    Object.assign(gesture,prepared);
+                    // Scrolling does not require copying the page again.
+                    gesture.front.querySelector('.edge-page-content').style.top = -window.scrollY + 'px';
+                } else {
+                    // Fallback for an immediate swipe before the idle preparation ran.
+                    syncPreviewTheme();
+                    const cached = cache.get(targetId);
+                    gesture.back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
+                    gesture.sourceSnapshot = snapshot(view);
+                    gesture.front = layer(gesture.sourceSnapshot,window.scrollY,true);
+                    gesture.shade = gesture.back.querySelector('.edge-back-shade');
+                    gesture.front.style.transform = 'translate3d(0,0,0)';
+                    gesture.back.style.transform = `translate3d(${-gesture.width*.22}px,0,0)`;
+                    gesture.shade.style.opacity = '.22';
+                }
                 gesture.sourceScroll = window.scrollY;
-                gesture.front = layer(gesture.sourceSnapshot, gesture.sourceScroll, true);
-                gesture.shade = gesture.back.querySelector('.edge-back-shade');
-                gesture.front.style.transform = 'translate3d(0,0,0)';
-                gesture.back.style.transform = `translate3d(${-gesture.width*.22}px,0,0)`;
-                gesture.shade.style.opacity = '.22';
                 overlay.style.display = 'block';
                 // Reserve only the edge strip; entry swipes elsewhere are untouched.
                 event.stopImmediatePropagation();
@@ -10795,9 +10866,22 @@
                     event.stopImmediatePropagation();
                 }
             }, true);
-            window.addEventListener('resize',cleanup);
-            window.addEventListener('pagehide',cleanup);
-            document.addEventListener('visibilitychange', () => { if (document.hidden) cleanup(); });
+            const observer = new MutationObserver(mutations => {
+                const view = activeView();
+                if (mutations.some(m => m.target === document.documentElement || view?.contains(m.target))) invalidatePrepared();
+            });
+            observer.observe(document.body, {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','value','checked','selected']});
+            observer.observe(document.documentElement, {attributes:true,attributeFilter:['data-theme','style']});
+            document.addEventListener('input',invalidatePrepared,true);
+            document.addEventListener('change',invalidatePrepared,true);
+            document.addEventListener('focusout',schedulePreparation,true);
+            window.addEventListener('resize',() => { discardPrepared(); cleanup(); });
+            window.addEventListener('pagehide',() => { discardPrepared(); cleanup(); cancelPreparation(); });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) { discardPrepared(); cleanup(); }
+                else schedulePreparation();
+            });
+            schedulePreparation();
         })();
     </script>
 
