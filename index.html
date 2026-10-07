@@ -9836,16 +9836,20 @@
             -webkit-backface-visibility: hidden;
             transition: transform .38s cubic-bezier(.25,.6,.25,1);
         }
-        .swipe-entry-shell.swipe-entry-deleting {
+        .swipe-entry-shell.swipe-entry-removing {
             background: #ff3b30;
             pointer-events: none;
         }
-        .swipe-entry-shell.swipe-entry-deleting > .swipe-action-rail,
-        .swipe-entry-shell.swipe-entry-deleting > .swipe-right-action-rail {
+        .swipe-entry-shell.swipe-entry-removing.swipe-entry-hiding {
+            background: #8e8e93;
+        }
+        .swipe-entry-shell.swipe-entry-hiding::before { opacity: 0 !important; }
+        .swipe-entry-shell.swipe-entry-removing > .swipe-action-rail,
+        .swipe-entry-shell.swipe-entry-removing > .swipe-right-action-rail {
             opacity: 0 !important;
             pointer-events: none !important;
         }
-        .swipe-entry-shell.swipe-entry-deleting > .item.swipe-entry-ready {
+        .swipe-entry-shell.swipe-entry-removing > .item.swipe-entry-ready {
             transition: transform .24s cubic-bezier(.25,.6,.25,1);
         }
         .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready,
@@ -10132,7 +10136,7 @@
             }
 
             function closeSwipe(shell = openShell, animate = true) {
-                if (!shell || shell.classList.contains('swipe-entry-deleting')) return;
+                if (!shell || shell.classList.contains('swipe-entry-removing')) return;
                 const card = cardOf(shell);
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-entry-right-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
@@ -10147,7 +10151,17 @@
             }
 
             function animateSwipeDelete(shell, deleteButton, width) {
-                if (!shell || shell.classList.contains('swipe-entry-deleting')) return;
+                animateSwipeRemoval(shell, width, -1, () => {
+                    const oldConfirm = window.confirm;
+                    try {
+                        window.confirm = () => true;
+                        deleteButton.click();
+                    } finally { window.confirm = oldConfirm; }
+                });
+            }
+
+            function animateSwipeRemoval(shell, width, direction, action) {
+                if (!shell || shell.classList.contains('swipe-entry-removing')) return;
                 const card = cardOf(shell);
                 const originalHeight = shell.style.height;
                 const originalMarginTop = shell.style.marginTop;
@@ -10155,15 +10169,12 @@
                 const originalTransition = shell.style.transition;
                 const finish = () => {
                     if (!shell.isConnected) return;
-                    const oldConfirm = window.confirm;
                     try {
-                        // Use the same saved-data and undo path as the existing delete button.
-                        window.confirm = () => true;
-                        deleteButton.click();
+                        // Keep the existing persistence and undo path for either action.
+                        action();
                     } finally {
-                        window.confirm = oldConfirm;
                         // A failed save must leave the entry visible and usable.
-                        shell.classList.remove('swipe-entry-deleting');
+                        shell.classList.remove('swipe-entry-removing', 'swipe-entry-hiding');
                         shell.style.height = originalHeight;
                         shell.style.marginTop = originalMarginTop;
                         shell.style.marginBottom = originalMarginBottom;
@@ -10174,10 +10185,11 @@
                 if (swipeReducedMotion?.matches) { finish(); return; }
                 shell.style.height = `${shell.getBoundingClientRect().height}px`;
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-right-dragging');
-                shell.classList.add('swipe-entry-deleting');
-                shell.style.setProperty('--swipe-delete-progress', '1');
-                if (card) card.style.transform = `translate3d(${-width}px,0,0)`;
-                // Slide out, hold the red surface briefly, then close the gap in the list.
+                shell.classList.add('swipe-entry-removing');
+                shell.classList.toggle('swipe-entry-hiding', direction > 0);
+                shell.style.setProperty('--swipe-delete-progress', direction < 0 ? '1' : '0');
+                if (card) card.style.transform = `translate3d(${direction * width}px,0,0)`;
+                // Slide out, hold the action color briefly, then close the gap in the list.
                 window.setTimeout(() => {
                     if (!shell.isConnected) return;
                     shell.style.transition = 'height .26s cubic-bezier(.25,.6,.25,1), margin-top .26s cubic-bezier(.25,.6,.25,1), margin-bottom .26s cubic-bezier(.25,.6,.25,1)';
@@ -10207,7 +10219,7 @@
             }
 
             function isSelectableShell(shell) {
-                return !!(shell && !shell.classList.contains('swipe-entry-deleting') && shell.querySelector(':scope > .swipe-action-rail .delete'));
+                return !!(shell && !shell.classList.contains('swipe-entry-removing') && shell.querySelector(':scope > .swipe-action-rail .delete'));
             }
 
             function ensureSelectionDot(shell) {
@@ -10495,7 +10507,7 @@
                     return;
                 }
 
-                if (shell.classList.contains('swipe-entry-deleting')) return;
+                if (shell.classList.contains('swipe-entry-removing')) return;
                 if (event.target.closest('.swipe-action-rail')) return;
 
                 /* Im Auswahlmodus sind normale Taps nur Auswahl-Taps; Swipe bleibt aus. */
@@ -10633,14 +10645,18 @@
                     const card = cardOf(shell);
                     cancelPendingFrame();
                     shell.classList.remove('swipe-entry-right-dragging', 'swipe-entry-dragging');
-                    if (card) card.style.transform = 'translate3d(0,0,0)';
+                    const cfg = shouldRun ? rightSwipeConfigFor(shell) : null;
+                    const shouldHide = cfg?.action === 'ausblenden';
+                    if (shouldHide) {
+                        animateSwipeRemoval(shell, shellWidth, 1, () => ausblendenEintrag(cfg.meta.type, cfg.meta.id));
+                    } else if (card) card.style.transform = 'translate3d(0,0,0)';
                     activeShell = null;
                     horizontal = false;
                     activeRailWidth = 0;
                     activeShellWidth = 0;
                     activeDeleteThreshold = 0;
                     latestDeleteVisualProgress = 0;
-                    if (shouldRun) window.setTimeout(() => {
+                    if (shouldRun && !shouldHide) window.setTimeout(() => {
                         if (shell.isConnected && !selectionMode) executeRightSwipe(shell);
                     }, swipeReducedMotion?.matches ? 0 : 380);
                     return;
@@ -10696,7 +10712,7 @@
                 /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
                    ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
                 const clickedShell = event.target.closest('.swipe-entry-shell');
-                if (event.isTrusted && clickedShell?.classList.contains('swipe-entry-deleting')) {
+                if (event.isTrusted && clickedShell?.classList.contains('swipe-entry-removing')) {
                     event.preventDefault();
                     event.stopPropagation();
                     return;
