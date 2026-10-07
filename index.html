@@ -9836,6 +9836,18 @@
             -webkit-backface-visibility: hidden;
             transition: transform .38s cubic-bezier(.25,.6,.25,1);
         }
+        .swipe-entry-shell.swipe-entry-deleting {
+            background: #ff3b30;
+            pointer-events: none;
+        }
+        .swipe-entry-shell.swipe-entry-deleting > .swipe-action-rail,
+        .swipe-entry-shell.swipe-entry-deleting > .swipe-right-action-rail {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .swipe-entry-shell.swipe-entry-deleting > .item.swipe-entry-ready {
+            transition: transform .24s cubic-bezier(.25,.6,.25,1);
+        }
         .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready,
         .swipe-entry-shell.swipe-entry-right-dragging > .item.swipe-entry-ready {
             transition: none !important;
@@ -10120,7 +10132,7 @@
             }
 
             function closeSwipe(shell = openShell, animate = true) {
-                if (!shell) return;
+                if (!shell || shell.classList.contains('swipe-entry-deleting')) return;
                 const card = cardOf(shell);
                 cancelPendingFrame();
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-dragging', 'swipe-entry-right-dragging', 'swipe-delete-progress', 'swipe-delete-armed');
@@ -10132,6 +10144,48 @@
                     if (!animate) requestAnimationFrame(() => { card.style.transition = ''; });
                 }
                 if (openShell === shell) openShell = null;
+            }
+
+            function animateSwipeDelete(shell, deleteButton, width) {
+                if (!shell || shell.classList.contains('swipe-entry-deleting')) return;
+                const card = cardOf(shell);
+                const originalHeight = shell.style.height;
+                const originalMarginTop = shell.style.marginTop;
+                const originalMarginBottom = shell.style.marginBottom;
+                const originalTransition = shell.style.transition;
+                const finish = () => {
+                    if (!shell.isConnected) return;
+                    const oldConfirm = window.confirm;
+                    try {
+                        // Use the same saved-data and undo path as the existing delete button.
+                        window.confirm = () => true;
+                        deleteButton.click();
+                    } finally {
+                        window.confirm = oldConfirm;
+                        // A failed save must leave the entry visible and usable.
+                        shell.classList.remove('swipe-entry-deleting');
+                        shell.style.height = originalHeight;
+                        shell.style.marginTop = originalMarginTop;
+                        shell.style.marginBottom = originalMarginBottom;
+                        shell.style.transition = originalTransition;
+                        if (shell.isConnected) closeSwipe(shell, false);
+                    }
+                };
+                if (swipeReducedMotion?.matches) { finish(); return; }
+                shell.style.height = `${shell.getBoundingClientRect().height}px`;
+                shell.classList.remove('swipe-entry-open', 'swipe-entry-right-dragging');
+                shell.classList.add('swipe-entry-deleting');
+                shell.style.setProperty('--swipe-delete-progress', '1');
+                if (card) card.style.transform = `translate3d(${-width}px,0,0)`;
+                // Slide out, hold the red surface briefly, then close the gap in the list.
+                window.setTimeout(() => {
+                    if (!shell.isConnected) return;
+                    shell.style.transition = 'height .26s cubic-bezier(.25,.6,.25,1), margin-top .26s cubic-bezier(.25,.6,.25,1), margin-bottom .26s cubic-bezier(.25,.6,.25,1)';
+                    shell.style.height = '0px';
+                    shell.style.marginTop = '0px';
+                    shell.style.marginBottom = '0px';
+                    window.setTimeout(finish, 260);
+                }, 320);
             }
 
             function railWidth(shell) {
@@ -10153,7 +10207,7 @@
             }
 
             function isSelectableShell(shell) {
-                return !!(shell && shell.querySelector(':scope > .swipe-action-rail .delete'));
+                return !!(shell && !shell.classList.contains('swipe-entry-deleting') && shell.querySelector(':scope > .swipe-action-rail .delete'));
             }
 
             function ensureSelectionDot(shell) {
@@ -10441,6 +10495,7 @@
                     return;
                 }
 
+                if (shell.classList.contains('swipe-entry-deleting')) return;
                 if (event.target.closest('.swipe-action-rail')) return;
 
                 /* Im Auswahlmodus sind normale Taps nur Auswahl-Taps; Swipe bleibt aus. */
@@ -10607,16 +10662,7 @@
                 latestDeleteVisualProgress = 0;
 
                 if (shouldDelete) {
-                    /* Voll-Swipe: dieselbe Loeschlogik wie beim roten Button,
-                       aber die Sicherheitsabfrage wird fuer genau diesen Aufruf uebersprungen.
-                       Dadurch bleiben bestehendes Rendering und Rueckgaengig-Funktion erhalten. */
-                    const oldConfirm = window.confirm;
-                    try {
-                        window.confirm = () => true;
-                        deleteButton.click();
-                    } finally {
-                        window.confirm = oldConfirm;
-                    }
+                    animateSwipeDelete(shell, deleteButton, shellWidth);
                     openShell = null;
                 } else {
                     const card = cardOf(shell);
@@ -10650,6 +10696,11 @@
                 /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
                    ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
                 const clickedShell = event.target.closest('.swipe-entry-shell');
+                if (event.isTrusted && clickedShell?.classList.contains('swipe-entry-deleting')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
                 // Block Safari's follow-up tap, while allowing the swipe's programmatic action click.
                 if (event.isTrusted && Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
                     suppressClickUntil = 0;
