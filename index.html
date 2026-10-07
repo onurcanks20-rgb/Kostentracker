@@ -2723,9 +2723,9 @@
         </div>
 
         <div class="container">
-            <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Einnahmen durchsuchen" oninput="renderEinnahmen()">
+            <div class="total" id="einnahmenGesamt" style="margin:0 0 14px;"></div>
+            <input id="einnahmenSuche" class="list-search" type="search" placeholder="🔎 Aktuelle und monatliche Einnahmen durchsuchen" oninput="renderEinnahmen()">
             <div id="einnahmenListe"></div>
-            <div class="total" id="einnahmenGesamt"></div>
         </div>
 
         <div class="container">
@@ -3112,6 +3112,7 @@
             offeneVersicherungen: {},
             offeneFixkosten: {},
             offeneEinnahmen: {},
+            einnahmenMonatlichOffen: false,
             offeneHaushaltEintraege: {},
             offeneFreizeitEintraege: {},
             offeneReiseEintraege: {},
@@ -7249,6 +7250,7 @@
             document.getElementById("einnahmenDatum").value = heuteISO();
             document.getElementById("einnahmenWiederholung").value = "einmalig";
             document.getElementById("einnahmenAddPanel")?.classList.add("hidden");
+            if (wiederholung === "monatlich") state.einnahmenMonatlichOffen = true;
             renderEinnahmen();
             renderHomeUebersicht();
             if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) closeStartQuickAdd();
@@ -7262,22 +7264,64 @@
             const suche = getSearchTerm("einnahmenSuche");
             const alleEinnahmen = Array.isArray(daten.Einnahmen) ? daten.Einnahmen : [];
             document.getElementById("einnahmenDeleteAllBtn")?.classList.toggle("hidden", alleEinnahmen.length === 0);
-            const liste = [...alleEinnahmen]
+            const sichtbar = alleEinnahmen
                 .filter(e => !istEintragAusgeblendet("einnahmen", e.id))
-                .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag))
-                .sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
+                .filter(e => matchesSearch(suche, e.text, e.von, e.wiederholung, e.datum, e.betrag));
+            const einmalig = sichtbar.filter(e => e.wiederholung !== "monatlich" && (
+                istInLetztenTagen(e.datum, 7) || parseISODate(e.datum) > startOfToday() || String(state.editEinnahmeId) === String(e.id)
+            )).sort((a,b) => String(b.datum).localeCompare(String(a.datum)));
+            const monatlich = sichtbar.filter(e => e.wiederholung === "monatlich")
+                .sort((a,b) => (parseISODate(a.datum)?.getDate() || 0) - (parseISODate(b.datum)?.getDate() || 0) || String(a.text || '').localeCompare(String(b.text || ''),'de'));
+            const z = getGehaltszeitraum();
+            const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
+            if (total) total.innerHTML = `<div style="opacity:.7;font-size:12px;margin-bottom:4px;">Einnahmen im aktuellen Gehaltszeitraum</div><strong style="font-size:24px;">+${formatBetrag(sum)}</strong>`;
 
-            if (!liste.length) {
-                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Noch keine Einnahmen</div><div class="empty-state-text">Zusätzliche oder wiederkehrende Einnahmen erscheinen hier.</div></div>`;
-                if (total) total.innerHTML = "";
-                return;
+            const label = document.createElement("div");
+            label.className = "section-label";
+            label.textContent = "Einmalige Einnahmen";
+            container.appendChild(label);
+            const note = document.createElement("div");
+            note.className = "info-text";
+            note.textContent = "Letzte 7 Tage und kommende Zahlungen. Ältere Einträge bleiben unter Einstellungen → Archiv erhalten.";
+            container.appendChild(note);
+            if (!einmalig.length) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                empty.innerHTML = `<div class="empty-state-icon">💰</div><div class="empty-state-title">${suche ? 'Keine passenden einmaligen Einnahmen' : 'Keine aktuellen einmaligen Einnahmen'}</div><div class="empty-state-text">Neue Einnahmen erscheinen hier.</div>`;
+                container.appendChild(empty);
+            }
+            renderRows(container,einmalig,false);
+
+            const monthlySum = monatlich.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            if (state.einnahmenLetzteSuche !== suche) {
+                if (suche) state.einnahmenMonatlichOffen = true;
+                state.einnahmenLetzteSuche = suche;
+            }
+            const expanded = !!state.einnahmenMonatlichOffen || monatlich.some(e=>String(state.editEinnahmeId)===String(e.id));
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.id = "einnahmenMonatlichToggle";
+            toggle.setAttribute("aria-expanded",String(expanded));
+            toggle.setAttribute("aria-controls","einnahmenMonatlichListe");
+            toggle.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--secondary);color:var(--text);text-align:left;margin:20px 0 10px;padding:16px;border-radius:16px;";
+            toggle.innerHTML = `<span><strong style="display:block;">Monatlich wiederkehrend</strong><span style="display:block;font-size:13px;opacity:.7;margin-top:4px;">${monatlich.length} ${monatlich.length === 1 ? 'Eintrag' : 'Einträge'} · +${formatBetrag(monthlySum)} / Monat</span></span><span aria-hidden="true" style="font-size:20px;">${expanded ? '⌃' : '⌄'}</span>`;
+            toggle.addEventListener("click",()=>{state.einnahmenMonatlichOffen=!expanded;renderEinnahmen();});
+            container.appendChild(toggle);
+            const monthlyList = document.createElement("div");
+            monthlyList.id = "einnahmenMonatlichListe";
+            if (!expanded) monthlyList.classList.add("hidden");
+            container.appendChild(monthlyList);
+            if (expanded) {
+                if (monatlich.length) renderRows(monthlyList,monatlich,true);
+                else monthlyList.innerHTML = `<div class="info-text">${suche ? 'Keine passenden monatlichen Einnahmen.' : 'Noch keine monatlich wiederkehrenden Einnahmen hinterlegt.'}</div>`;
             }
 
+            function renderRows(host,liste,recurring) {
             let letzteEinnahmenGruppe = null;
             liste.forEach(e => {
                 const gruppenKey = e.datum || "ohne-datum";
-                if (gruppenKey !== letzteEinnahmenGruppe) {
-                    appendDateGroupHeader(container, e.datum, { first: letzteEinnahmenGruppe === null, note: e.wiederholung === "monatlich" ? "Startdatum" : "Datum" });
+                if (!recurring && gruppenKey !== letzteEinnahmenGruppe) {
+                    appendDateGroupHeader(host, e.datum, { first: letzteEinnahmenGruppe === null, note: e.wiederholung === "monatlich" ? "Startdatum" : "Datum" });
                     letzteEinnahmenGruppe = gruppenKey;
                 }
                 const isEdit = String(state.editEinnahmeId) === String(e.id);
@@ -7300,6 +7344,7 @@
                                 <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
                                     <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
                                     <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
+                                    ${recurring ? `<span style="font-size:13px;opacity:.72;">Monatlich am ${parseISODate(e.datum)?.getDate() || '-'}.${parseISODate(e.datum) > startOfToday() ? ' · ab '+formatDatum(e.datum) : ''}</span>` : ''}
                                 </span>
                             </div>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
@@ -7312,12 +7357,10 @@
                 }
                 const item = createItem(html);
                 item.style.background = "#3a3a3c";
-                container.appendChild(item);
+                host.appendChild(item);
             });
 
-            const z = getGehaltszeitraum();
-            const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
-            if (total) total.innerHTML = "Einnahmen im aktuellen Gehaltszeitraum: +" + formatBetrag(sum);
+            }
         }
 
         function toggleEinnahmeDetails(id) {
