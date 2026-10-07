@@ -10594,9 +10594,14 @@
                 const rightRail = activeRightRail;
                 if (startOffset <= 0 && dx > 0 && rightRail) {
                     setDragDirection('right');
-                    const limit = activeShellWidth * 0.42;
+                    const isHideGesture = rightRail.dataset.action === 'ausblenden';
+                    const limit = isHideGesture ? activeShellWidth : activeShellWidth * 0.42;
                     const travel = dx - startOffset;
-                    const rightOffset = travel <= limit ? travel : limit + (travel - limit) * .18;
+                    // Hiding removes the row, so follow the finger beyond the middle.
+                    // Actions that keep the row still use resistance at their reveal limit.
+                    const rightOffset = isHideGesture
+                        ? Math.min(activeShellWidth, travel)
+                        : (travel <= limit ? travel : limit + (travel - limit) * .18);
                     setCardTranslate(activeShell, rightOffset);
                     return;
                 }
