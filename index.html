@@ -10650,7 +10650,8 @@
                 /* Nur den synthetischen Klick des Eintrags schlucken, der den Long Press
                    ausgeloest hat. Andere Eintraege sind sofort anklickbar. */
                 const clickedShell = event.target.closest('.swipe-entry-shell');
-                if (Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
+                // Block Safari's follow-up tap, while allowing the swipe's programmatic action click.
+                if (event.isTrusted && Date.now() < suppressClickUntil && clickedShell && clickedShell === suppressClickShell) {
                     suppressClickUntil = 0;
                     suppressClickShell = null;
                     event.preventDefault();
