@@ -2748,7 +2748,7 @@
             <input id="costText" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
             <input id="costBetrag" type="text" inputmode="decimal" placeholder="Betrag" enterkeyhint="next">
             <input id="costInfo" autocapitalize="words" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" enterkeyhint="next">
-            <label for="costHaendler" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Händler / Zahlungsname (optional)</label>
+            <label for="costHaendler" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Anbieter (optional)</label>
             <input id="costHaendler" autocapitalize="off" placeholder="z. B. Telekom oder Netflix" enterkeyhint="next">
             <div class="info-text">Name aus der Zahlungsmitteilung. Mehrere Namen mit einem Semikolon trennen.</div>
             <label for="costZuordnungTage" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Zeitfenster zur Fälligkeit (± Tage)</label>
@@ -6310,7 +6310,7 @@
                         <input id="editKostenText-${k.id}" value="${escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
                         <input id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${formatInputBetrag(k.betrag)}" placeholder="Betrag">
                         <input id="editKostenInfo-${k.id}" value="${escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
-                        <label for="editKostenHaendler-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Händler / Zahlungsname (optional)</label>
+                        <label for="editKostenHaendler-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Anbieter (optional)</label>
                         <input id="editKostenHaendler-${k.id}" value="${escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
                         <div class="info-text">Mehrere Namen mit einem Semikolon trennen.</div>
                         <label for="editKostenZuordnungTage-${k.id}" style="opacity:0.7; font-size:13px; margin-top:4px;">Zeitfenster zur Fälligkeit (± Tage)</label>
@@ -6332,17 +6332,13 @@
                     const istOffen = !!state.offeneFixkosten[String(k.id)];
                     item = createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="toggleFixkostenDetails('${k.id}')"
-                                 style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                    <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(k.text || k.name || "-")}</span>
-                                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">
-                                        <strong style="font-size:18px;">${formatBetrag(k.betrag)}</strong>
-                                        <span style="font-size:14px;opacity:.72;">· am ${String(tag).padStart(2, "0")}.</span>
-                                    </div>
-                                </div>
+                        <div class="compact-alltag-content">
+                            <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
+                                <span class="compact-alltag-title">${escapeHtml(k.text || k.name || "-")}</span>
+                                ${k.haendler ? `<span class="compact-alltag-sub">${escapeHtml(k.haendler)}</span>` : ''}
+                                <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
                             </div>
+                            <strong class="compact-alltag-amount">${formatBetrag(k.betrag)}</strong>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
                                 <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
@@ -6354,7 +6350,7 @@
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Wiederholung</span><span style="font-weight:600;text-align:right;">Monatlich am ${tag}.</span></div>
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Startdatum</span><span style="font-weight:600;text-align:right;">${formatDatum(datum)}</span></div>
                                 ${k.info ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Info</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${escapeHtml(k.info)}</span></div>` : ''}
-                                ${k.haendler ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Händler / Zahlungsname</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${escapeHtml(k.haendler)}</span></div>
+                                ${k.haendler ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Anbieter</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${escapeHtml(k.haendler)}</span></div>
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Zeitfenster zur Fälligkeit</span><span style="font-weight:600;text-align:right;">±${normalizeFixkostenZuordnungTage(k.zuordnungTage)} Tage</span></div>` : ''}
                             </div>
                         ` : ''}
@@ -6362,6 +6358,7 @@
                 `);
                 }
 
+                if (!isEdit) item.classList.add("compact-alltag-card");
                 div.appendChild(item);
             });
 
@@ -6710,18 +6707,16 @@
                 item.className = "item";
 
                 if (!isEdit) {
-
+                    item.classList.add("compact-alltag-card");
                     item.innerHTML = `
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
-                    <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; width:100%; gap:10px;">
-                        <div onclick="toggleVersicherungDetails('${v.id}')"
-                             style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                            <div style="display:flex; flex-direction:column; min-width:0; gap:4px;">
-                                <span style="font-weight:700; overflow-wrap:anywhere;">${escapeHtml(v.name || "Versicherung")}</span>
-                                <strong style="font-size:18px;">${formatBetrag(v.betrag)}</strong>
-                            </div>
+                    <div class="compact-alltag-content">
+                        <div class="compact-alltag-main" onclick="toggleVersicherungDetails('${v.id}')" style="cursor:pointer;">
+                            <span class="compact-alltag-title">${escapeHtml(v.name || "Versicherung")}</span>
+                            ${v.anbieter ? `<span class="compact-alltag-sub">${escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
+                        <strong class="compact-alltag-amount">${formatBetrag(v.betrag)}</strong>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
@@ -7339,14 +7334,13 @@
                     const info = e.wiederholung === "monatlich" ? `Monatlich am ${parseISODate(e.datum)?.getDate() || '-'} · seit ${formatDatum(e.datum)}` : `Einmalig · ${formatDatum(e.datum)}`;
                     const istOffen = !!state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                        <div style="display:grid; grid-template-columns:minmax(0,1fr) auto; width:100%; gap:10px; align-items:center;">
-                            <div onclick="toggleEinnahmeDetails('${e.id}')" style="display:flex; align-items:flex-start; gap:10px; min-width:0; cursor:pointer;">
-                                <span style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0;">
-                                    <strong style="overflow-wrap:anywhere;">${escapeHtml(e.text || 'Einnahme')}</strong>
-                                    <strong style="font-size:18px;">+${formatBetrag(e.betrag)}</strong>
-                                    ${recurring ? `<span style="font-size:13px;opacity:.72;">Monatlich am ${parseISODate(e.datum)?.getDate() || '-'}.${parseISODate(e.datum) > startOfToday() ? ' · ab '+formatDatum(e.datum) : ''}</span>` : ''}
-                                </span>
+                        <div class="compact-alltag-content">
+                            <div class="compact-alltag-main" onclick="toggleEinnahmeDetails('${e.id}')" style="cursor:pointer;">
+                                <span class="compact-alltag-title">${escapeHtml(e.text || 'Einnahme')}</span>
+                                ${e.von ? `<span class="compact-alltag-sub">${escapeHtml(e.von)}</span>` : ''}
+                                ${recurring ? `<span class="compact-alltag-sub">Monatlich am ${parseISODate(e.datum)?.getDate() || '-'}.${parseISODate(e.datum) > startOfToday() ? ' · ab '+formatDatum(e.datum) : ''}</span>` : ''}
                             </div>
+                            <strong class="compact-alltag-amount">+${formatBetrag(e.betrag)}</strong>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
                         </div>
                         ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
@@ -7356,6 +7350,7 @@
                     </div>`;
                 }
                 const item = createItem(html);
+                if (!isEdit) item.classList.add("compact-alltag-card");
                 item.style.background = "#3a3a3c";
                 host.appendChild(item);
             });
