@@ -9850,7 +9850,7 @@
             pointer-events: none !important;
         }
         .swipe-entry-shell.swipe-entry-removing > .item.swipe-entry-ready {
-            transition: transform .24s cubic-bezier(.25,.6,.25,1);
+            transition: transform var(--swipe-removal-duration, .24s) cubic-bezier(.25,.6,.25,1);
         }
         .swipe-entry-shell.swipe-entry-dragging > .item.swipe-entry-ready,
         .swipe-entry-shell.swipe-entry-right-dragging > .item.swipe-entry-ready {
@@ -10167,6 +10167,8 @@
                 const originalMarginTop = shell.style.marginTop;
                 const originalMarginBottom = shell.style.marginBottom;
                 const originalTransition = shell.style.transition;
+                const originalSlideDuration = shell.style.getPropertyValue('--swipe-removal-duration');
+                const slideDuration = direction > 0 ? 420 : 240;
                 const finish = () => {
                     if (!shell.isConnected) return;
                     try {
@@ -10179,12 +10181,15 @@
                         shell.style.marginTop = originalMarginTop;
                         shell.style.marginBottom = originalMarginBottom;
                         shell.style.transition = originalTransition;
+                        if (originalSlideDuration) shell.style.setProperty('--swipe-removal-duration', originalSlideDuration);
+                        else shell.style.removeProperty('--swipe-removal-duration');
                         if (shell.isConnected) closeSwipe(shell, false);
                     }
                 };
                 if (swipeReducedMotion?.matches) { finish(); return; }
                 shell.style.height = `${shell.getBoundingClientRect().height}px`;
                 shell.classList.remove('swipe-entry-open', 'swipe-entry-right-dragging');
+                shell.style.setProperty('--swipe-removal-duration', `${slideDuration}ms`);
                 shell.classList.add('swipe-entry-removing');
                 shell.classList.toggle('swipe-entry-hiding', direction > 0);
                 shell.style.setProperty('--swipe-delete-progress', direction < 0 ? '1' : '0');
@@ -10197,7 +10202,7 @@
                     shell.style.marginTop = '0px';
                     shell.style.marginBottom = '0px';
                     window.setTimeout(finish, 260);
-                }, 320);
+                }, slideDuration + 80);
             }
 
             function railWidth(shell) {
