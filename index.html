@@ -7276,6 +7276,30 @@
             const sum = einnahmenZahlungenImZeitraum(z.start, z.ende).reduce((a,e)=>a+e.betrag,0);
             if (total) total.innerHTML = `<div style="opacity:.7;font-size:12px;margin-bottom:4px;">Einnahmen im aktuellen Gehaltszeitraum</div><strong style="font-size:24px;">+${formatBetrag(sum)}</strong>`;
 
+            const monthlySum = monatlich.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
+            if (state.einnahmenLetzteSuche !== suche) {
+                if (suche) state.einnahmenMonatlichOffen = true;
+                state.einnahmenLetzteSuche = suche;
+            }
+            const expanded = !!state.einnahmenMonatlichOffen || monatlich.some(e=>String(state.editEinnahmeId)===String(e.id));
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.id = "einnahmenMonatlichToggle";
+            toggle.setAttribute("aria-expanded",String(expanded));
+            toggle.setAttribute("aria-controls","einnahmenMonatlichListe");
+            toggle.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--secondary);color:var(--text);text-align:left;margin:10px 0 14px;padding:16px;border-radius:16px;";
+            toggle.innerHTML = `<span><strong style="display:block;">Monatlich wiederkehrend</strong><span style="display:block;font-size:13px;opacity:.7;margin-top:4px;">${monatlich.length} ${monatlich.length === 1 ? 'Eintrag' : 'Einträge'} · +${formatBetrag(monthlySum)} / Monat</span></span><span aria-hidden="true" style="font-size:20px;">${expanded ? '⌃' : '⌄'}</span>`;
+            toggle.addEventListener("click",()=>{state.einnahmenMonatlichOffen=!expanded;renderEinnahmen();});
+            container.appendChild(toggle);
+            const monthlyList = document.createElement("div");
+            monthlyList.id = "einnahmenMonatlichListe";
+            if (!expanded) monthlyList.classList.add("hidden");
+            container.appendChild(monthlyList);
+            if (expanded) {
+                if (monatlich.length) renderRows(monthlyList,monatlich,true);
+                else monthlyList.innerHTML = `<div class="info-text">${suche ? 'Keine passenden monatlichen Einnahmen.' : 'Noch keine monatlich wiederkehrenden Einnahmen hinterlegt.'}</div>`;
+            }
+
             const label = document.createElement("div");
             label.className = "section-label";
             label.textContent = "Einmalige Einnahmen";
@@ -7291,30 +7315,6 @@
                 container.appendChild(empty);
             }
             renderRows(container,einmalig,false);
-
-            const monthlySum = monatlich.reduce((sum,e)=>sum+(parseBetrag(e.betrag)||0),0);
-            if (state.einnahmenLetzteSuche !== suche) {
-                if (suche) state.einnahmenMonatlichOffen = true;
-                state.einnahmenLetzteSuche = suche;
-            }
-            const expanded = !!state.einnahmenMonatlichOffen || monatlich.some(e=>String(state.editEinnahmeId)===String(e.id));
-            const toggle = document.createElement("button");
-            toggle.type = "button";
-            toggle.id = "einnahmenMonatlichToggle";
-            toggle.setAttribute("aria-expanded",String(expanded));
-            toggle.setAttribute("aria-controls","einnahmenMonatlichListe");
-            toggle.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--secondary);color:var(--text);text-align:left;margin:20px 0 10px;padding:16px;border-radius:16px;";
-            toggle.innerHTML = `<span><strong style="display:block;">Monatlich wiederkehrend</strong><span style="display:block;font-size:13px;opacity:.7;margin-top:4px;">${monatlich.length} ${monatlich.length === 1 ? 'Eintrag' : 'Einträge'} · +${formatBetrag(monthlySum)} / Monat</span></span><span aria-hidden="true" style="font-size:20px;">${expanded ? '⌃' : '⌄'}</span>`;
-            toggle.addEventListener("click",()=>{state.einnahmenMonatlichOffen=!expanded;renderEinnahmen();});
-            container.appendChild(toggle);
-            const monthlyList = document.createElement("div");
-            monthlyList.id = "einnahmenMonatlichListe";
-            if (!expanded) monthlyList.classList.add("hidden");
-            container.appendChild(monthlyList);
-            if (expanded) {
-                if (monatlich.length) renderRows(monthlyList,monatlich,true);
-                else monthlyList.innerHTML = `<div class="info-text">${suche ? 'Keine passenden monatlichen Einnahmen.' : 'Noch keine monatlich wiederkehrenden Einnahmen hinterlegt.'}</div>`;
-            }
 
             function renderRows(host,liste,recurring) {
             let letzteEinnahmenGruppe = null;
