@@ -10596,7 +10596,8 @@
                 .join('\n').replace(/:root\[data-theme="(light|dark)"\]/g, ':host([data-theme="$1"])')
                 .replace(/:root/g, ':host').replace(/\bbody\b/g, '.edge-page-content').replace(/\bhtml\b/g, '.edge-page-content') + `
                 :host { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; }
-                .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; }
+                .edge-back-layer { position:absolute; inset:0; overflow:hidden; background:var(--bg); will-change:transform; contain:paint; }
+                .edge-page-content * { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
                 .edge-back-front { box-shadow:-8px 0 24px rgba(0,0,0,.18); }
                 .edge-page-content { position:absolute; left:0; width:100%; margin:0; box-sizing:border-box; }
                 .edge-back-shade { position:absolute; inset:0; background:#000; pointer-events:none; will-change:opacity; }
@@ -10641,7 +10642,10 @@
             window.kostentrackerRememberView = nextId => {
                 const view = activeView();
                 if (gesture && !gesture.navigating) cleanup();
-                if (view && view.id !== nextId) cache.set(view.id, {node:snapshot(view),scroll:window.scrollY});
+                if (view && view.id !== nextId) {
+                    const prepared = gesture?.navigating && gesture.view === view;
+                    cache.set(view.id, {node:prepared ? gesture.sourceSnapshot : snapshot(view),scroll:prepared ? gesture.sourceScroll : window.scrollY});
+                }
             };
 
             function destination(button) {
@@ -10683,16 +10687,16 @@
                 cancelAnimationFrame(frame);
                 paint();
                 g.settling = true;
-                const duration = reducedMotion?.matches ? 0 : 220;
+                const duration = reducedMotion?.matches ? 0 : (commit ? 380 : 300);
                 // Resolve the current finger position before starting the release animation.
                 g.front.getBoundingClientRect();
-                g.front.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1)`;
+                g.front.style.transition = `transform ${duration}ms cubic-bezier(.25,.6,.25,1)`;
                 g.back.style.transition = g.front.style.transition;
                 g.shade.style.transition = `opacity ${duration}ms ease-out`;
                 g.front.style.transform = `translate3d(${commit ? g.width : 0}px,0,0)`;
                 g.back.style.transform = `translate3d(${commit ? 0 : -g.width*.22}px,0,0)`;
                 g.shade.style.opacity = commit ? '0' : '.22';
-                suppressClickUntil = performance.now() + 400;
+                suppressClickUntil = performance.now() + duration + 180;
                 const complete = () => {
                     if (gesture !== g) return;
                     if (commit && !g.navigating) navigate();
@@ -10701,15 +10705,14 @@
                 const navigate = () => {
                     if (gesture !== g || g.navigating) return;
                     g.navigating = true;
-                    // Same path as the visible back button, prepared under the animation.
+                    // Render only once the slide is finished: DOM work must not interrupt it.
                     g.button.click();
                     window.scrollTo(0, cache.get(g.targetId)?.scroll || 0);
                 };
                 g.front.addEventListener('transitionend', event => {
                     if (event.target === g.front && event.propertyName === 'transform') complete();
                 });
-                // Start rendering the real destination while the compositor slides the copy.
-                if (commit) frame = requestAnimationFrame(navigate);
+                // The cached destination stays visible until the real view is ready.
                 cleanupTimer = setTimeout(complete, duration + 70);
             }
 
@@ -10736,6 +10739,17 @@
                     if (key.startsWith('--')) overlay.style.setProperty(key, theme.getPropertyValue(key));
                 }
                 gesture = {view,button,targetId,target,startX:touch.clientX,startY:touch.clientY,lastX:touch.clientX,lastTime:performance.now(),velocity:0,distance:0,width:window.innerWidth,dragging:false,settling:false};
+                // Prepare and paint at first contact, before the finger starts moving.
+                const cached = cache.get(targetId);
+                gesture.back = layer(cached ? cached.node.cloneNode(true) : snapshot(target), cached?.scroll || 0, false);
+                gesture.sourceSnapshot = snapshot(view);
+                gesture.sourceScroll = window.scrollY;
+                gesture.front = layer(gesture.sourceSnapshot, gesture.sourceScroll, true);
+                gesture.shade = gesture.back.querySelector('.edge-back-shade');
+                gesture.front.style.transform = 'translate3d(0,0,0)';
+                gesture.back.style.transform = `translate3d(${-gesture.width*.22}px,0,0)`;
+                gesture.shade.style.opacity = '.22';
+                overlay.style.display = 'block';
                 // Reserve only the edge strip; entry swipes elsewhere are untouched.
                 event.stopImmediatePropagation();
             }, {capture:true,passive:true});
@@ -10750,10 +10764,6 @@
                 if (!g.dragging) {
                     if (Math.max(Math.abs(dx),Math.abs(dy)) < 8) return;
                     if (dx <= 0 || Math.abs(dy) >= dx * .8 || !event.cancelable) { cleanup(); return; }
-                    const cached = cache.get(g.targetId);
-                    g.back = layer(cached ? cached.node.cloneNode(true) : snapshot(g.target), cached?.scroll || 0, false);
-                    g.front = layer(snapshot(g.view), window.scrollY, true);
-                    g.shade = g.back.querySelector('.edge-back-shade');
                     g.dragging = true;
                     overlay.style.display = 'block';
                 }
