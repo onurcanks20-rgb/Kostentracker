@@ -1,10 +1,50 @@
-const WORKER_VERSION = "main-bank-push-bakery-v2";
+const WORKER_VERSION = "main-modules-v1";
 const APP_SCOPE = new URL(self.registration.scope);
 const CACHE_PREFIX = `kostentracker:${encodeURIComponent(APP_SCOPE.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${WORKER_VERSION}`;
 const APP_URL = new URL("index.html", APP_SCOPE).href;
+const CODE_ASSETS = [
+  "./js/core/dateninitialisierung.js?v=main-modules-v1",
+  "./js/core/dienste.js?v=main-modules-v1",
+  "./js/core/speicherung-backup.js?v=main-modules-v1",
+  "./js/ui/rueckgaengig.js?v=main-modules-v1",
+  "./js/ui/erinnerungen.js?v=main-modules-v1",
+  "./js/core/formatierung.js?v=main-modules-v1",
+  "./js/budget/gehalt.js?v=main-modules-v1",
+  "./js/ui/navigation.js?v=main-modules-v1",
+  "./js/ui/eintragsaktionen.js?v=main-modules-v1",
+  "./js/ui/einstellungen.js?v=main-modules-v1",
+  "./js/ui/archiv.js?v=main-modules-v1",
+  "./js/budget/wochenbudget.js?v=main-modules-v1",
+  "./js/ui/schnelleingabe.js?v=main-modules-v1",
+  "./js/kategorien/geplante-ausgaben.js?v=main-modules-v1",
+  "./js/kategorien/sparen-investieren.js?v=main-modules-v1",
+  "./js/kategorien/reisen.js?v=main-modules-v1",
+  "./js/kategorien/fixkosten.js?v=main-modules-v1",
+  "./js/ui/listen.js?v=main-modules-v1",
+  "./js/kategorien/versicherungen.js?v=main-modules-v1",
+  "./js/budget/berechnungen.js?v=main-modules-v1",
+  "./js/ui/verschieben.js?v=main-modules-v1",
+  "./js/kategorien/einnahmen.js?v=main-modules-v1",
+  "./js/kategorien/haushalt.js?v=main-modules-v1",
+  "./js/kategorien/freizeit.js?v=main-modules-v1",
+  "./js/ui/formulare.js?v=main-modules-v1",
+  "./js/kategorien/alltag-gemeinsam.js?v=main-modules-v1",
+  "./js/ui/ausgabenarchiv.js?v=main-modules-v1",
+  "./js/budget/faelligkeiten.js?v=main-modules-v1",
+  "./js/budget/zeitraeume.js?v=main-modules-v1",
+  "./js/budget/uebersicht.js?v=main-modules-v1",
+  "./js/grafik/diagramme.js?v=main-modules-v1",
+  "./js/app/design-start.js?v=main-modules-v1",
+  "./js/app/start.js?v=main-modules-v1",
+  "./js/ui/wischgesten.js?v=main-modules-v1",
+  "./js/ui/zurueckwischen.js?v=edge-smooth-v2",
+  "./js/server/synchronisierung.js?v=main-modules-v1",
+  "./css/app.css?v=main-modules-v1",
+  "./css/bedienung.css?v=main-modules-v1"
+].map(path => new URL(path, APP_SCOPE).href);
 const STATIC_ASSETS = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"]
-  .map(path => new URL(path, APP_SCOPE).href);
+  .map(path => new URL(path, APP_SCOPE).href).concat(CODE_ASSETS);
 
 function isAppUrl(value) {
   try {
@@ -28,8 +68,10 @@ self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
     // The app is required; an unavailable icon must not block notification delivery.
-    await cache.add(APP_URL);
-    await Promise.all(STATIC_ASSETS.filter(url => url !== APP_URL).map(url =>
+    // Install the complete code revision together. A missing script rejects the update.
+    try { await cache.addAll([APP_URL, ...CODE_ASSETS]); }
+    catch (error) { await caches.delete(CACHE_NAME); throw error; }
+    await Promise.all(STATIC_ASSETS.filter(url => url !== APP_URL && !CODE_ASSETS.includes(url)).map(url =>
       cache.add(url).catch(() => console.warn("Optionale App-Datei konnte nicht gecacht werden:", url))
     ));
     await self.skipWaiting();
@@ -39,7 +81,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(key => (key.startsWith(CACHE_PREFIX) || key.startsWith(`kostentracker-test:${encodeURIComponent(APP_SCOPE.pathname)}:`)) && key !== CACHE_NAME).map(key => caches.delete(key)));
+    await Promise.all(keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map(key => caches.delete(key)));
     await self.clients.claim();
   })());
 });
@@ -66,6 +108,9 @@ self.addEventListener("fetch", event => {
   if (event.request.mode === "navigate") {
     if (!isAppPage) return;
     event.respondWith((async () => {
+      // The cached HTML belongs to these scripts: activate a complete new worker for updates.
+      const installed = await caches.match(APP_URL, { cacheName: CACHE_NAME });
+      if (installed) return installed;
       try {
         const response = await fetch(event.request);
         if (response.ok && (response.headers.get("Content-Type") || "").includes("text/html")) {
@@ -83,6 +128,18 @@ self.addEventListener("fetch", event => {
 
   // Cache only this app's files, leaving future server/API calls to the network.
   if (!STATIC_ASSETS.includes(url.href)) return;
+  if (CODE_ASSETS.includes(url.href)) {
+    event.respondWith((async () => {
+      const installed = await caches.match(event.request, { cacheName: CACHE_NAME });
+      if (installed) return installed;
+      try {
+        const response = await fetch(event.request);
+        if (response.ok) await putInCache(event.request, response.clone());
+        return response;
+      } catch (_) { return offlineResponse(); }
+    })());
+    return;
+  }
   const network = (async () => {
     try {
       const response = await fetch(event.request);
