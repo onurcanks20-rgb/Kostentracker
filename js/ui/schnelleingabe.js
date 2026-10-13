@@ -2,6 +2,9 @@ Kostentracker.module({
   "id": "js/ui/schnelleingabe.js",
   "dependencies": [
     "addKategorie",
+    "getReiseInputCurrency",
+    "prepareReiseExpenseRate",
+    "updateReiseAmountPreview",
     "formatInputBetrag",
     "generateId",
     "getAktuellerMonat",
@@ -192,13 +195,14 @@ Kostentracker.module({
             }
             if (panelId === "hausAddPanel") applyLetzteAlltagsKategorie("haushalt");
             if (panelId === "freizeitAddPanel") applyLetzteAlltagsKategorie("freizeit");
-            if (panelId === "reiseAddPanel") applyLetzteReiseKategorie(false);
+            if (panelId === "reiseAddPanel") { applyLetzteReiseKategorie(false); dependencies.prepareReiseExpenseRate(true); }
         }
 
         function setQuickAmount(inputId, amount) {
             const input = document.getElementById(inputId);
             if (!input) return;
             input.value = String(amount).replace(".", ",");
+            if (inputId === "betrag") dependencies.updateReiseAmountPreview();
             input.focus();
         }
 
@@ -219,8 +223,19 @@ Kostentracker.module({
             const textInput = document.getElementById(config.textId);
             if (textInput) textInput.value = "";
 
-            const amountInput = document.getElementById(config.amountId);
+            renderQuickAmounts(panelId, config.amountId);
+        }
+
+        function refreshReiseQuickAmounts() {
+            const panel = document.getElementById("reiseAddPanel");
+            if (!panel?.classList.contains("quick-entry-mode")) return;
+            panel.querySelectorAll(".quick-amount-row").forEach(el => el.remove());
+            renderQuickAmounts("reiseAddPanel", "betrag");
+        }
+        function renderQuickAmounts(panelId, amountId) {
+            const amountInput = document.getElementById(amountId);
             if (!amountInput) return;
+            if (panelId === "reiseAddPanel" && (dependencies.getReiseInputCurrency() || "EUR") !== "EUR") return;
             const row = document.createElement("div");
             row.className = "quick-amount-row";
             row.setAttribute("aria-label", "Schnellbeträge");
@@ -229,10 +244,11 @@ Kostentracker.module({
                 btn.type = "button";
                 btn.className = "quick-amount-btn";
                 btn.textContent = `${amount} €`;
-                btn.addEventListener("click", () => setQuickAmount(config.amountId, amount));
+                btn.addEventListener("click", () => setQuickAmount(amountId, amount));
                 row.appendChild(btn);
             });
-            amountInput.insertAdjacentElement("afterend", row);
+            const anchor = panelId === "reiseAddPanel" ? document.getElementById("reiseAmountInputRow") : amountInput;
+            anchor?.insertAdjacentElement("afterend", row);
         }
 
         function openStartQuickAdd(panelId, focusId) {
@@ -432,7 +448,7 @@ Kostentracker.module({
         }
 
         function applyLetzteReiseKategorie(focusBetrag = false) {
-            const fallback = "Essen";
+            const fallback = "Essen / Trinken";
             const kat = getLetzteKategorie("reisen", fallback);
             const btn = document.querySelector(`#reiseKategorieGrid [data-category="${CSS.escape(kat)}"]`)
                 || document.querySelector(`#reiseKategorieGrid [data-category="${fallback}"]`);
@@ -551,5 +567,5 @@ Kostentracker.module({
             dependencies.renderListe();
         }
 
-return { getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
+return { refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
 });
