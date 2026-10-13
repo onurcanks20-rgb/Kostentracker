@@ -164,8 +164,47 @@ function appendImportedPayment(payment) {
   const entry={id:dependencies.generateId(),text:String(payment.merchant||'Apple Pay').slice(0,200),betrag:payment.amountCents/100,datum:payment.date,kategorie:target.category,_serverPaymentId:payment.id};
   if(target.area==='Freizeit') dependencies.appendFreizeitExternalExpense(entry,month);else dependencies.appendHaushaltExternalExpense(entry,month);
 }
+let reviewGateOverflow=null,reviewGateFallback=false;
+const reviewGateInert=new Map();
+function pendingPaymentCount() {return (context.repository.view.Einstellungen?.serverPendingReview||[]).length;}
+function syncPaymentReviewGate() {
+  const dialog=document.getElementById('paymentReviewDialog');if(!dialog)return;
+  const count=pendingPaymentCount(),remaining=document.getElementById('paymentReviewRemaining');
+  if(remaining)remaining.textContent=count===1?'Eine Zahlung ist offen. Bitte entscheiden.':`${count} Zahlungen sind offen. Bitte alle entscheiden.`;
+  if(count){
+    if(reviewGateOverflow===null){reviewGateOverflow=document.body.style.overflow||'';document.body.style.overflow='hidden';}
+    if(!dialog.open){
+      if(typeof dialog.showModal==='function')dialog.showModal();
+      else{reviewGateFallback=true;dialog.setAttribute('open','');dialog.open=true;document.body.classList.add('payment-review-fallback');for(const node of Array.from(document.body.children)){if(node===dialog)continue;reviewGateInert.set(node,node.inert);node.inert=true;}}
+      document.getElementById('paymentReviewHeading')?.focus();
+    }
+  }else{
+    if(dialog.open){if(typeof dialog.close==='function')dialog.close();else{dialog.removeAttribute('open');dialog.open=false;}}
+    if(reviewGateOverflow!==null){document.body.style.overflow=reviewGateOverflow;reviewGateOverflow=null;}
+    for(const [node,previous]of reviewGateInert)node.inert=previous;reviewGateInert.clear();reviewGateFallback=false;document.body.classList.remove('payment-review-fallback');
+  }
+}
+function initializePaymentReviewGate() {
+  const dialog=document.getElementById('paymentReviewDialog');if(!dialog)return;
+  dialog.addEventListener('cancel',event=>{if(pendingPaymentCount())event.preventDefault();});
+  dialog.addEventListener('close',()=>{if(pendingPaymentCount())setTimeout(syncPaymentReviewGate,0);});
+  document.addEventListener('keydown',event=>{
+    if(!dialog.open)return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();}
+    if(reviewGateFallback&&event.key==='Tab'){
+      const controls=Array.from(dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]'));
+      const first=controls[0],last=controls[controls.length-1];
+      if(!first){event.preventDefault();document.getElementById('paymentReviewHeading')?.focus();return;}
+      if(event.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement))){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&(document.activeElement===last||!controls.includes(document.activeElement))){event.preventDefault();first.focus();}
+    }
+  });
+  document.addEventListener('focusin',event=>{if(reviewGateFallback&&dialog.open&&!dialog.contains(event.target))document.getElementById('paymentReviewHeading')?.focus();});
+  renderServerPaymentReview();
+}
 function renderServerPaymentReview() {
-  const host=document.getElementById('serverPaymentReview');if(!host)return;
+  const host=document.getElementById('serverPaymentReview');if(!host){syncPaymentReviewGate();return;}
+  const error=document.getElementById('paymentReviewError');if(error)error.textContent='';
   host.replaceChildren();
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[];
   const title=document.createElement('strong');title.textContent=`Zahlungen zur Prüfung: ${pending.length}`;host.appendChild(title);
@@ -179,6 +218,7 @@ function renderServerPaymentReview() {
     }
     host.appendChild(row);
   }
+  syncPaymentReviewGate();
 }
 function resolveServerPaymentReview(id,book) {
   const pending=context.repository.view.Einstellungen?.serverPendingReview||[],payment=pending.find(p=>p.id===id);if(!payment)return;
@@ -187,7 +227,7 @@ function resolveServerPaymentReview(id,book) {
     if(book) appendImportedPayment(payment);
     context.repository.view.Einstellungen.serverPendingReview=pending.filter(p=>p.id!==id);
     context.storage.setItem(context.storage.key,JSON.stringify(context.repository.view));context.storage.lastSaved=JSON.stringify(context.repository.view);
-  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');return;}
+  } catch(error) {context.repository.view=before;showPaymentImportedNotice(false);serverStatus('Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.');const status=document.getElementById('paymentReviewError');if(status)status.textContent='Entscheidung konnte nicht gespeichert werden. Die Zahlung bleibt offen. Bitte erneut versuchen.';syncPaymentReviewGate();return;}
   if(book) showPaymentImportedNotice();
   renderServerPaymentReview();dependencies.renderHomeUebersicht();dependencies.renderRecentAusgaben('haushalt');dependencies.renderRecentAusgaben('freizeit');scheduleTestServerSync();
 }
@@ -286,10 +326,11 @@ async function restoreTestServerBackup() {
   } catch(error) {serverStatus(error.message);}
   finally {testServerBusy=false;}
 }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePaymentReviewGate,{once:true});else initializePaymentReviewGate();
 window.addEventListener('online',()=>syncTestServer(false));
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncTestServer(false);});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderServerPaymentReview();syncTestServer(false);}});
 window.addEventListener('load',()=>{renderTestServerSettings();if(testServerConfig.token) syncTestServer(false);});
 
 
-return { withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
+return { pendingPaymentCount, syncPaymentReviewGate, initializePaymentReviewGate, withPushTimeout, ensureTestServiceWorker, openServerSettings, renderPushTestStatus, serverStatus, renderTestServerSettings, bindTestServerUser, saveTestServerSettings, testServerRequest, scheduleTestServerSync, normalizedProvider, showPaymentImportedNotice, classifyPushPayment, importedPaymentDestination, appendImportedPayment, renderServerPaymentReview, resolveServerPaymentReview, importTestServerPayments, syncTestServer, pushKeyBytes, activateTestServerPush, toggleTestServerCode, restoreTestServerBackup };
 });
