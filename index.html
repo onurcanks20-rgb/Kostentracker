@@ -20,7 +20,7 @@
     <script src="./js/core/dienste.js?v=main-modules-v1"></script>
     <script src="./js/app/design-start.js?v=main-modules-v1"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=main-modules-v1">
+    <link rel="stylesheet" href="./css/app.css?v=main-payment-review-v1">
 </head>
 
 <body>
@@ -309,7 +309,7 @@
                 <button onclick="restoreTestServerBackup()" style="background:#3a3a3c;">Serverbackup wiederherstellen</button>
                 <div id="testServerStatus" class="settings-note" role="status" aria-live="polite" style="margin-top:16px;">Persönlichen Code einmal eintragen.</div>
             </div>
-            <div class="settings-page-card"><div id="serverPaymentReview"></div></div>
+
             <div class="settings-page-card">
                 <h3>Zahlungen</h3>
                 <div class="settings-note">Dein Kurzbefehl übermittelt Bank-Mitteilungen an deinen persönlichen Zugang. Bäckereien werden unter Freizeit → Essen / Trinken erfasst. Neue Zahlungen werden beim Öffnen der App mit Internet übernommen. Aktuell werden Euro-Zahlungen unterstützt.</div>
@@ -1070,9 +1070,15 @@
     <link rel="stylesheet" href="./css/bedienung.css?v=main-modules-v1">
     <script src="./js/ui/wischgesten.js?v=main-modules-v1"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=edge-smooth-v2"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-payment-review-v1"></script>
 
-<script src="./js/server/synchronisierung.js?v=main-modules-v1"></script>
+<dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
+  <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
+  <p id="paymentReviewRemaining" class="settings-note"></p>
+  <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
+  <div id="serverPaymentReview"></div>
+</dialog>
+<script src="./js/server/synchronisierung.js?v=main-payment-review-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 
