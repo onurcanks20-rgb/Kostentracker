@@ -17,10 +17,10 @@
 
     <title>Kostentracker</title>
 
-    <script src="./js/core/dienste.js?v=main-entry-time-v1"></script>
-    <script src="./js/app/design-start.js?v=main-entry-time-v1"></script>
+    <script src="./js/core/dienste.js?v=main-haendler-v1"></script>
+    <script src="./js/app/design-start.js?v=main-haendler-v1"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=main-entry-time-v1">
+    <link rel="stylesheet" href="./css/app.css?v=main-haendler-v1">
 </head>
 
 <body>
@@ -261,6 +261,11 @@
                     <span class="settings-menu-main"><span class="settings-menu-title">Erinnerung</span><span class="settings-menu-sub">Große Ausgaben und Hinweise auf der Startseite</span></span>
                     <span class="settings-menu-chevron">›</span>
                 </button>
+                <button class="settings-menu-item" type="button" onclick="openMerchantSettings()">
+                    <span class="settings-menu-icon">🏷️</span>
+                    <span class="settings-menu-main"><span class="settings-menu-title">Händlerzuordnung</span><span class="settings-menu-sub">Automatische Kategorien und eigene Zuordnungen</span></span>
+                    <span class="settings-menu-chevron">›</span>
+                </button>
                 <button class="settings-menu-item" type="button" onclick="openSettingsDesign()">
                     <span class="settings-menu-icon">🎨</span>
                     <span class="settings-menu-main"><span class="settings-menu-title">Design</span><span id="settingsDesignMenuSub" class="settings-menu-sub">Systemeinstellung verwenden</span></span>
@@ -363,6 +368,21 @@
                 
             </div>
         </div>
+    </div>
+
+    <div id="settingsMerchantView" class="hidden">
+      <div class="container">
+        <div class="topbar"><button class="back-btn" type="button" onclick="openSettings()" aria-label="Zurück"><span class="back-icon"></span></button><h2 style="flex:1;">Händlerzuordnung</h2><button class="page-info-button" type="button" onclick="openPageInfo('settingsMerchantView')" aria-label="Informationen zur Händlerzuordnung">ⓘ</button></div>
+        <div class="settings-page-card">
+          <h3>Zuordnung hinzufügen</h3>
+          <label for="merchantRuleName">Händlername</label><input id="merchantRuleName" maxlength="200" placeholder="z. B. Little Tokyo" autocomplete="off">
+          <label for="merchantRuleArea">Bereich</label><select id="merchantRuleArea" onchange="updateMerchantRuleCategories()"><option value="">Bereich auswählen</option><option value="Haushalt">Haushalt</option><option value="Freizeit">Freizeit</option></select>
+          <label for="merchantRuleCategory">Kategorie</label><select id="merchantRuleCategory"><option value="">Kategorie auswählen</option></select>
+          <button id="merchantRuleSave" type="button" onclick="saveMerchantRule()">Zuordnung speichern</button><div id="merchantRuleStatus" class="settings-note" role="status" aria-live="polite"></div>
+        </div>
+        <div class="settings-page-card"><h3>Eigene Zuordnungen</h3><div id="merchantRuleList"></div></div>
+        <div class="settings-page-card"><details><summary>Automatisch erkannte Händler</summary><div id="merchantBuiltinList"></div></details></div>
+      </div>
     </div>
 
     <!-- ===================== EINSTELLUNGEN: SCHNELLEINGABE ===================== -->
@@ -1043,39 +1063,39 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=main-entry-time-v1"></script>
-    <script src="./js/core/speicherung-backup.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/rueckgaengig.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/erinnerungen.js?v=main-entry-time-v1"></script>
-<script src="./js/core/formatierung.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/gehalt.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/navigation.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/einstellungen.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/archiv.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/wochenbudget.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/schnelleingabe.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/reisen.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/fixkosten.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/listen.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/versicherungen.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/berechnungen.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/verschieben.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/einnahmen.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/haushalt.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/freizeit.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/formulare.js?v=main-entry-time-v1"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=main-entry-time-v1"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/faelligkeiten.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/zeitraeume.js?v=main-entry-time-v1"></script>
-<script src="./js/budget/uebersicht.js?v=main-entry-time-v1"></script>
-<script src="./js/grafik/diagramme.js?v=main-entry-time-v1"></script>
-<script src="./js/app/start.js?v=main-entry-time-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=main-haendler-v1"></script>
+    <script src="./js/core/speicherung-backup.js?v=main-haendler-v1"></script>
+<script src="./js/ui/rueckgaengig.js?v=main-haendler-v1"></script>
+<script src="./js/ui/erinnerungen.js?v=main-haendler-v1"></script>
+<script src="./js/core/formatierung.js?v=main-haendler-v1"></script>
+<script src="./js/budget/gehalt.js?v=main-haendler-v1"></script>
+<script src="./js/ui/navigation.js?v=main-haendler-v1"></script>
+<script src="./js/ui/eintragsaktionen.js?v=main-haendler-v1"></script>
+<script src="./js/ui/einstellungen.js?v=main-haendler-v1"></script>
+<script src="./js/ui/archiv.js?v=main-haendler-v1"></script>
+<script src="./js/budget/wochenbudget.js?v=main-haendler-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/reisen.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/fixkosten.js?v=main-haendler-v1"></script>
+<script src="./js/ui/listen.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/versicherungen.js?v=main-haendler-v1"></script>
+<script src="./js/budget/berechnungen.js?v=main-haendler-v1"></script>
+<script src="./js/ui/verschieben.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/einnahmen.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/haushalt.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/freizeit.js?v=main-haendler-v1"></script>
+<script src="./js/ui/formulare.js?v=main-haendler-v1"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=main-haendler-v1"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=main-haendler-v1"></script>
+<script src="./js/budget/faelligkeiten.js?v=main-haendler-v1"></script>
+<script src="./js/budget/zeitraeume.js?v=main-haendler-v1"></script>
+<script src="./js/budget/uebersicht.js?v=main-haendler-v1"></script>
+<script src="./js/grafik/diagramme.js?v=main-haendler-v1"></script>
+<script src="./js/app/start.js?v=main-haendler-v1"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1099,10 +1119,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=main-entry-time-v1">
-    <script src="./js/ui/wischgesten.js?v=main-entry-time-v1"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=main-haendler-v1">
+    <script src="./js/ui/wischgesten.js?v=main-haendler-v1"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=main-entry-time-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-haendler-v1"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1110,8 +1130,9 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/reise-zahlungen.js?v=main-entry-time-v1"></script>
-<script src="./js/server/synchronisierung.js?v=main-entry-time-v1"></script>
+<script src="./js/server/haendler.js?v=main-haendler-v1"></script>
+<script src="./js/server/reise-zahlungen.js?v=main-haendler-v1"></script>
+<script src="./js/server/synchronisierung.js?v=main-haendler-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
