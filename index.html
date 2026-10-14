@@ -17,10 +17,10 @@
 
     <title>Kostentracker</title>
 
-    <script src="./js/core/dienste.js?v=main-travel-v1"></script>
-    <script src="./js/app/design-start.js?v=main-travel-v1"></script>
+    <script src="./js/core/dienste.js?v=main-entry-time-v1"></script>
+    <script src="./js/app/design-start.js?v=main-entry-time-v1"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=main-settings-info-v1">
+    <link rel="stylesheet" href="./css/app.css?v=main-entry-time-v1">
 </head>
 
 <body>
@@ -770,7 +770,7 @@
                 </div>
                 <select id="kategorieSelect" class="hidden" aria-hidden="true"></select>
                 <input id="text" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="datum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="datum" type="date"></label><div id="reiseUhrzeitWrap" class="entry-time-field"><label for="reiseUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="reiseUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addEintrag()" class="btn btn-primary">Hinzufügen</button>
                 <button onclick="toggleCategoryAdd('reiseAddPanel')" class="btn" style="background:#3a3a3c;margin-top:10px;">Abbrechen</button>
             </div>
@@ -872,7 +872,7 @@
                 </div>
                 <input id="hausKategorie" type="hidden" value="Einkauf">
                 <input id="hausText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="hausDatum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="hausDatum" type="date"></label><div id="hausUhrzeitWrap" class="entry-time-field"><label for="hausUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="hausUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addHaushalt()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
@@ -920,7 +920,7 @@
                 </div>
                 <input id="freizeitKategorie" type="hidden" value="Essen / Trinken">
                 <input id="freizeitText" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
-                <input id="freizeitDatum" type="date">
+                <div class="entry-date-time"><label><span>Datum</span><input id="freizeitDatum" type="date"></label><div id="freizeitUhrzeitWrap" class="entry-time-field"><label for="freizeitUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="freizeitUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
                 <button onclick="addFreizeit()" class="btn btn-primary">Hinzufügen</button>
             </div>
         </div>
@@ -974,9 +974,8 @@
                 <input id="einnahmenText" autocapitalize="words" placeholder="Bezeichnung (z. B. Bruder Handyvertrag)" enterkeyhint="next">
                 <input id="einnahmenBetrag" type="text" inputmode="decimal" min="0" step="0.01" placeholder="Betrag" enterkeyhint="next">
                 <input id="einnahmenVon" autocapitalize="words" placeholder="Von wem? (optional)" enterkeyhint="next">
-                <label for="einnahmenDatum" style="display:block; opacity:0.75; margin-top:8px; font-size:14px;">Erste Zahlung / Datum</label>
-                <input id="einnahmenDatum" type="date">
-                <select id="einnahmenWiederholung">
+                <div class="entry-date-time"><label><span>Datum</span><input id="einnahmenDatum" type="date"></label><div id="einnahmenUhrzeitWrap" class="entry-time-field"><label for="einnahmenUhrzeit">Uhrzeit (optional)</label><div class="entry-time-input"><input id="einnahmenUhrzeit" type="time" step="60" aria-label="Uhrzeit (optional)" title="Ortszeit dieses Geräts"><button type="button" class="entry-time-clear" aria-label="Uhrzeit entfernen" onclick="clearEntryTime(this.previousElementSibling.id,event)">×</button></div></div></div>
+                <select id="einnahmenWiederholung" onchange="toggleIncomeTime('einnahmenWiederholung','einnahmenUhrzeitWrap')">
                     <option value="einmalig">Einmalig</option>
                     <option value="monatlich">Monatlich</option>
                 </select>
@@ -1044,39 +1043,39 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=main-travel-v1"></script>
-    <script src="./js/core/speicherung-backup.js?v=main-travel-v1"></script>
-<script src="./js/ui/rueckgaengig.js?v=main-travel-v1"></script>
-<script src="./js/ui/erinnerungen.js?v=main-travel-v1"></script>
-<script src="./js/core/formatierung.js?v=main-travel-v1"></script>
-<script src="./js/budget/gehalt.js?v=main-travel-v1"></script>
-<script src="./js/ui/navigation.js?v=main-category-nav-v1"></script>
-<script src="./js/ui/eintragsaktionen.js?v=main-travel-v1"></script>
-<script src="./js/ui/einstellungen.js?v=main-settings-info-v1"></script>
-<script src="./js/ui/archiv.js?v=main-travel-v1"></script>
-<script src="./js/budget/wochenbudget.js?v=main-travel-v1"></script>
-<script src="./js/ui/schnelleingabe.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/reisen.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/fixkosten.js?v=main-travel-v1"></script>
-<script src="./js/ui/listen.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/versicherungen.js?v=main-travel-v1"></script>
-<script src="./js/budget/berechnungen.js?v=main-travel-v1"></script>
-<script src="./js/ui/verschieben.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/einnahmen.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/haushalt.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/freizeit.js?v=main-travel-v1"></script>
-<script src="./js/ui/formulare.js?v=main-travel-v1"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=main-travel-v1"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=main-travel-v1"></script>
-<script src="./js/budget/faelligkeiten.js?v=main-travel-v1"></script>
-<script src="./js/budget/zeitraeume.js?v=main-travel-v1"></script>
-<script src="./js/budget/uebersicht.js?v=main-travel-home-v2"></script>
-<script src="./js/grafik/diagramme.js?v=main-travel-v1"></script>
-<script src="./js/app/start.js?v=main-travel-v1"></script>
+    <script src="./js/core/dateninitialisierung.js?v=main-entry-time-v1"></script>
+    <script src="./js/core/speicherung-backup.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/rueckgaengig.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/erinnerungen.js?v=main-entry-time-v1"></script>
+<script src="./js/core/formatierung.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/gehalt.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/navigation.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/eintragsaktionen.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/einstellungen.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/archiv.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/wochenbudget.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/schnelleingabe.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/reisen.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/fixkosten.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/listen.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/versicherungen.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/berechnungen.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/verschieben.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/einnahmen.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/haushalt.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/freizeit.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/formulare.js?v=main-entry-time-v1"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=main-entry-time-v1"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/faelligkeiten.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/zeitraeume.js?v=main-entry-time-v1"></script>
+<script src="./js/budget/uebersicht.js?v=main-entry-time-v1"></script>
+<script src="./js/grafik/diagramme.js?v=main-entry-time-v1"></script>
+<script src="./js/app/start.js?v=main-entry-time-v1"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1100,10 +1099,10 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=main-travel-v1">
-    <script src="./js/ui/wischgesten.js?v=main-travel-v1"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=main-entry-time-v1">
+    <script src="./js/ui/wischgesten.js?v=main-entry-time-v1"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=main-settings-info-v1"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-entry-time-v1"></script>
 
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
@@ -1111,8 +1110,8 @@
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/reise-zahlungen.js?v=main-travel-v1"></script>
-<script src="./js/server/synchronisierung.js?v=main-settings-info-v1"></script>
+<script src="./js/server/reise-zahlungen.js?v=main-entry-time-v1"></script>
+<script src="./js/server/synchronisierung.js?v=main-entry-time-v1"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
     <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
