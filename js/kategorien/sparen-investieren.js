@@ -3,6 +3,7 @@ Kostentracker.module({
   "dependencies": [
     "alltagImZeitraum",
     "beginUndoDelete",
+    "closeStartQuickAdd",
     "einnahmenZahlungenImZeitraum",
     "escapeHtml",
     "finishUndoDelete",
@@ -36,7 +37,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/sparen-investieren.js
+// Kostentracker: js/kategorien/sparen-investieren.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function sparenInvestierenAktivImZeitraum(von, bis) {
@@ -83,6 +84,7 @@ Kostentracker.module({
             document.getElementById("sparenInvestierenBetrag").value = "";
             document.getElementById("sparenInvestierenText").value = "";
             document.getElementById("sparenInvestierenAddPanel")?.classList.add("hidden");
+            if (!document.getElementById("startQuickAddSheet")?.classList.contains("hidden")) dependencies.closeStartQuickAdd();
             renderSparenInvestieren();
             dependencies.renderUebersicht();
         }
