@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/versicherungen.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -40,7 +41,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/versicherungen.js
+// Kostentracker Hauptversion: js/kategorien/versicherungen.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function addVersicherung() {
@@ -154,23 +155,21 @@ Kostentracker.module({
                 <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
 
                     <div class="compact-alltag-content">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Versicherung')}</span>
                         <div class="compact-alltag-main" onclick="toggleVersicherungDetails('${v.id}')" style="cursor:pointer;">
                             <span class="compact-alltag-title">${dependencies.escapeHtml(v.name || "Versicherung")}</span>
                             ${v.anbieter ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(v.anbieter)}</span>` : ''}
                         </div>
-                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(v.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleVersicherungDetails('${v.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben">↪️</button>
-                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')">🗑️</button>
+                            <button onclick="event.stopPropagation(); moveAusgabe('versicherungen','${v.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                            <button class="edit" onclick="event.stopPropagation(); startEditVersicherung('${v.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation(); deleteVersicherung('${v.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
                     </div>
 
                     ${istOffen ? `
-                        <div style="
-                            background:#3a3a3c;
-                            border-radius:14px;
-                            padding:12px;
+                        <div class="category-entry-details" style="
                             display:flex;
                             flex-direction:column;
                             gap:8px;
@@ -217,19 +216,19 @@ Kostentracker.module({
                 <div class="booking-edit-form">
 
                     <label class="booking-field-label" for="editName-${v.id}">Versicherung</label>
-                    <input class="booking-control" id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
+<input class="booking-control" id="editName-${v.id}" value="${dependencies.escapeHtml(v.name || "")}" autocapitalize="words">
                     <label class="booking-field-label" for="editBetrag-${v.id}">Betrag pro Zahlung (€)</label>
-                    <input class="booking-control" id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(v.betrag)}">
+<input class="booking-control" id="editBetrag-${v.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(v.betrag)}">
                     <label class="booking-field-label" for="editDatum-${v.id}">Erste Zahlung</label>
-                    <input class="booking-control" id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
+<input class="booking-control" id="editDatum-${v.id}" type="date" value="${v.datum || ""}">
 
                     <label class="booking-field-label" for="editAnbieter-${v.id}">Anbieter (optional)</label>
-                    <input class="booking-control" id="editAnbieter-${v.id}" value="${dependencies.escapeHtml(v.anbieter || "")}" autocapitalize="words">
+<input class="booking-control" id="editAnbieter-${v.id}" value="${dependencies.escapeHtml(v.anbieter || "")}" autocapitalize="words">
                     <label class="booking-field-label" for="editNummer-${v.id}">Versicherungsnummer (optional)</label>
-                    <input class="booking-control" id="editNummer-${v.id}" value="${dependencies.escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
+<input class="booking-control" id="editNummer-${v.id}" value="${dependencies.escapeHtml(v.versicherungsnummer || "")}" autocapitalize="words">
 
                     <label class="booking-field-label" for="editIntervall-${v.id}">Zahlungsrhythmus</label>
-                    <select class="booking-control" id="editIntervall-${v.id}">
+<select class="booking-control" id="editIntervall-${v.id}">
                         <option value="monatlich" ${v.intervall === "monatlich" ? "selected" : ""}>monatlich</option>
                         <option value="vierteljährlich" ${v.intervall === "vierteljährlich" ? "selected" : ""}>vierteljährlich</option>
                         <option value="halbjährlich" ${v.intervall === "halbjährlich" ? "selected" : ""}>halbjährlich</option>
@@ -237,7 +236,7 @@ Kostentracker.module({
                     </select>
 
                     <label class="booking-field-label" for="editMonat-${v.id}">Startmonat</label>
-                    <select class="booking-control" id="editMonat-${v.id}">
+<select class="booking-control" id="editMonat-${v.id}">
                         <option value="1" ${parseInt(v.monat) === 1 ? "selected" : ""}>Januar</option>
                         <option value="2" ${parseInt(v.monat) === 2 ? "selected" : ""}>Februar</option>
                         <option value="3" ${parseInt(v.monat) === 3 ? "selected" : ""}>März</option>
@@ -268,7 +267,8 @@ Kostentracker.module({
 
 
             if (total) {
-                total.innerHTML = "Fixkosten pro aktuellem Gehaltsmonat: " + dependencies.formatBetrag(dependencies.berechneGesamtFixkosten());
+                total.innerHTML = "";
+                total.classList.add("hidden");
             }
         }
 

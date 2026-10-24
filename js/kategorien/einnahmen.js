@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/einnahmen.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "appendDateGroupHeader",
     "beginUndoDelete",
@@ -43,7 +44,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/einnahmen.js
+// Kostentracker Hauptversion: js/kategorien/einnahmen.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function addEinnahme() {
@@ -145,14 +146,14 @@ Kostentracker.module({
                 if (isEdit) {
                     html = `<div class="booking-edit-form">
                         <label class="booking-field-label" for="editEinnahmenText-${e.id}">Bezeichnung</label>
-                        <input class="booking-control" id="editEinnahmenText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words">
+<input class="booking-control" id="editEinnahmenText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words">
                         <label class="booking-field-label" for="editEinnahmenBetrag-${e.id}">Betrag (€)</label>
-                        <input class="booking-control" id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${dependencies.formatInputBetrag(e.betrag)}">
+<input class="booking-control" id="editEinnahmenBetrag-${e.id}" type="text" inputmode="decimal" min="0" step="0.01" value="${dependencies.formatInputBetrag(e.betrag)}">
                         <label class="booking-field-label" for="editEinnahmenVon-${e.id}">Von wem? (optional)</label>
-                        <input class="booking-control" id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
+<input class="booking-control" id="editEinnahmenVon-${e.id}" value="${dependencies.escapeHtml(e.von || '')}" placeholder="Von wem? (optional)" autocapitalize="words">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editEinnahmenDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editEinnahmenUhrzeit-${e.id}`,e,e.wiederholung==='monatlich')}</div>
                         <label class="booking-field-label" for="editEinnahmenWiederholung-${e.id}">Wiederholung</label>
-                        <select class="booking-control" id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
+<select class="booking-control" id="editEinnahmenWiederholung-${e.id}" onchange="toggleIncomeTime('editEinnahmenWiederholung-${e.id}','editEinnahmenUhrzeit-${e.id}Wrap')"><option value="einmalig" ${e.wiederholung !== 'monatlich' ? 'selected' : ''}>Einmalig</option><option value="monatlich" ${e.wiederholung === 'monatlich' ? 'selected' : ''}>Monatlich</option></select>
                         <div style="display:flex; gap:10px;"><button onclick="saveEditEinnahme('${e.id}')">💾 Speichern</button><button onclick="cancelEditEinnahme()">❌ Abbrechen</button></div>
                     </div>`;
                 } else {
@@ -160,15 +161,15 @@ Kostentracker.module({
                     const istOffen = !!context.session.state.offeneEinnahmen[String(e.id)];
                     html = `<div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div class="compact-alltag-content">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Einnahme')}</span>
                             <div class="compact-alltag-main" onclick="toggleEinnahmeDetails('${e.id}')" style="cursor:pointer;">
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || 'Einnahme')}${recurring?'':dependencies.renderEntryTime(e)}</span>
-                                ${e.von ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(e.von)}</span>` : ''}
-                                ${recurring ? `<span class="compact-alltag-sub">Monatlich am ${dependencies.parseISODate(e.datum)?.getDate() || '-'}.${dependencies.parseISODate(e.datum) > dependencies.startOfToday() ? ' · ab '+dependencies.formatDatum(e.datum) : ''}</span>` : ''}
+                                ${e.von || recurring ? `<span class="compact-alltag-sub">${e.von ? dependencies.escapeHtml(e.von) : ''}${e.von && recurring ? ' · ' : ''}${recurring ? 'am ' + (dependencies.parseISODate(e.datum)?.getDate() || '-') + '.' : ''}</span>` : ''}
                             </div>
-                            <strong class="compact-alltag-amount">+${dependencies.formatBetrag(e.betrag)}</strong>
-                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben">↪️</button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')">✏️</button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')">🗑️</button></div>
+                            <strong class="compact-alltag-amount">+${dependencies.formatBetrag(e.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleEinnahmeDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
+                            <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><button onclick="event.stopPropagation(); moveAusgabe('einnahmen','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button><button class="edit" onclick="event.stopPropagation(); startEditEinnahme('${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button><button class="delete" onclick="event.stopPropagation(); deleteEinnahme('${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button></div>
                         </div>
-                        ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                        ${istOffen ? `<div onclick="toggleEinnahmeDetails('${e.id}')" class="category-entry-details" style="display:flex;flex-direction:column;gap:8px;cursor:pointer;">
                             <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Art</span><span style="font-weight:600;text-align:right;">${dependencies.escapeHtml(info)}</span></div>
                             ${e.von ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Von</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(e.von)}</span></div>` : ''}
                         </div>` : ''}
@@ -176,7 +177,7 @@ Kostentracker.module({
                 }
                 const item = dependencies.createItem(html);
                 if (!isEdit) item.classList.add("compact-alltag-card");
-                item.style.background = "#3a3a3c";
+                item.classList.add("alltag-entry");
                 host.appendChild(item);
             });
 

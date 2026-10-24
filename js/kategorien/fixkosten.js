@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/fixkosten.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -42,7 +43,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/fixkosten.js
+// Kostentracker Hauptversion: js/kategorien/fixkosten.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function renderLaufendeKosten() {
@@ -137,19 +138,19 @@ Kostentracker.module({
                     item = dependencies.createItem(`
                     <div class="booking-edit-form">
                         <label class="booking-field-label" for="editKostenText-${k.id}">Beschreibung</label>
-                        <input class="booking-control" id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
+<input class="booking-control" id="editKostenText-${k.id}" value="${dependencies.escapeHtml(k.text || k.name || "")}" placeholder="Beschreibung" autocapitalize="words">
                         <label class="booking-field-label" for="editKostenBetrag-${k.id}">Betrag pro Monat (€)</label>
-                        <input class="booking-control" id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(k.betrag)}" placeholder="Betrag">
+<input class="booking-control" id="editKostenBetrag-${k.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(k.betrag)}" placeholder="Betrag">
                         <label class="booking-field-label" for="editKostenInfo-${k.id}">Vertragsinfo (optional)</label>
-                        <input class="booking-control" id="editKostenInfo-${k.id}" value="${dependencies.escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
+<input class="booking-control" id="editKostenInfo-${k.id}" value="${dependencies.escapeHtml(k.info || "")}" placeholder="Info (z. B. Kundennummer, Vertragsnummer)" autocapitalize="words">
                         <label class="booking-field-label" for="editKostenHaendler-${k.id}">Anbieter (optional)</label>
-                        <input class="booking-control" id="editKostenHaendler-${k.id}" value="${dependencies.escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
+<input class="booking-control" id="editKostenHaendler-${k.id}" value="${dependencies.escapeHtml(k.haendler || "")}" placeholder="z. B. Telekom oder Netflix" autocapitalize="off">
                         <div class="info-text">Mehrere Namen mit einem Semikolon trennen.</div>
                         <label class="booking-field-label" for="editKostenZuordnungTage-${k.id}">Zeitfenster zur Fälligkeit (± Tage)</label>
-                        <input class="booking-control" id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
+<input class="booking-control" id="editKostenZuordnungTage-${k.id}" type="number" inputmode="numeric" min="0" max="31" step="1" value="${normalizeFixkostenZuordnungTage(k.zuordnungTage)}">
                         <div class="info-text">Vorbereitung für die Push-Erfassung: Tage vor oder nach der Fälligkeit.</div>
                         <label class="booking-field-label" for="editKostenDatum-${k.id}">Erste Abbuchung · danach monatlich</label>
-                        <input class="booking-control" id="editKostenDatum-${k.id}" type="date" value="${datum}">
+<input class="booking-control" id="editKostenDatum-${k.id}" type="date" value="${datum}">
 
                         <div style="display:flex; gap:10px; margin-top:6px;">
                             <button onclick="saveEditKosten('${k.id}')">💾 Speichern</button>
@@ -165,20 +166,20 @@ Kostentracker.module({
                     item = dependencies.createItem(`
                     <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
                         <div class="compact-alltag-content">
+<span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Fixkosten')}</span>
                             <div class="compact-alltag-main" onclick="toggleFixkostenDetails('${k.id}')" style="cursor:pointer;">
                                 <span class="compact-alltag-title">${dependencies.escapeHtml(k.text || k.name || "-")}</span>
-                                ${k.haendler ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(k.haendler)}</span>` : ''}
-                                <span class="compact-alltag-sub">Monatlich am ${String(tag).padStart(2, "0")}.</span>
+                                <span class="compact-alltag-sub">${k.haendler ? dependencies.escapeHtml(k.haendler) + ' · ' : ''}am ${String(tag).padStart(2, "0")}.</span>
                             </div>
-                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong>
+                            <strong class="compact-alltag-amount">${dependencies.formatBetrag(k.betrag)}</strong><button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${istOffen}" onclick="event.stopPropagation(); toggleFixkostenDetails('${k.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button>
                             <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
-                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben">↪️</button>
-                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')">✏️</button>
-                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')">🗑️</button>
+                                <button onclick="event.stopPropagation(); moveAusgabe('fixkosten','${k.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                                <button class="edit" onclick="event.stopPropagation(); startEditKosten('${k.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                                <button class="delete" onclick="event.stopPropagation(); deleteLaufendeKosten('${k.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                             </div>
                         </div>
                         ${istOffen ? `
-                            <div onclick="toggleFixkostenDetails('${k.id}')" style="background:#3a3a3c;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px;cursor:pointer;">
+                            <div onclick="toggleFixkostenDetails('${k.id}')" class="category-entry-details" style="display:flex;flex-direction:column;gap:8px;cursor:pointer;">
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Wiederholung</span><span style="font-weight:600;text-align:right;">Monatlich am ${tag}.</span></div>
                                 <div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Startdatum</span><span style="font-weight:600;text-align:right;">${dependencies.formatDatum(datum)}</span></div>
                                 ${k.info ? `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="opacity:.7;">Info</span><span style="font-weight:600;text-align:right;overflow-wrap:anywhere;">${dependencies.escapeHtml(k.info)}</span></div>` : ''}

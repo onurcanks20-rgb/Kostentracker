@@ -33,7 +33,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/alltag-gemeinsam.js
+// Kostentracker Hauptversion: js/kategorien/alltag-gemeinsam.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         
@@ -88,6 +88,26 @@ Kostentracker.module({
             return text.toLocaleLowerCase('de-DE') === kategorie.toLocaleLowerCase('de-DE') ? '' : text;
         }
 
+        function alltagCategoryIcon(category) {
+            const names={'Einkauf':'cart','Tanken':'fuel','Drogerie':'droplet','Essen / Trinken':'food','Aktivität':'activity','Geschenke':'gift','Versicherung':'shield','Fixkosten':'receipt','Einnahme':'income','Geplant':'calendar','Sparen':'wallet','Investieren':'chart','Reise':'plane'};
+            const name=Object.hasOwn(names,category)?names[category]:'spark';
+            return `<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-${name}"></use></svg>`;
+        }
+        function closeAlltagMenus(restoreFocus=false) {
+            for(const menu of document.querySelectorAll('.alltag-overflow[open]')) {
+                menu.open=false;
+                if(restoreFocus)menu.querySelector('summary')?.focus();
+            }
+        }
+        document.addEventListener('click',event=>{
+            for(const menu of document.querySelectorAll('.alltag-overflow[open]')) {
+                if(!menu.contains(event.target)||event.target.closest?.('.alltag-delete-action'))menu.open=false;
+            }
+        });
+        document.addEventListener('keydown',event=>{
+            if(event.key==='Escape')closeAlltagMenus(true);
+        });
+
         function renderRecentAusgaben(typ) {
             const istFreizeit = typ === "freizeit";
             const container = document.getElementById(istFreizeit ? "freizeitListe" : "haushaltListe");
@@ -126,38 +146,40 @@ Kostentracker.module({
                     html = istFreizeit ? `
                         <div class="booking-edit-form">
                             <label class="booking-field-label" for="editFreizeitBetrag-${e.id}">Betrag (€)</label>
-                            <input class="booking-control" id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+<input class="booking-control" id="editFreizeitBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                             <label class="booking-field-label" for="editFreizeitText-${e.id}">Beschreibung (optional)</label>
-                            <input class="booking-control" id="editFreizeitText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+<input class="booking-control" id="editFreizeitText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <div class="entry-date-time"><label><span>Datum</span><input id="editFreizeitDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editFreizeitUhrzeit-${e.id}`,e)}</div>
                             <div style="display:flex; gap:10px;"><button onclick="saveEditFreizeit('${e.id}')">💾 Speichern</button><button onclick="cancelEditFreizeit()">❌ Abbrechen</button></div>
                         </div>` : `
                         <div class="booking-edit-form">
                             <label class="booking-field-label" for="editBetrag-${e.id}">Betrag (€)</label>
-                            <input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+<input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                             <label class="booking-field-label" for="editText-${e.id}">Beschreibung (optional)</label>
-                            <input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+<input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                             <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editUhrzeit-${e.id}`,e)}</div>
                             <div style="display:flex; gap:10px;"><button onclick="saveEditHaushalt('${e.id}')">💾 Speichern</button><button onclick="cancelEditHaushalt()">❌ Abbrechen</button></div>
                         </div>`;
                 } else {
                     const zusatz = alltagZusatztext(e);
                     html = `<div class="compact-alltag-content">
-                        <div class="compact-alltag-main">
+                        <span class="alltag-category-icon">${alltagCategoryIcon(e.kategorie)}</span>
+                        <div class="compact-alltag-main" onclick="toggleAlltagsDetails('${typ}','${e.id}')">
                             <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                             ${zusatz || dependencies.entryClock(e) ? `<span class="compact-alltag-sub">${dependencies.escapeHtml(zusatz)}${dependencies.renderEntryTime(e,!!zusatz)}</span>` : ''}
                         </div>
                         <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${!!offenMap[String(e.id)]}" onclick="event.stopPropagation(); toggleAlltagsDetails('${typ}','${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                             <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
                             <button class="edit" onclick="event.stopPropagation(); ${istFreizeit ? `startEditFreizeit('${e.id}')` : `startEditHaushalt('${e.id}')`}">✏️</button>
                             <button class="delete" onclick="event.stopPropagation(); ${istFreizeit ? `deleteFreizeit('${e.id}')` : `deleteHaushalt('${e.id}')`}">🗑️</button>
                         </div>
-                    </div>`;
+                    </div>${offenMap[String(e.id)] ? `<div class="category-entry-details"><dl><dt>Datum</dt><dd>${dependencies.escapeHtml(String(e.datum || '').split('-').reverse().join('.'))}${dependencies.entryClock(e) ? ' · ' + dependencies.escapeHtml(dependencies.entryClock(e)) : ''}</dd><dt>Beschreibung</dt><dd>${dependencies.escapeHtml(zusatz || 'Keine Beschreibung')}</dd></dl></div>` : ''}`;
                 }
                 const item = dependencies.createItem(html);
                 if (!isEdit) item.classList.add("compact-alltag-card");
-                item.style.background = "#3a3a3c";
+                item.classList.add("alltag-entry");
                 container.appendChild(item);
                 if (isEdit) setTimeout(() => istFreizeit ? dependencies.setupFreizeitEditEnterFlow(e.id) : dependencies.setupHaushaltEditEnterFlow(e.id), 0);
             });
@@ -170,5 +192,13 @@ Kostentracker.module({
             renderRecentAusgaben(typ);
         }
 
-return { alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
+document.addEventListener('click', event => {
+    if (event.defaultPrevented || event.target.closest('button,input,select,textarea,a,label,summary,.actions,.swipe-action-rail,[onclick]')) return;
+    const card = event.target.closest('.item');
+    if (!card) return;
+    const detail = card.querySelector('[onclick*="toggleAlltagsDetails("],[onclick*="toggleFixkostenDetails("],[onclick*="toggleVersicherungDetails("],[onclick*="toggleEinnahmeDetails("],[onclick*="toggleSparenDetails("],[onclick*="toggleGeplantDetails("],[onclick*="toggleReiseDetails("],[onclick*="toggleArchivDetails("]');
+    detail?.click();
+});
+
+return { alltagCategoryIcon, closeAlltagMenus, alleAusgabenAusBereich, renderBereichWocheninfo, alltagZusatztext, renderRecentAusgaben, toggleAlltagsDetails };
 });

@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/sparen-investieren.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "alltagImZeitraum",
     "beginUndoDelete",
@@ -38,7 +39,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker: js/kategorien/sparen-investieren.js
+// Kostentracker Hauptversion: js/kategorien/sparen-investieren.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function sparenInvestierenAktivImZeitraum(von, bis) {
@@ -52,7 +53,8 @@ Kostentracker.module({
             const aktiv = sparenInvestierenAktivImZeitraum(zeitraum.start, zeitraum.ende);
             const investieren = aktiv.filter(e => e.typ === "investieren").reduce((s,e)=>s+e.betrag,0);
             const sparenPlan = aktiv.filter(e => e.typ === "sparen").reduce((s,e)=>s+e.betrag,0);
-            return { aktiv, investieren, sparenPlan, gesamt: investieren + sparenPlan };
+            
+return { aktiv, investieren, sparenPlan, gesamt: investieren + sparenPlan };
         }
 
         function berechneSparBudgetStatus(zeitraum) {
@@ -156,7 +158,7 @@ Kostentracker.module({
             const status = berechneSparBudgetStatus(z);
             if (sumEl) sumEl.innerHTML = `
                 <div class="bereich-week-info-top"><span class="bereich-week-info-label">Diese Gehaltsperiode</span><span class="bereich-week-info-amount">${dependencies.formatBetrag(status.investieren + status.gespart)}</span></div>
-                <div class="bereich-week-info-breakdown">📈 Investiert: ${dependencies.formatBetrag(status.investieren)} · 💰 Gespart: ${dependencies.formatBetrag(status.gespart)} von ${dependencies.formatBetrag(status.sparenPlan)}${status.sparVerbrauch > 0 ? ` · ${dependencies.formatBetrag(status.sparVerbrauch)} als Puffer genutzt` : ""}</div>`;
+                <div class="category-summary-columns"><div><span>Gespart</span><strong>${dependencies.formatBetrag(status.gespart)}</strong><small>von ${dependencies.formatBetrag(status.sparenPlan)}</small></div><div><span>Investiert</span><strong>${dependencies.formatBetrag(status.investieren)}</strong></div></div>${status.sparVerbrauch > 0 ? `<div class="bereich-week-info-breakdown">${dependencies.formatBetrag(status.sparVerbrauch)} als Puffer genutzt</div>` : ''}`;
 
             const items = [...(context.repository.view["Sparen & Investieren"] || [])].sort((a,b) => String(b.datum || "").localeCompare(String(a.datum || "")) || Number(b.id || 0) - Number(a.id || 0));
             document.getElementById("sparenInvestierenDeleteAllBtn")?.classList.toggle("hidden", !items.length);
@@ -178,37 +180,49 @@ Kostentracker.module({
                     <div class="item" style="align-items:stretch;">
                         <div class="booking-edit-form">
                             <label class="booking-field-label" for="editSparenTyp-${e.id}">Art</label>
-                            <select class="booking-control" id="editSparenTyp-${e.id}">
+<select class="booking-control" id="editSparenTyp-${e.id}">
                                 <option value="investieren" ${e.typ === "investieren" ? "selected" : ""}>📈 Investieren</option>
                                 <option value="sparen" ${e.typ === "sparen" ? "selected" : ""}>💰 Rücklage / Sparen</option>
                             </select>
                             <label class="booking-field-label" for="editSparenBetrag-${e.id}">Betrag pro Gehaltsperiode (€)</label>
-                            <input class="booking-control" id="editSparenBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
+<input class="booking-control" id="editSparenBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag pro Gehaltsperiode" enterkeyhint="next">
                             <label class="booking-field-label" for="editSparenText-${e.id}">Beschreibung (optional)</label>
-                            <input class="booking-control" id="editSparenText-${e.id}" autocapitalize="words" value="${dependencies.escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
+<input class="booking-control" id="editSparenText-${e.id}" autocapitalize="words" value="${dependencies.escapeHtml(e.text || '')}" placeholder="Beschreibung (optional)" enterkeyhint="next">
                             <label class="booking-field-label" for="editSparenDatum-${e.id}">Gültig ab</label>
-                            <input class="booking-control" id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
+<input class="booking-control" id="editSparenDatum-${e.id}" type="date" value="${e.datum || ''}">
                             <div style="display:flex;gap:10px;">
                                 <button onclick="saveEditSparenInvestieren('${e.id}')">💾 Speichern</button>
                                 <button onclick="cancelEditSparenInvestieren()" style="background:#3a3a3c;">❌ Abbrechen</button>
                             </div>
                         </div>
                     </div>`;
+                const offen = !!context.session.state.offeneSparDetails?.[String(e.id)];
                 return gruppenHeader + `
-                    <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${e.typ === "sparen" ? "💰 Sparen" : "📈 Investieren"}</div>
-                            <div class="info-text" style="margin-top:4px;">${e.typ === "sparen" ? "Rücklage · dient als Puffer" : "Investition · bleibt geschützt"} · ab ${dependencies.formatDatum(e.datum)}</div>
-                            ${e.text ? `<div class="info-text" style="margin-top:3px;">${dependencies.escapeHtml(e.text)}</div>` : ""}
-                            <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)} / Gehaltsperiode</div>
+                    <div class="item compact-alltag-card category-record category-detail-card">
+                      <div class="compact-alltag-content">
+                        <span class="alltag-category-icon">${dependencies.alltagCategoryIcon(e.typ==='sparen'?'Sparen':'Investieren')}</span>
+                        <div class="compact-alltag-main" onclick="toggleSparenDetails('${e.id}')">
+                            <span class="compact-alltag-title">${e.typ === "sparen" ? "Sparen" : "Investieren"}</span>
+                            <span class="compact-alltag-sub">Pro Gehaltsperiode</span>
                         </div>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${offen}" onclick="event.stopPropagation();toggleSparenDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex;gap:5px;">
-                            <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')">🗑️</button>
+                            <button class="edit" onclick="event.stopPropagation();startEditSparenInvestieren('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation();deleteSparenInvestieren('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
+                      </div>
+                      ${offen ? `<div class="category-entry-details"><dl><dt>Gültig ab</dt><dd>${dependencies.formatDatum(e.datum)}</dd><dt>Art</dt><dd>${e.typ === 'sparen' ? 'Rücklage · dient als Puffer' : 'Investition · bleibt geschützt'}</dd>${e.text ? `<dt>Beschreibung</dt><dd>${dependencies.escapeHtml(e.text)}</dd>` : ''}</dl></div>` : ''}
                     </div>`;
             }).join("");
         }
 
-return { sparenInvestierenAktivImZeitraum, sparenInvestierenSummen, berechneSparBudgetStatus, addSparenInvestieren, deleteSparenInvestieren, deleteAlleSparenInvestieren, startEditSparenInvestieren, cancelEditSparenInvestieren, saveEditSparenInvestieren, editSparenInvestieren, renderSparenInvestieren };
+function toggleSparenDetails(id) {
+    const map = context.session.state.offeneSparDetails ||= {};
+    map[String(id)] = !map[String(id)];
+    renderSparenInvestieren();
+}
+
+
+return { toggleSparenDetails, sparenInvestierenAktivImZeitraum, sparenInvestierenSummen, berechneSparBudgetStatus, addSparenInvestieren, deleteSparenInvestieren, deleteAlleSparenInvestieren, startEditSparenInvestieren, cancelEditSparenInvestieren, saveEditSparenInvestieren, editSparenInvestieren, renderSparenInvestieren };
 });

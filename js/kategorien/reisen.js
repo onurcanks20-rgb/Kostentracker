@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/reisen.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "addItem",
     "appendDateGroupHeader",
@@ -67,7 +68,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/kategorien/reisen.js
+// Kostentracker Hauptversion: js/kategorien/reisen.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function addLand() {
@@ -148,13 +149,12 @@ Kostentracker.module({
                 const budget = dependencies.parseBetrag(meta.budget) || 0;
                 const uebrig = budget - sum;
                 item.innerHTML = `
-            <div class="land-main">
+            <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Reise')}</span><div class="land-main">
                 ${context.session.state.editLandName === land
-                    ? `<input id="editLand-${dependencies.safeId(land)}" value="${dependencies.escapeHtml(land)}">`
-                    : `<span class="land-name">${dependencies.escapeHtml(land)}</span>`
+                    ? `<label class="booking-field-label" for="editLand-${dependencies.safeId(land)}">Land</label><input class="booking-control" id="editLand-${dependencies.safeId(land)}" value="${dependencies.escapeHtml(land)}">`
+                    : `<div class="land-head"><span class="land-name">${dependencies.escapeHtml(land)}</span><strong class="land-spent" aria-label="Ausgegeben: ${dependencies.formatBetragText(sum)}">${dependencies.formatBetrag(sum)}</strong></div>`
                 }
                 <div class="land-stats">
-                    <span class="land-spent">Ausgegeben: ${dependencies.formatBetrag(sum)}</span>
                     ${budget > 0
                         ? `<span>Übrig: ${dependencies.formatBetrag(uebrig)} von ${dependencies.formatBetrag(budget)}</span>`
                         : `<span>Kein Budget festgelegt</span>`}
@@ -162,7 +162,7 @@ Kostentracker.module({
             </div>
         `;
 
-                item.onclick = () => {
+                item.onclick = event => {
                     if (context.session.state.editLandName !== land) {
                         openLand(land);
                     }
@@ -183,7 +183,7 @@ Kostentracker.module({
                 } else {
 
                     editBtn.className = "edit";
-                    editBtn.innerText = "✏️";
+                    editBtn.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg>';editBtn.setAttribute('aria-label','Reise bearbeiten');
                     editBtn.onclick = (event) => {
                         event.stopPropagation();
                         startEditLand(land);
@@ -207,7 +207,9 @@ Kostentracker.module({
                 // 🗑️ Button daneben
                 let delBtn = document.createElement("button");
                 delBtn.className = "delete";
-                delBtn.innerText = "🗑️";
+                delBtn.type = "button";
+                delBtn.setAttribute("data-swipe-confirm", "true");
+                delBtn.innerHTML = '<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg>';delBtn.setAttribute('aria-label','Reise löschen');
 
                 // 🔥 wichtig: verhindert Öffnen
                 delBtn.onclick = (event) => deleteLand(event, land);
@@ -222,6 +224,7 @@ Kostentracker.module({
                     actions.appendChild(delBtn);
                 }
 
+                if (context.session.state.editLandName !== land) actions.classList.add("actions");
                 item.appendChild(actions);
                 row.appendChild(item);
 
@@ -293,16 +296,16 @@ Kostentracker.module({
                     <div class="item reise-budget-editor">
                         <div class="reise-budget-editor-title">Reise planen</div>
                         <label class="booking-field-label" for="reiseBudgetEdit">Budget in Euro</label>
-                        <input class="booking-control" id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
+<input class="booking-control" id="reiseBudgetEdit" type="text" inputmode="decimal" value="${budget ? dependencies.formatInputBetrag(budget) : ""}" placeholder="Budget in Euro" enterkeyhint="next">
                         <div class="reise-currency-settings"><span>Reisewährung</span>${dependencies.renderReiseCurrencySelector(true)}</div>
                         <div class="date-range">
                             <div class="date-field">
                                 <label class="booking-field-label" for="reiseVonEdit">Von</label>
-                                <input class="booking-control" id="reiseVonEdit" type="date" value="${dependencies.escapeHtml(meta.von || "")}">
+<input class="booking-control" id="reiseVonEdit" type="date" value="${dependencies.escapeHtml(meta.von || "")}">
                             </div>
                             <div class="date-field">
                                 <label class="booking-field-label" for="reiseBisEdit">Bis</label>
-                                <input class="booking-control" id="reiseBisEdit" type="date" value="${dependencies.escapeHtml(meta.bis || "")}">
+<input class="booking-control" id="reiseBisEdit" type="date" value="${dependencies.escapeHtml(meta.bis || "")}">
                             </div>
                         </div>
                         <div class="reise-form-actions">
@@ -568,6 +571,7 @@ Kostentracker.module({
                 item.className = "item reise-category-card" + ((context.session.state.offeneKategorie === k || context.session.state.editKategorieName === k) ? " reise-category-open" : "");
 
                 const editingCategory = context.session.state.editKategorieName === k;
+                if (editingCategory) item.classList.add("reise-category-editing");
                 const categoryMain = document.createElement("div");
                 categoryMain.className = 'reise-category-main';
                 categoryMain.style.cursor = editingCategory ? 'default' : 'pointer';
@@ -575,8 +579,14 @@ Kostentracker.module({
                     const input = document.createElement("input");
                     input.id = "editKategorie-" + dependencies.safeId(k);
                     input.value = k;
+                    input.className = "booking-control";
+                    input.setAttribute("aria-label", "Kategoriename");
+                    const fieldLabel = document.createElement("label");
+                    fieldLabel.className = "booking-field-label";
+                    fieldLabel.setAttribute("for", input.id);
+                    fieldLabel.textContent = "Kategorie";
                     input.addEventListener("click", event => event.stopPropagation());
-                    categoryMain.appendChild(input);
+                    categoryMain.append(fieldLabel, input);
                 } else {
                     const label = document.createElement("span");
                     label.className = "reise-category-label";
@@ -588,7 +598,8 @@ Kostentracker.module({
                     chevron.className = "reise-category-chevron";
                     chevron.setAttribute("aria-hidden", "true");
                     chevron.textContent = "›";
-                    categoryMain.append(label, amount, chevron);
+                    const categoryIcon=document.createElement('span');categoryIcon.className='alltag-category-icon';categoryIcon.innerHTML=dependencies.alltagCategoryIcon(k);
+                    categoryMain.append(categoryIcon,label,amount,chevron);
                     categoryMain.addEventListener("click", () => toggleKategorie(k));
                 }
                 const categoryActions = document.createElement("div");
@@ -598,7 +609,9 @@ Kostentracker.module({
                     const button = document.createElement("button");
                     button.type = "button";
                     button.className = className;
-                    button.textContent = label;
+                    const categoryGlyphs={'✏️':'edit','🗑️':'delete','💾':'check','❌':'close'};
+                    const glyph=categoryGlyphs[label];
+                    if(glyph)button.innerHTML='<svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-'+glyph+'"></use></svg>';else button.textContent=label;
                     button.setAttribute("aria-label", (className === "edit" ? "Kategorie bearbeiten" : className === "delete" ? "Kategorie löschen" : label) + " · " + k);
                     button.addEventListener("click", event => {
                         event.stopPropagation();
@@ -607,8 +620,9 @@ Kostentracker.module({
                     categoryActions.appendChild(button);
                 };
                 if (editingCategory) {
-                    addCategoryAction("💾", "btn btn-icon btn-primary", () => saveEditKategorie(k));
-                    addCategoryAction("❌", "btn btn-icon btn-cancel", cancelEditKategorie);
+                    categoryActions.classList.add("reise-category-edit-actions");
+                    addCategoryAction("Speichern", "btn btn-primary", () => saveEditKategorie(k));
+                    addCategoryAction("Abbrechen", "btn btn-cancel", cancelEditKategorie);
                 } else {
                     addCategoryAction("✏️", "edit", () => startEditKategorie(k));
                     addCategoryAction("🗑️", "delete", () => deleteKategorie(k));
@@ -636,21 +650,24 @@ Kostentracker.module({
                         let sub = document.createElement("div");
                         sub.className = "item reise-entry-card";
                         sub.style.marginLeft = "12px";
-                        sub.style.background = "#3a3a3c";
+                        sub.classList.add("alltag-entry");
 
                         if (context.session.state.editReiseId === e.id) {
 
+                            sub.classList.add("reise-entry-editing");
                             sub.innerHTML = `
-                        <div style="font-size:13px;opacity:.75;">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
+                        <div class="booking-edit-form reise-edit-form">
+                        <div class="info-text">Betrag in ${e.fx ? e.fx.currency : 'EUR'}${e.fx ? ' · gespeicherter Kurs' : ''}</div>
                         <label class="booking-field-label" for="editBetrag-${e.id}">Betrag (${e.fx ? dependencies.escapeHtml(e.fx.currency) : 'EUR'})</label>
-                        <input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
+<input class="booking-control" id="editBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.fx ? e.fx.amount : e.betrag)}" placeholder="Betrag in ${e.fx ? e.fx.currency : 'EUR'}" enterkeyhint="next">
                         <label class="booking-field-label" for="editText-${e.id}">Beschreibung (optional)</label>
-                        <input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+<input class="booking-control" id="editText-${e.id}" value="${dependencies.escapeHtml(e.text || "")}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                         <div class="entry-date-time"><label><span>Datum</span><input id="editDatum-${e.id}" type="date" value="${e.datum || ""}"></label>${dependencies.renderEntryTimeInput(`editReiseUhrzeit-${e.id}`,e)}</div>
 
-                        <div class="actions">
-                            <button onclick="saveEditReise(${e.id})">💾</button>
-                            <button onclick="cancelEditReise()">❌</button>
+                        <div class="actions reise-form-actions">
+                            <button type="button" onclick="saveEditReise(${e.id})">Speichern</button>
+                            <button type="button" class="reise-form-cancel" onclick="cancelEditReise()">Abbrechen</button>
+                        </div>
                         </div>
                     `;
 
@@ -662,15 +679,15 @@ Kostentracker.module({
                             const reiseBeschreibung = dependencies.escapeHtml(e.text || '');
                             sub.innerHTML = `
                         <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
-                            <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')">
+                            <div class="reise-entry-heading" onclick="toggleReiseDetails('${e.id}')"><span class="alltag-category-icon">${dependencies.alltagCategoryIcon(k)}</span>
                                 <span class="reise-entry-label">${dependencies.escapeHtml(e.text || k)}${dependencies.renderEntryTime(e)}</span>
                                 <div class="reise-entry-amounts"><strong class="reise-entry-amount">${dependencies.formatBetrag(e.betrag)}</strong>${entryFxDetails(e)}</div>
                             </div>
                             <div class="reise-entry-controls">
                                 <div class="actions reise-entry-actions">
-                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})">✏️</button>
-                                    <button class="delete" data-delete-reise>🗑️</button>
+                                    <button onclick="event.stopPropagation(); moveAusgabe('reisen','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-move"></use></svg></button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditReise(${e.id})" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                                    <button class="delete" data-delete-reise aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                                 </div>
                             </div>
                             ${reiseOffen ? `
@@ -693,17 +710,14 @@ Kostentracker.module({
 
                     if (alleEintraege.length > 0 && !suche) {
                         const clearWrap = document.createElement("div");
-                        clearWrap.style.marginLeft = "20px";
+                        clearWrap.className = "category-inline-options";
                         clearWrap.style.marginTop = "8px";
                         clearWrap.innerHTML = `
-                            <button class="delete"
-                                    data-clear-kategorie
-                                    style="width:100%;padding:11px 14px;border-radius:12px;font-weight:700;">
-                                🗑️ Alle ${dependencies.escapeHtml(k)}-Ausgaben löschen
-                            </button>
+                            <details class="alltag-overflow category-inline-overflow"><summary aria-label="Optionen für diese Kategorie"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button class="alltag-delete-action" data-clear-kategorie><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle ${dependencies.escapeHtml(k)}-Ausgaben löschen</span></button></div></details>
                         `;
                         clearWrap.querySelector('button').addEventListener("click", event => {
                             event.stopPropagation();
+                            const menu=clearWrap.querySelector('details');if(menu)menu.open=false;
                             clearKategorie(k);
                         });
                         div.appendChild(clearWrap);

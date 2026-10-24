@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/kategorien/geplante-ausgaben.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "appendEmptyAction",
     "beginUndoDelete",
     "closeStartQuickAdd",
@@ -38,7 +39,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker: js/kategorien/geplante-ausgaben.js
+// Kostentracker Hauptversion: js/kategorien/geplante-ausgaben.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function updateGeplantBereichUI(setzeStandardBudget = false) {
@@ -322,7 +323,7 @@ Kostentracker.module({
             if (!listeEl) return;
             const z = dependencies.getGehaltszeitraum();
             const reserviert = geplanteReservierungenImZeitraum(z.start, z.ende).reduce((sum,e)=>sum+(dependencies.parseBetrag(e.betrag)||0),0);
-            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert in dieser Gehaltsperiode</span><span class="bereich-week-info-amount">${dependencies.formatBetrag(reserviert)}</span></div><div class="bereich-week-info-breakdown">Nur Einträge mit „Vom Frei verfügbar abziehen: Ja“ werden reserviert.</div>`;
+            if (sumEl) sumEl.innerHTML = `<div class="bereich-week-info-top"><span class="bereich-week-info-label">Reserviert <button type="button" class="category-info-button" aria-label="Informationen zur Reservierung" onclick="openPageInfo('geplantReservierung')">ⓘ</button></span><span class="bereich-week-info-amount">${dependencies.formatBetrag(reserviert)}</span></div>`;
             const items = [...(context.repository.view["Geplante Ausgaben"] || [])].sort((a,b) => String(a.datum).localeCompare(String(b.datum)));
             document.getElementById("geplantDeleteAllBtn")?.classList.toggle("hidden", !items.length);
             if (!items.length) {
@@ -349,35 +350,35 @@ Kostentracker.module({
                         <div class="item" style="align-items:stretch;">
                             <div class="booking-edit-form">
                                 <label class="booking-field-label" for="editGeplantText-${e.id}">Beschreibung</label>
-                                <input class="booking-control" id="editGeplantText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
+<input class="booking-control" id="editGeplantText-${e.id}" value="${dependencies.escapeHtml(e.text || '')}" autocapitalize="words" placeholder="Beschreibung" enterkeyhint="next">
                                 <label class="booking-field-label" for="editGeplantBetrag-${e.id}">Betrag (€)</label>
-                                <input class="booking-control" id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+<input class="booking-control" id="editGeplantBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <label class="booking-field-label" for="editGeplantDatum-${e.id}">Geplantes Datum</label>
-                                <input class="booking-control" id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
+<input class="booking-control" id="editGeplantDatum-${e.id}" type="date" value="${e.datum || ''}">
                                 <label class="booking-field-label" for="editGeplantWiederholung-${e.id}">Wiederholung</label>
-                                <select class="booking-control" id="editGeplantWiederholung-${e.id}">
+<select class="booking-control" id="editGeplantWiederholung-${e.id}">
                                     <option value="einmalig" ${(e.wiederholung || "einmalig") === "einmalig" ? "selected" : ""}>Einmalig</option>
                                     <option value="monatlich" ${e.wiederholung === "monatlich" ? "selected" : ""}>Monatlich</option>
                                     <option value="jaehrlich" ${e.wiederholung === "jaehrlich" ? "selected" : ""}>Jährlich</option>
                                 </select>
                                 <label class="booking-field-label" for="editGeplantBereich-${e.id}">Später buchen nach</label>
-                                <select class="booking-control" id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
+<select class="booking-control" id="editGeplantBereich-${e.id}" onchange="updateEditGeplantBereichUI('${e.id}',true)">
                                     <option value="haushalt" ${bereich === "haushalt" ? "selected" : ""}>Haushalt</option>
                                     <option value="freizeit" ${bereich === "freizeit" ? "selected" : ""}>Freizeit</option>
                                     <option value="reisen" ${bereich === "reisen" ? "selected" : ""}>Reisen</option>
                                 </select>
                                 <div id="editGeplantReiseWrap-${e.id}" class="${bereich === "reisen" ? "" : "hidden"}">
                                     <label class="booking-field-label" for="editGeplantReise-${e.id}">Reise</label>
-                                    <select class="booking-control" id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
+<select class="booking-control" id="editGeplantReise-${e.id}" onchange="updateEditGeplantKategorieSelect('${e.id}')">
                                         ${laender.length ? laender.map(l => `<option value="${dependencies.escapeHtml(l)}" ${l === land ? "selected" : ""}>${dependencies.escapeHtml(l)}</option>`).join("") : `<option value="">Keine Reise vorhanden</option>`}
                                     </select>
                                 </div>
                                 <label class="booking-field-label" for="editGeplantKategorie-${e.id}">Kategorie</label>
-                                <select class="booking-control" id="editGeplantKategorie-${e.id}">
+<select class="booking-control" id="editGeplantKategorie-${e.id}">
                                     ${kategorien.map(k => `<option value="${dependencies.escapeHtml(k)}" ${k === kategorie ? "selected" : ""}>${dependencies.escapeHtml(k)}</option>`).join("")}
                                 </select>
                                 <label class="booking-field-label" for="editGeplantBudget-${e.id}">Vom Frei verfügbar abziehen?</label>
-                                <select class="booking-control" id="editGeplantBudget-${e.id}">
+<select class="booking-control" id="editGeplantBudget-${e.id}">
                                     <option value="ja" ${e.budgetWirksam !== false ? "selected" : ""}>Ja, vom Frei verfügbar abziehen</option>
                                     <option value="nein" ${e.budgetWirksam === false ? "selected" : ""}>Nein, nur vormerken</option>
                                 </select>
@@ -388,22 +389,33 @@ Kostentracker.module({
                             </div>
                         </div>`;
                 }
-                const ziel = e.bereich === "reisen" ? `✈️ ${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "🎉 Freizeit" : "🛒 Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
+                const ziel = e.bereich === "reisen" ? `${dependencies.escapeHtml(e.land || "Reise")} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}` : `${e.bereich === "freizeit" ? "Freizeit" : "Haushalt"} · ${dependencies.escapeHtml(e.kategorie || "Sonstiges")}`;
+                const offen = !!context.session.state.offeneGeplantDetails?.[String(e.id)];
                 return gruppenHeader + `
-                    <div class="item" style="align-items:center;">
-                        <div style="min-width:0;flex:1;">
-                            <div style="font-weight:750;">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</div>
-                            <div class="info-text" style="margin-top:4px;">${dependencies.formatDatum(e.datum)} · ${ziel}</div>
-                            <div class="info-text" style="margin-top:3px;">${e.wiederholung === "monatlich" ? "🔁 Monatlich" : e.wiederholung === "jaehrlich" ? "🔁 Jährlich" : "1× Einmalig"} · ${e.budgetWirksam !== false ? "💶 Im Frei verfügbar reserviert" : "📝 Nur vorgemerkt"}</div>
-                            <div style="font-weight:800;margin-top:5px;">${dependencies.formatBetrag(e.betrag)}</div>
+                    <div class="item compact-alltag-card category-record category-detail-card">
+                      <div class="compact-alltag-content">
+                        <span class="alltag-category-icon">${dependencies.alltagCategoryIcon('Geplant')}</span>
+                        <div class="compact-alltag-main" onclick="toggleGeplantDetails('${e.id}')">
+                            <span class="compact-alltag-title">${dependencies.escapeHtml(e.text || "Geplante Ausgabe")}</span>
+                            <span class="compact-alltag-sub">${ziel}</span><span class="category-status">${e.budgetWirksam !== false ? 'Reserviert' : 'Nur vorgemerkt'}</span>
                         </div>
+                        <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
+                        <button type="button" class="alltag-row-open" aria-label="Details anzeigen" aria-expanded="${offen}" onclick="event.stopPropagation();toggleGeplantDetails('${e.id}')"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-chevron"></use></svg></button>
                         <div class="actions" style="display:flex;gap:5px;">
-                            <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')">✏️</button>
-                            <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')">🗑️</button>
+                            <button class="edit" onclick="event.stopPropagation();startEditGeplanteAusgabe('${String(e.id)}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-edit"></use></svg></button>
+                            <button class="delete" onclick="event.stopPropagation();deleteGeplanteAusgabe('${String(e.id)}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg></button>
                         </div>
+                      </div>
+                      ${offen ? `<div class="category-entry-details"><dl><dt>Datum</dt><dd>${dependencies.formatDatum(e.datum)}</dd><dt>Wiederholung</dt><dd>${e.wiederholung === 'monatlich' ? 'Monatlich' : e.wiederholung === 'jaehrlich' ? 'Jährlich' : 'Einmalig'}</dd><dt>Budget</dt><dd>${e.budgetWirksam !== false ? 'Vom Frei verfügbar abziehen' : 'Nur vormerken'}</dd></dl></div>` : ''}
                     </div>`;
             }).join("");
         }
 
-return { updateGeplantBereichUI, updateGeplantKategorieSelect, geplantDatumZuISO, geplantNaechstesDatum, geplanteAusgabenImZeitraum, geplanteReservierungenImZeitraum, addGeplanteAusgabe, deleteGeplanteAusgabe, deleteAlleGeplanteAusgaben, startEditGeplanteAusgabe, cancelEditGeplanteAusgabe, editGeplantKategorienFuer, updateEditGeplantBereichUI, updateEditGeplantKategorieSelect, saveEditGeplanteAusgabe, editGeplanteAusgabe, verarbeiteFaelligeGeplanteAusgaben, renderGeplanteAusgaben };
+function toggleGeplantDetails(id) {
+    const map = context.session.state.offeneGeplantDetails ||= {};
+    map[String(id)] = !map[String(id)];
+    renderGeplanteAusgaben();
+}
+
+return { toggleGeplantDetails, updateGeplantBereichUI, updateGeplantKategorieSelect, geplantDatumZuISO, geplantNaechstesDatum, geplanteAusgabenImZeitraum, geplanteReservierungenImZeitraum, addGeplanteAusgabe, deleteGeplanteAusgabe, deleteAlleGeplanteAusgaben, startEditGeplanteAusgabe, cancelEditGeplanteAusgabe, editGeplantKategorienFuer, updateEditGeplantBereichUI, updateEditGeplantKategorieSelect, saveEditGeplanteAusgabe, editGeplanteAusgabe, verarbeiteFaelligeGeplanteAusgaben, renderGeplanteAusgaben };
 });
