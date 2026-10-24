@@ -1,6 +1,7 @@
 Kostentracker.module({
   "id": "js/ui/ausgabenarchiv.js",
   "dependencies": [
+    "alltagCategoryIcon",
     "alltagZusatztext",
     "createItem",
     "datumZeitwert",
@@ -40,7 +41,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/ui/ausgabenarchiv.js
+// Kostentracker Hauptversion: js/ui/ausgabenarchiv.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function toggleArchivDetails(typ, id) {
@@ -154,8 +155,11 @@ Kostentracker.module({
                 const jahrOffen = !!jahresState[jahr];
                 const jahrSumme = Object.values(data[jahr]).flat().reduce((a,b) => a + (dependencies.parseBetrag(b.betrag)||0), 0);
                 const jahrItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
-                    <div><span class="toggle-btn">${jahrOffen ? '▲' : '▼'}</span> 📁 ${jahr}</div><strong>${dependencies.formatBetrag(jahrSumme)}</strong>
+                    <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${jahrOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${jahr}</span></div><strong>${dependencies.formatBetrag(jahrSumme)}</strong>
                 </div>`);
+                jahrItem.classList.add("archive-year-toggle");
+                jahrItem.setAttribute("role","button");jahrItem.setAttribute("tabindex","0");jahrItem.setAttribute("aria-expanded",String(jahrOffen));
+                jahrItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();jahrItem.onclick();} };
                 jahrItem.onclick = () => { jahresState[jahr] = !jahrOffen; renderAusgabenArchiv(); };
                 container.appendChild(jahrItem);
                 if (!jahrOffen) return;
@@ -166,8 +170,11 @@ Kostentracker.module({
                     const liste = [...data[jahr][monat]].sort(dependencies.compareEntriesNewest);
                     const summe = liste.reduce((a,b)=>a+(dependencies.parseBetrag(b.betrag)||0),0);
                     const monatItem = dependencies.createItem(`<div style="display:flex; justify-content:space-between; width:100%; align-items:center; cursor:pointer;">
-                        <div><span class="toggle-btn">${monatOffen ? '▲' : '▼'}</span> 📂 ${dependencies.getMonatName(parseInt(monat))}</div><strong>${dependencies.formatBetrag(summe)}</strong>
-                    </div>`,20);
+                        <div class="archive-group-label"><svg class="alltag-icon archive-group-chevron ${monatOffen ? 'is-open' : ''}" aria-hidden="true"><use href="#alltag-chevron"></use></svg><span>${dependencies.getMonatName(parseInt(monat))}</span></div><strong>${dependencies.formatBetrag(summe)}</strong>
+                    </div>`,0);
+                    monatItem.classList.add("archive-month-toggle");
+                    monatItem.setAttribute("role","button");monatItem.setAttribute("tabindex","0");monatItem.setAttribute("aria-expanded",String(monatOffen));
+                    monatItem.onkeydown = event => { if(event.key === "Enter" || event.key === " "){event.preventDefault();monatItem.onclick();} };
                     monatItem.onclick = () => { monatsState[key] = !monatOffen; renderAusgabenArchiv(); };
                     container.appendChild(monatItem);
                     if (!monatOffen) return;
@@ -179,19 +186,19 @@ Kostentracker.module({
                         if (isEdit) {
                             item = dependencies.createItem(`<div style="display:flex; flex-direction:column; width:100%; gap:6px;">
                                 <label class="booking-field-label" for="editArchivBetrag-${e.id}">Betrag (€)</label>
-                                <input class="booking-control" id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
+<input class="booking-control" id="editArchivBetrag-${e.id}" type="text" inputmode="decimal" value="${dependencies.formatInputBetrag(e.betrag)}" placeholder="Betrag" enterkeyhint="next">
                                 <label class="booking-field-label" for="editArchivText-${e.id}">Beschreibung (optional)</label>
-                                <input class="booking-control" id="editArchivText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
+<input class="booking-control" id="editArchivText-${e.id}" value="${dependencies.escapeHtml(e.text || e.name || '')}" autocapitalize="words" placeholder="Genauere Beschreibung (optional)" enterkeyhint="next">
                                 <div class="entry-date-time"><label><span>Datum</span><input id="editArchivDatum-${e.id}" type="date" value="${e.datum || ''}"></label>${dependencies.renderEntryTimeInput(`editArchivUhrzeit-${e.id}`,e)}</div>
                                 <div style="display:flex; gap:10px;">
                                     <button onclick="event.stopPropagation(); saveEditAusgabenArchiv('${typ}','${e.id}')">💾 Speichern</button>
                                     <button onclick="event.stopPropagation(); cancelEditAusgabenArchiv()">❌ Abbrechen</button>
                                 </div>
-                            </div>`,40);
+                            </div>`,0);
                         } else {
                             const zusatz = dependencies.alltagZusatztext(e);
                             const istAusgeblendet = dependencies.istEintragAusgeblendet(typ, e.id);
-                            item = dependencies.createItem(`<div class="compact-alltag-content">
+                            item = dependencies.createItem(`<div class="compact-alltag-content"><span class="alltag-category-icon">${dependencies.alltagCategoryIcon(e.kategorie)}</span>
                                 <div class="compact-alltag-main">
                                     <span class="compact-alltag-title">${dependencies.escapeHtml(e.kategorie || 'Sonstiges')}</span>
                                     ${istAusgeblendet ? `<span class="compact-alltag-sub" style="opacity:.9;">👁️‍🗨️ Ausgeblendet</span>` : ''}
@@ -201,15 +208,15 @@ Kostentracker.module({
                                 <strong class="compact-alltag-amount">${dependencies.formatBetrag(e.betrag)}</strong>
                                 <div class="actions" style="display:flex; align-items:center; gap:8px; white-space:nowrap;">
                                     ${istAusgeblendet ? `<button onclick="event.stopPropagation(); eintragEinblenden('${typ}','${e.id}')" title="Wieder einblenden">👁️</button>` : ''}
-                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben">↪️</button>
-                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')">✏️</button>
-                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')">🗑️</button>
+                                    <button onclick="event.stopPropagation(); moveAusgabe('${typ}','${e.id}')" title="Verschieben" aria-label="Verschieben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-move"></use></svg></button>
+                                    <button class="edit" onclick="event.stopPropagation(); startEditAusgabenArchiv('${typ}','${e.id}')" aria-label="Bearbeiten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-edit"></use></svg></button>
+                                    <button class="delete" onclick="event.stopPropagation(); deleteArchivEintrag('${typ}','${e.id}')" aria-label="Löschen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-delete"></use></svg></button>
                                 </div>
-                            </div>`,40);
+                            </div>`,0);
                             item.classList.add("compact-alltag-card");
                         }
 
-                        item.style.background = "#3a3a3c";
+                        item.classList.add("alltag-entry");
                         container.appendChild(item);
                     });
                 });
