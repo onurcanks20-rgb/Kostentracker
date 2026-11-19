@@ -2365,16 +2365,19 @@ button:disabled { opacity:.5; cursor:default; }
 .alltag-page .empty-state-title { font-size:16px; }
 .alltag-page .empty-state-text { font-size:13px;line-height:1.5;color:var(--alltag-muted); }
 /* Gemeinsame Navigation bleibt funktional identisch, neue Symbole nur auf diesen zwei Seiten. */
-:is(body:has(.alltag-page:not(.hidden)) #categoryBottomNav, #freshCostDialog .fc-nav, #categoryEditDialog .fc-nav) {
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav {
     left:0;bottom:0;transform:none;width:100%;max-width:none;
     gap:0;padding:4px 16px max(4px, env(safe-area-inset-bottom));
     border:0;border-top:1px solid rgba(128,128,128,.18);border-radius:0;
     background:var(--bg);box-shadow:none;
 }
-:is(body:has(.alltag-page:not(.hidden)) #categoryBottomNav, #freshCostDialog .fc-nav, #categoryEditDialog .fc-nav) button { min-height:44px;padding:2px 8px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
-:is(body:has(.alltag-page:not(.hidden)) #categoryBottomNav, #freshCostDialog .fc-nav, #categoryEditDialog .fc-nav) .nav-icon { display:grid;place-items:center;min-height:24px;margin-bottom:1px; }
-:is(body:has(.alltag-page:not(.hidden)) #categoryBottomNav, #freshCostDialog .fc-nav, #categoryEditDialog .fc-nav) .alltag-nav-emoji { display:none; }
-:is(body:has(.alltag-page:not(.hidden)) #categoryBottomNav, #freshCostDialog .fc-nav, #categoryEditDialog .fc-nav) .alltag-nav-vector { display:block;width:24px;height:24px; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav button { min-height:44px;padding:2px 8px;font-size:11px;font-weight:500;line-height:1.2;background:transparent; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .nav-icon { display:grid;place-items:center;min-height:24px;margin-bottom:1px; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-emoji { display:none; }
+body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
+body:has(#freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav {
+    display:grid;z-index:20003;
+}
 @media(max-width:360px) {
     .alltag-page .alltag-topbar { gap:6px; }
     .alltag-page .alltag-topbar h2 { font-size:22px; }
@@ -3197,12 +3200,10 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 }
 
 /* New reference page. Scoped independently from the old form layouts. */
-:is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0;margin:0 auto;width:100%;max-width:none;height:auto;max-height:none;padding:calc(env(safe-area-inset-top,0px) + 22px) 0 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
+:is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#000;--fc-card:#171719;--fc-muted:#a0a0a7;box-sizing:border-box;position:fixed;inset:0 0 var(--editor-nav-height, 0px);margin:0 auto;width:100%;max-width:none;height:auto;max-height:none;padding:calc(env(safe-area-inset-top,0px) + 22px) 0 0;border:0;border-radius:0;background:var(--fc-bg);color:var(--text);overflow:hidden; }
 :is(#freshCostDialog,#categoryEditDialog):not([open]) { display:none; }
 :is(#freshCostDialog,#categoryEditDialog)[open] { display:flex;flex-direction:column;overscroll-behavior:none; }
-:is(#freshCostDialog,#categoryEditDialog)::backdrop { background:#000; }
 :root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog) { --fc-bg:#f2f2f7;--fc-card:#fff;--fc-muted:#686870; }
-:root[data-theme="light"] :is(#freshCostDialog,#categoryEditDialog)::backdrop { background:#f2f2f7; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-head { display:flex;align-items:center;gap:8px;flex:none;padding:0;margin:0 0 16px; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-head > div { flex:1;min-width:0; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-head h2 { margin:0;font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em; }
@@ -3241,9 +3242,7 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button { display:block;width:100%;min-height:40px;margin:0;padding:10px;border:0;border-radius:5px;background:var(--action-add);color:#fff;font-size:13px;line-height:20px;font-weight:600; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions button:disabled { opacity:.5; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-actions .fc-cancel { margin-top:4px;background:transparent;color:var(--text);font-weight:500; }
-:is(#freshCostDialog,#categoryEditDialog) > .fc-nav { position:static;flex:none;margin:0; }
 :is(#freshCostDialog,#categoryEditDialog) :is(input,button,summary):focus-visible { outline:2px solid var(--primary);outline-offset:2px; }
-.fresh-cost-curtain { position:fixed;inset:0;z-index:20001;background:var(--bg); }
 :is(#freshCostDialog,#categoryEditDialog) { z-index:20002; }
 
 /* Full Fixkosten details share the approved field shape and page layout. */
