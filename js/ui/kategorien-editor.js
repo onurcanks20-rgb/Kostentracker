@@ -17,7 +17,8 @@ Kostentracker.module({
   freizeit:{key:'Freizeit',label:'Freizeit',state:'editFreizeitId',render:'renderFreizeit',save:'saveEditFreizeit',field:'editFreizeitBetrag-',reminder:'freizeit'},
   reisen:{key:'Reisen',label:'Reisen',state:'editReiseId',render:'renderListe',save:'saveEditReise',field:'editBetrag-',reminder:'reisen'}
  };
- let active=null,mode='details',fallback=[];
+ let active=null,mode='details';
+ const navigation=$('categoryBottomNav');
  // iOS needs a fixed page, not only overflow:hidden, to stop the document
  // behind a full-screen dialog from scrolling. Preserve the category position
  // and original inline styles; navigation deliberately starts at the top.
@@ -42,6 +43,43 @@ Kostentracker.module({
   const root=document.documentElement;Object.assign(root.style,saved.root,{scrollBehavior:'auto'});
   window.scrollTo(saved.restore?saved.x:0,saved.restore?saved.y:0);root.style.scrollBehavior=saved.root.scrollBehavior;
  }
+ // Keep the existing navigation in the normal page so iOS uses one viewport
+ // anchor. The editor occupies only the space above that navigation.
+ const editorLayers=new Map();
+ function openEditorLayer(editor,heading,cancel){
+  const hiddenBackground=new Map(),previousFocus=document.activeElement;
+  for(const node of document.body.children){
+   if(node===editor||node===navigation||node.tagName==='SCRIPT')continue;
+   hiddenBackground.set(node,!!node.inert);
+   node.inert=true;
+  }
+  editorLayers.set(editor,{hiddenBackground,previousFocus,cancel});
+  editor.setAttribute('open','');
+  fitEditorAboveNavigation();
+  heading.focus({preventScroll:true});
+ }
+ function closeEditorLayer(editor){
+  const layer=editorLayers.get(editor);if(!layer)return;
+  editor.removeAttribute('open');editorLayers.delete(editor);
+  editor.style.removeProperty('--editor-nav-height');
+  for(const [node,wasInert]of layer.hiddenBackground)node.inert=wasInert;
+  if(layer.previousFocus?.isConnected)layer.previousFocus.focus({preventScroll:true});
+ }
+ function fitEditorAboveNavigation(){
+  if(!editorLayers.size)return;
+  const height=navigation?.getBoundingClientRect().height||0;
+  for(const editor of editorLayers.keys())editor.style.setProperty('--editor-nav-height',height+'px');
+ }
+ if(navigation&&typeof ResizeObserver==='function')new ResizeObserver(fitEditorAboveNavigation).observe(navigation);
+ window.addEventListener('resize',fitEditorAboveNavigation);
+ window.visualViewport?.addEventListener('resize',fitEditorAboveNavigation);
+ document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||event.defaultPrevented)return;
+  for(const [editor,layer]of editorLayers){
+   if(!editor.contains(event.target)&&!navigation?.contains(event.target))continue;
+   event.preventDefault();layer.cancel();break;
+  }
+ });
  // Keep touch and wheel scrolling inside the editor, including on browsers
  // that pass gestures through a modal when its contents fit or reach an edge.
  function keepEditorScrollInside(editor,surface){
@@ -101,13 +139,11 @@ Kostentracker.module({
   $('categoryEditCurrent').textContent=d.formatBetragText(recurring(kind,e)?d.recurringAmount(e,kind==='sparen-investieren'?d.getGehaltszeitraum().start:d.heuteISO()):e.betrag);
   if(!mountDetails()){active=null;return false;}
   setCategoryEditMode('details',false);lockEditorBackground('category');
-  if(dialog.showModal)dialog.showModal();else{dialog.setAttribute('open','');$('categoryEditorCurtain').classList.remove('hidden');for(const node of document.body.children)if(node!==dialog&&node.id!=='categoryEditorCurtain'&&node.tagName!=='SCRIPT'){fallback.push([node,!!node.inert]);node.inert=true;}}
-  $('categoryEditName').focus({preventScroll:true});return true;
+  openEditorLayer(dialog,$('categoryEditName'),d.cancelEditCategoryEditor);return true;
  }
  function dismissCategoryEditor(restoreScroll=true){
   if(!active)return;const cfg=active.cfg;active=null;context.session.state[cfg.state]=null;
-  if(dialog.open&&dialog.close)dialog.close();else dialog.removeAttribute('open');
-  unlockEditorBackground('category',restoreScroll);$('categoryEditorCurtain').classList.add('hidden');for(const [node,was]of fallback)node.inert=was;fallback=[];$('categoryEditDetails').replaceChildren();
+  closeEditorLayer(dialog);unlockEditorBackground('category',restoreScroll);$('categoryEditDetails').replaceChildren();
  }
  function cancelEditCategoryEditor(){dismissCategoryEditor();}
  function finishCategoryEditor(kind,id){if(active&&active.kind===kind&&String(active.id)===String(id))dismissCategoryEditor();}
@@ -188,5 +224,5 @@ Kostentracker.module({
   window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);
   schedule();
  }
- return {lockEditorBackground,unlockEditorBackground,openCategoryEditor,dismissCategoryEditor,cancelEditCategoryEditor,finishCategoryEditor,setCategoryEditMode,refreshCategoryEditor,saveEditCategoryEditor,categoryEditorProposal};
+ return {lockEditorBackground,unlockEditorBackground,openEditorLayer,closeEditorLayer,openCategoryEditor,dismissCategoryEditor,cancelEditCategoryEditor,finishCategoryEditor,setCategoryEditMode,refreshCategoryEditor,saveEditCategoryEditor,categoryEditorProposal};
 });
