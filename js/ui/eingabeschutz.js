@@ -1,6 +1,6 @@
 Kostentracker.module({
- id:'js/ui/eingabeschutz.js', dependencies:[], session:[], read:[], write:[], replace:false
-}, () => {
+ id:'js/ui/eingabeschutz.js', dependencies:['dismissFreshCost','dismissCategoryEditor'], session:[], read:[], write:[], replace:false
+}, (context, dependencies) => {
  'use strict';
  const panelIds=new Set(['reisenAddPanel','reiseAddPanel','versAddPanel','hausAddPanel','freizeitAddPanel','einnahmenAddPanel','kostenAddPanel','geplantAddPanel','sparenInvestierenAddPanel']);
  const drafts=new Map();
@@ -17,7 +17,7 @@ Kostentracker.module({
  function owner(field) {
   for(let node=field;node&&node!==document;node=node.parentElement)if(panelIds.has(node.id))return node;
   if(!/^(?:edit|reiseBudgetEdit$|reiseVonEdit$|reiseBisEdit$|reiseCurrencyEdit$)/i.test(field?.id||''))return null;
-  return field.closest?.('.reise-category-card,.item')||null;
+  return field.closest?.('.reise-category-card,.item,.fc-content')||null;
  }
  function values(root) {
   return controls(root).map((field,index)=>({field,key:field.id||String(index),value:String(field.value??''),checked:!!field.checked,type:field.type}));
@@ -56,6 +56,7 @@ Kostentracker.module({
    if(name==='show'&&document.getElementById(args[0])&&!document.getElementById(args[0]).classList.contains('hidden'))return [];
    return all;
   }
+  if(name==='setFreshCostMode'||name==='setCategoryEditMode')return all.filter(root=>root.classList.contains('fc-content'));
   if(name==='closeStartQuickAdd')return all.filter(root=>document.getElementById('startQuickAddHost')?.contains(root));
   if(name==='closeCategoryAddPanels'||name==='toggleCategoryAdd')return all.filter(root=>panelIds.has(root.id));
   if(name==='openStartQuickAdd'||name==='erneutBuchenEintrag')return all;
@@ -82,7 +83,7 @@ Kostentracker.module({
   const submitting=submissions.test(name);
   if(submitting)submission={saved:false,roots:[...drafts.keys()].filter(root=>root.contains(document.activeElement)||Array.from(root.querySelectorAll?.('[onclick]')||[]).some(button=>(button.getAttribute('onclick')||'').includes(name+'(')))};
   depth++;
-  try{return fn(...args);}
+  try{const result=fn(...args);if(navigation.test(name)&&result!==false){dependencies.dismissFreshCost?.(false);dependencies.dismissCategoryEditor?.(false);}return result;}
   finally{
    depth--;
    // A successful save closes or replaces its form; a validation/storage failure leaves it dirty.
