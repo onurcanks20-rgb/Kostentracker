@@ -2376,7 +2376,7 @@ body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[
 body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-emoji { display:none; }
 body:has(.alltag-page:not(.hidden), #freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav .alltag-nav-vector { display:block;width:24px;height:24px; }
 body:has(#freshCostDialog[open], #categoryEditDialog[open]) #categoryBottomNav {
-    display:grid;z-index:20003;
+    display:grid;z-index:20003;touch-action:pinch-zoom;
 }
 @media(max-width:360px) {
     .alltag-page .alltag-topbar { gap:6px; }
@@ -3291,4 +3291,6 @@ body.travel-mode .travel-mode-rate-refresh { width:44px;min-height:44px;padding:
 /* Keep iPhone overlay scrollbars outside the form controls. */
 :is(#freshCostDialog,#categoryEditDialog) .fc-content { box-sizing:border-box;padding-right:8px;overflow-x:hidden;overflow-y:hidden; }
 
+/* Reserve page panning for the scrollable part of the editor. */
+:is(#freshCostDialog,#categoryEditDialog) :is(.fc-head,.fc-content:not(.editor-can-scroll)) { touch-action:pinch-zoom; }
 :is(#freshCostDialog,#categoryEditDialog) .fc-content.editor-can-scroll { overflow-y:auto; }
