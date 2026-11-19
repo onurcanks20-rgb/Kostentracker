@@ -19,29 +19,20 @@ Kostentracker.module({
  };
  let active=null,mode='details';
  const navigation=$('categoryBottomNav');
- // iOS needs a fixed page, not only overflow:hidden, to stop the document
- // behind a full-screen dialog from scrolling. Preserve the category position
- // and original inline styles; navigation deliberately starts at the top.
+ // Keep the document in normal flow so the fixed navigation retains its
+ // viewport position. The editor and navigation intercept scroll gestures.
  const backgroundOwners=new Set();let background=null;
  function lockEditorBackground(owner){
-  if(backgroundOwners.has(owner))return;
-  if(!backgroundOwners.size){
-   const body=document.body,root=document.documentElement;
-   const bodyKeys=['position','top','left','right','width','overflow','boxSizing'];
-   const rootKeys=['overflow','overscrollBehavior','scrollBehavior'];
-   background={x:window.scrollX||0,y:window.scrollY||0,restore:true,body:Object.fromEntries(bodyKeys.map(key=>[key,body.style[key]||''])),root:Object.fromEntries(rootKeys.map(key=>[key,root.style[key]||'']))};
-   root.style.overflow='hidden';root.style.overscrollBehavior='none';root.style.scrollBehavior='auto';
-   Object.assign(body.style,{position:'fixed',top:-background.y+'px',left:-background.x+'px',right:'0',width:'100%',overflow:'hidden',boxSizing:'border-box'});
-  }
+  if(!backgroundOwners.size)background={x:window.scrollX||0,y:window.scrollY||0,restore:true};
   backgroundOwners.add(owner);
  }
  function unlockEditorBackground(owner,restoreScroll=true){
   if(!backgroundOwners.delete(owner)||!background)return;
   if(!restoreScroll)background.restore=false;
   if(backgroundOwners.size)return;
-  const saved=background;background=null;Object.assign(document.body.style,saved.body);
-  const root=document.documentElement;Object.assign(root.style,saved.root,{scrollBehavior:'auto'});
-  window.scrollTo(saved.restore?saved.x:0,saved.restore?saved.y:0);root.style.scrollBehavior=saved.root.scrollBehavior;
+  const saved=background;background=null;
+  const left=saved.restore?saved.x:0,top=saved.restore?saved.y:0;
+  if(window.scrollX!==left||window.scrollY!==top)window.scrollTo({left,top,behavior:'instant'});
  }
  // Keep the existing navigation in the normal page so iOS uses one viewport
  // anchor. The editor occupies only the space above that navigation.
@@ -80,29 +71,30 @@ Kostentracker.module({
    event.preventDefault();layer.cancel();break;
   }
  });
- // Keep touch and wheel scrolling inside the editor, including on browsers
- // that pass gestures through a modal when its contents fit or reach an edge.
- function keepEditorScrollInside(editor,surface){
-  function canScroll(target,deltaY){
-   if(!surface.contains(target)||!surface.classList.contains('editor-can-scroll'))return false;
+ // Cancel gestures on the navigation and at the edges of the form, where
+ // Safari could otherwise scroll the page or move its browser chrome.
+ function keepEditorScrollInside(target,surface){
+  function canScroll(node,deltaY){
+   if(!surface?.contains(node)||!surface.classList.contains('editor-can-scroll'))return false;
    const remaining=surface.scrollHeight-surface.clientHeight-surface.scrollTop;
    return deltaY>0?remaining>1:deltaY<0&&surface.scrollTop>0;
   }
-  editor.addEventListener('wheel',event=>{
-   if(event.cancelable&&!event.ctrlKey&&!canScroll(event.target,event.deltaY))event.preventDefault();
+  target.addEventListener('wheel',event=>{
+   if(backgroundOwners.size&&event.cancelable&&!event.ctrlKey&&!canScroll(event.target,event.deltaY))event.preventDefault();
   },{passive:false});
   let lastTouchY;
-  editor.addEventListener('touchstart',event=>{
+  target.addEventListener('touchstart',event=>{
    lastTouchY=event.touches.length===1?event.touches[0].clientY:undefined;
   },{passive:true});
-  editor.addEventListener('touchmove',event=>{
+  target.addEventListener('touchmove',event=>{
    if(event.touches.length!==1){lastTouchY=undefined;return;}
    const y=event.touches[0].clientY;
    const deltaY=lastTouchY===undefined?0:lastTouchY-y;
    lastTouchY=y;
-   if(event.cancelable&&!canScroll(event.target,deltaY))event.preventDefault();
+   if(backgroundOwners.size&&event.cancelable&&!canScroll(event.target,deltaY))event.preventDefault();
   },{passive:false});
  }
+ if(navigation)keepEditorScrollInside(navigation);
  function findEntry(kind,id){
   const cfg=configs[kind];if(!cfg)return null;const data=context.repository.view[cfg.key];
   const lists=Array.isArray(data)?[data]:Object.values(kind==='reisen'?data?.[context.session.aktuellesLand]||{}:data||{});
