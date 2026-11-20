@@ -2,6 +2,8 @@ Kostentracker.module({
   "id": "js/ui/schnelleingabe.js",
   "dependencies": [
     "addKategorie",
+    "openAccessibleDialog",
+    "closeAccessibleDialog",
     "openEditorLayer",
     "closeEditorLayer",
     "lockEditorBackground",
@@ -136,6 +138,7 @@ Kostentracker.module({
         }
 
         function renderQuickAddSettings() {
+            renderHomeQuickFavoriteSettings();
             const host = document.getElementById("quickAddSettingsList");
             if (!host) return;
             const aktiv = getQuickAddFavoriten();
@@ -197,7 +200,191 @@ Kostentracker.module({
             renderQuickAddSettings();
         }
 
+        function homeQuickFavoriteOptions() {
+            const options = new Map();
+            const areas = [
+                {grid:"haus", group:"haushalt", label:"Haushalt", panel:"hausAddPanel", focus:"hausBetrag"},
+                {grid:"freizeit", group:"freizeit", label:"Freizeit", panel:"freizeitAddPanel", focus:"freizeitBetrag"},
+                {grid:"reise", group:"reisen", label:"Reise"}
+            ];
+            for (const [key, label, icon] of [
+                ["haushalt","Haushalt","cart"], ["freizeit","Freizeit","activity"],
+                ["einnahmen","Einnahme","income"], ["fixkosten","Fixkosten","receipt"],
+                ["versicherungen","Versicherung","shield"], ["geplant","Geplante Ausgabe","calendar"],
+                ["sparen","Sparen & Investieren","wallet"], ["reisen","Reiseausgabe","plane"]
+            ]) {
+                const option = context.session.QUICK_ADD_OPTIONEN?.[key];
+                if (option) options.set(key,{label,icon,action:option.action});
+            }
+            for (const {grid, group, label, panel, focus} of areas) {
+                for (const button of document.querySelectorAll(`#${grid}KategorieGrid [data-category]`)) {
+                    const category = button.dataset.category;
+                    const pickerLabel = grid === "freizeit" && category === "Essen / Trinken" ? "Essen" : category;
+                    const tileLabel = grid === "reise" || category === "Sonstiges" ? `${pickerLabel} · ${label}` : pickerLabel;
+                    const icon = button.querySelector("use")?.getAttribute("href")?.replace("#alltag-", "") || "plus";
+                    options.set(`${grid}:${category}`, {
+                        label: tileLabel, pickerLabel, icon, group,
+                        action: grid === "reise"
+                            ? () => openReiseAuswahlFromHome(category)
+                            : () => openStartQuickAdd(panel, focus, {area:grid, category})
+                    });
+                }
+            }
+            return options;
+        }
+
+        function selectedHomeQuickFavorites(options) {
+            const saved = context.repository.view.Einstellungen?.startseitenFavoriten;
+            return Array.isArray(saved) ? [...new Set(saved.filter(key => options.has(key)))] : [];
+        }
+
+        function renderHomeQuickFavorites() {
+            const host = document.getElementById("homeQuickFavoriteTiles");
+            if (!host) return;
+            const options = homeQuickFavoriteOptions();
+            const favorites = selectedHomeQuickFavorites(options);
+            const signature = JSON.stringify(favorites);
+            if (host.dataset.favorites === signature) return;
+            host.dataset.favorites = signature;
+            host.replaceChildren();
+            for (const key of favorites) {
+                const {label, icon, action} = options.get(key);
+                const button = document.createElement("button");
+                button.className = "home-quick-favorite";
+                fillQuickChoice(button, label, icon);
+                button.querySelector(".quick-choice-chevron").remove();
+                button.addEventListener("click", action);
+                host.appendChild(button);
+            }
+        }
+
+        function saveHomeQuickFavorites(favorites) {
+            context.repository.view.Einstellungen.startseitenFavoriten = favorites;
+            if (dependencies.speichern() === false) return false;
+            renderHomeQuickFavoriteSettings();
+            return true;
+        }
+
+        function homeQuickFavoriteChoice(key, label, icon) {
+            const button = document.createElement("button");
+            button.className = "add-choice";
+            fillQuickChoice(button, label, icon);
+            const indicator = button.querySelector(".quick-choice-chevron");
+            indicator.classList.add("home-quick-choice-plus");
+            indicator.querySelector("use").setAttribute("href", "#alltag-plus");
+            button.addEventListener("click", () => {
+                const current = selectedHomeQuickFavorites(homeQuickFavoriteOptions());
+                if (current.includes(key) || saveHomeQuickFavorites([...current,key])) {
+                    dependencies.closeAccessibleDialog("homeQuickFavoritePicker");
+                }
+            });
+            return button;
+        }
+
+        function openHomeQuickFavoritePicker() {
+            const dialog = document.getElementById("homeQuickFavoritePicker");
+            const host = document.getElementById("homeQuickFavoriteChoices");
+            if (!host || dialog?.open) return;
+
+            const options = homeQuickFavoriteOptions();
+            const favorites = new Set(selectedHomeQuickFavorites(options));
+            host.replaceChildren();
+            for (const [key, option] of options) {
+                if (option.group) continue;
+                const subcategories = [...options].filter(([, child]) => child.group === key);
+                if (!subcategories.length) {
+                    if (!favorites.has(key)) host.appendChild(homeQuickFavoriteChoice(key, option.label, option.icon));
+                    continue;
+                }
+
+                const details = document.createElement("details");
+                details.setAttribute("name", "home-quick-favorite-category");
+                const summary = document.createElement("summary");
+                fillQuickChoice(summary, key === "reisen" ? "Reisen" : option.label, option.icon);
+                const choices = document.createElement("div");
+                choices.className = "home-quick-favorite-subcategories";
+                for (const [childKey, child] of subcategories) {
+                    if (!favorites.has(childKey)) {
+                        choices.appendChild(homeQuickFavoriteChoice(childKey, child.pickerLabel, child.icon));
+                    }
+                }
+                if (!favorites.has(key)) {
+                    choices.appendChild(homeQuickFavoriteChoice(key, `${option.label} allgemein`, option.icon));
+                }
+                if (choices.children.length) {
+                    details.append(summary, choices);
+                    host.appendChild(details);
+                }
+            }
+            if (!host.children.length) {
+                const message = document.createElement("p");
+                message.textContent = "Alle Schnellzugriffe sind bereits hinzugefügt.";
+                host.appendChild(message);
+            }
+            host.scrollTop = 0;
+            dependencies.openAccessibleDialog("homeQuickFavoritePicker", "homeQuickFavoritePickerTitle");
+        }
+
+        function renderHomeQuickFavoriteSettings() {
+            const host = document.getElementById("homeQuickFavoriteSettings");
+            if (!host) return;
+            const options = homeQuickFavoriteOptions();
+            const favorites = selectedHomeQuickFavorites(options);
+            host.replaceChildren();
+            favorites.forEach((key,index) => {
+                const {label} = options.get(key);
+                const row = document.createElement("div");
+                row.className = "quick-fav-row";
+                const name = document.createElement("span");
+                name.textContent = label;
+                const actions = document.createElement("div");
+                actions.className = "quick-fav-actions";
+                for (const [symbol, description, direction] of [["↑","Nach oben",-1],["↓","Nach unten",1],["×","Entfernen",0]]) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = symbol;
+                    button.setAttribute("aria-label", `${label} · ${description}`);
+                    button.disabled = direction !== 0 && (index + direction < 0 || index + direction >= favorites.length);
+                    button.addEventListener("click", () => {
+                        const current = selectedHomeQuickFavorites(homeQuickFavoriteOptions());
+                        const from = current.indexOf(key), to = from + direction;
+                        if (from < 0 || to < 0 || to >= current.length) return;
+                        if (direction) [current[from],current[to]] = [current[to],current[from]];
+                        else current.splice(from,1);
+                        saveHomeQuickFavorites(current);
+                    });
+                    actions.appendChild(button);
+                }
+                row.append(name,actions);
+                host.appendChild(row);
+            });
+        }
+
+        const addActionsByView = new Map([
+            ["haushaltView", ["hausAddPanel", "Haushaltsausgabe hinzufügen"]],
+            ["freizeitView", ["freizeitAddPanel", "Freizeitausgabe hinzufügen"]],
+            ["einnahmenView", ["einnahmenAddPanel", "Einnahme hinzufügen"]],
+            ["kostenView", ["kostenAddPanel", "Fixkosten hinzufügen"]],
+            ["versicherungenView", ["versAddPanel", "Versicherung hinzufügen"]],
+            ["geplanteAusgabenView", ["geplantAddPanel", "Geplante Ausgabe hinzufügen"]],
+            ["sparenInvestierenView", ["sparenInvestierenAddPanel", "Sparbetrag hinzufügen"]],
+            ["reisen", ["reisenAddPanel", "Land hinzufügen"]],
+            ["travelOverviewView", ["reisenAddPanel", "Land hinzufügen"]],
+            ["land", ["reiseAddPanel", "Reiseausgabe hinzufügen"]]
+        ]);
+        let mainNavAddAction;
+
+        function updateMainNavAdd(viewId) {
+            mainNavAddAction = addActionsByView.get(viewId);
+            document.querySelector("#categoryBottomNav .main-nav-add")
+                ?.setAttribute("aria-label", mainNavAddAction?.[1] || "Buchung hinzufügen");
+        }
+
         function openAddSheet() {
+            if (mainNavAddAction) {
+                toggleCategoryAdd(mainNavAddAction[0]);
+                return;
+            }
             renderQuickAddMenu();
             document.getElementById("addSheet")?.classList.remove("hidden");
         }
@@ -283,7 +470,7 @@ Kostentracker.module({
             anchor?.insertAdjacentElement("afterend", row);
         }
 
-        function openStartQuickAdd(panelId, focusId) {
+        function openStartQuickAdd(panelId, focusId, favorite) {
             dismissCategoryAdd();
             closeAddSheet();
             closeStartQuickAdd();
@@ -299,11 +486,19 @@ Kostentracker.module({
             };
             host.appendChild(panel);
             panel.classList.remove("hidden");
-            prepareStartQuickAdd(panelId);
+            prepareStartQuickAdd(panelId, !favorite);
+            if (favorite) {
+                const chosen = Array.from(panel.querySelectorAll("[data-category]"))
+                    .find(button => button.dataset.category === favorite.category);
+                if (chosen && panelId === "reiseAddPanel") setReiseKategorie(favorite.category, chosen, false);
+                else if (chosen) setQuickCategory(favorite.area, favorite.category, chosen, false);
+            }
             prepareQuickEntryLayout(panelId);
             sheet.classList.remove("hidden");
 
+            if (favorite) document.getElementById(focusId)?.focus();
             setTimeout(() => {
+                if (context.session.startQuickAddContext?.panel !== panel) return;
                 dependencies.setupUniversalAddEnterFlow(panelId);
                 document.getElementById(focusId)?.focus();
             }, 80);
@@ -329,7 +524,7 @@ Kostentracker.module({
             document.getElementById("reiseAuswahlSheet")?.classList.add("hidden");
         }
 
-        function openReiseAuswahlFromHome() {
+        function openReiseAuswahlFromHome(category) {
             closeAddSheet();
 
             const sheet = document.getElementById("reiseAuswahlSheet");
@@ -344,13 +539,16 @@ Kostentracker.module({
                 return heute >= meta.von && heute <= meta.bis;
             });
 
-            // Ist heute genau eine Reise aktiv, wird sie bei der Schnelleingabe
-            // automatisch gewaehlt und die zusaetzliche Laenderauswahl uebersprungen.
-            if (aktiveReisen.length === 1) {
-                context.session.aktuellesLand = aktiveReisen[0];
+            function openTravelExpense(land) {
+                context.session.aktuellesLand = land;
                 dependencies.updateDropdown();
-                openStartQuickAdd("reiseAddPanel", "betrag");
-                setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                openStartQuickAdd("reiseAddPanel", "betrag", category ? {category} : undefined);
+                if (!category) setTimeout(() => applyLetzteReiseKategorie(true), 30);
+            }
+
+            // Eine aktive Reise wird direkt gewählt.
+            if (aktiveReisen.length === 1) {
+                openTravelExpense(aktiveReisen[0]);
                 return;
             }
 
@@ -378,20 +576,13 @@ Kostentracker.module({
                     fillQuickChoice(btn, land, "plane");
                     btn.addEventListener("click", () => {
                         closeReiseAuswahlSheet();
-                        context.session.aktuellesLand = land;
-                        dependencies.updateDropdown();
-                        openStartQuickAdd("reiseAddPanel", "betrag");
-                        setTimeout(() => applyLetzteReiseKategorie(true), 30);
+                        openTravelExpense(land);
                     });
                     choices.appendChild(btn);
                 });
             }
 
             sheet.classList.remove("hidden");
-        }
-
-        function focusLater(id) {
-            setTimeout(() => document.getElementById(id)?.focus(), 80);
         }
 
         let categoryAdd = null;
@@ -450,13 +641,12 @@ Kostentracker.module({
             dependencies.resetAddReminderForPanel(panelId);
             prepareStartQuickAdd(panelId, false);
             const firstId = dependencies.setupUniversalAddEnterFlow(panelId) || focusId;
-            if (panelId === "reisenAddPanel") {
-                panel.classList.remove("hidden");
-                focusLater(firstId);
-                return;
-            }
-
             openCategoryAdd(panel);
+            if (panelId === "reiseAddPanel" || panelId === "reisenAddPanel") {
+                setTimeout(() => {
+                    if (categoryAdd?.panel === panel) document.getElementById(firstId)?.focus({preventScroll:true});
+                }, 30);
+            }
         }
 
         function toggleFreiDetails() {
@@ -643,5 +833,5 @@ Kostentracker.module({
             dependencies.renderListe();
         }
 
-return { dismissCategoryAdd, cancelCategoryAdd, refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, focusLater, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
+return { renderHomeQuickFavorites, openHomeQuickFavoritePicker, dismissCategoryAdd, cancelCategoryAdd, refreshReiseQuickAmounts, getQuickAddFavoriten, renderQuickAddMenu, toggleQuickAddSettingsPanel, getQuickAmounts, renderQuickAmountSettings, saveQuickAmounts, renderQuickAddSettings, toggleQuickAddFavorit, moveQuickAddOption, updateMainNavAdd, openAddSheet, closeAddSheet, prepareStartQuickAdd, setQuickAmount, prepareQuickEntryLayout, openStartQuickAdd, closeStartQuickAdd, closeReiseAuswahlSheet, openReiseAuswahlFromHome, closeCategoryAddPanels, toggleCategoryAdd, toggleFreiDetails, getLetzteKategorie, merkeLetzteKategorie, applyLetzteAlltagsKategorie, focusBetragSchnell, setQuickCategory, setReiseKategorie, applyLetzteReiseKategorie, renderQuickAdd, quickAdd, toggleManual, saveQuickAdd };
 });

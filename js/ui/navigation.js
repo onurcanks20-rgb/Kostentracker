@@ -3,15 +3,16 @@ Kostentracker.module({
   "dependencies": [
     "applyLetzteAlltagsKategorie",
     "travelModeRoute", "isTravelMode", "openTravelOverview", "refreshTravelMode",
+    "travelModeTrips", "renderTravelCountries", "beginTabSlide", "moveTabSlide", "finishTabSlide",
     "closeAddSheet",
     "closeCategoryAddPanels",
     "toggleCategoryAdd",
+    "updateMainNavAdd",
     "getAktuellerMonat",
     "getGehaltstag",
     "getGehaltszeitraum",
     "getStartgehalt",
     "heuteISO",
-    "initGrafik",
     "renderAusgabenArchiv",
     "renderDesignMenuStatus",
     "renderDesignSettings",
@@ -19,7 +20,6 @@ Kostentracker.module({
     "renderFreizeit",
     "renderGeplanteAusgaben",
     "renderGestureSettings",
-    "renderGrafik",
     "renderHaushalt",
     "renderHomeUebersicht",
     "renderLaender",
@@ -29,6 +29,7 @@ Kostentracker.module({
     "renderQuickAmountSettings",
     "renderSparenInvestieren",
     "renderUebersicht",
+    "renderStatistik",
     "renderVersicherungen",
     "renderWarnSettings",
     "setupFreizeitEnterFlow",
@@ -46,7 +47,7 @@ Kostentracker.module({
   "replace": false
 }, (context, dependencies) => {
 "use strict";
-// Kostentracker Test: js/ui/navigation.js
+// Kostentracker Hauptversion: js/ui/navigation.js
 // Privater Modulbereich; Zugriffe ausschließlich über die deklarierten Dienstschnittstellen.
 
         function monatZuZahl(name) {
@@ -84,7 +85,7 @@ Kostentracker.module({
                 "kostenView",
                 "versicherungenView",
                 "uebersichtView",
-                "grafikView",
+                "statistikView",
                 "settingsView",
                 "settingsBudgetView",
                 "settingsQuickAddView",
@@ -113,7 +114,18 @@ Kostentracker.module({
             ];
             const categoryNav = document.getElementById("categoryBottomNav");
             const isCategory = categoryViews.includes(id);
-            categoryNav?.classList.toggle("hidden", !isCategory);
+            const activeTab = {
+                home: "home", uebersichtView: "overview", statistikView: "statistics",
+                reisen: "reisen", travelOverviewView: "reisen", land: "reisen"
+            }[id] || (isCategory ? "overview" : "");
+            categoryNav?.classList.toggle("hidden", !activeTab);
+            dependencies.updateMainNavAdd?.(id);
+            categoryNav?.querySelectorAll("[data-main-tab]").forEach(button => {
+                const active = button.dataset.mainTab === activeTab;
+                button.classList.toggle("active", active);
+                if (active) button.setAttribute("aria-current", "page");
+                else button.removeAttribute("aria-current");
+            });
             document.body?.classList.toggle("category-nav-visible", isCategory);
 
             // Kleine Resets, aber nur wenn die Elemente existieren
@@ -127,8 +139,12 @@ Kostentracker.module({
                 const datum = document.getElementById("datum");
                 if (datum) datum.value = "";
             }
+            if (id === "statistikView") dependencies.renderStatistik?.();
             // Ausgangsposition vorher für die Zurückwisch-Geste sichern.
-            if (changingView) window.scrollTo(0, 0);
+            if (changingView) {
+                window.scrollTo(0, 0);
+                document.dispatchEvent(new Event("kostentracker:main-view-shown"));
+            }
         }
 
         function goHome() {
@@ -165,10 +181,8 @@ Kostentracker.module({
             if (direktHinzufuegen) dependencies.toggleCategoryAdd("geplantAddPanel", "geplantText");
         }
 
-        function openGrafik() {
-            show("grafikView");
-            dependencies.initGrafik();
-            dependencies.renderGrafik();
+        function openStatistik() {
+            show("statistikView");
         }
 
         function openSettings() {
@@ -308,5 +322,126 @@ Kostentracker.module({
             dependencies.renderHomeUebersicht();
         }
 
-return { monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openGrafik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
+        // Swipe only on the tab landing pages. Reuse the same actions as a
+        // tap on the bottom bar so routing and unsaved-input checks still apply.
+        const tabSwipePages = {
+            home: "home", uebersichtView: "overview", statistikView: "statistics",
+            reisen: "reisen", travelOverviewView: "reisen"
+        };
+        const tabSwipeBlocked = "dialog[open], .sheet-backdrop:not(.hidden), .swipe-selection-mode";
+        const tabSwipeIgnore = "input, textarea, select, [contenteditable], .category-add-panel, .swipe-entry-shell, .item, .home-booking-row, [data-horizontal-scroll]";
+
+        let swipe = null;
+
+        function tabSwipeDestination(page, direction) {
+            const nav = document.getElementById("categoryBottomNav");
+            if (!nav || nav.classList.contains("hidden")) return null;
+            const travelMode = dependencies.isTravelMode?.();
+            const buttons = [...nav.querySelectorAll("[data-main-tab]")]
+                .filter(button => !travelMode || button.dataset.mainTab !== "overview");
+            const index = buttons.findIndex(button => button.dataset.mainTab === tabSwipePages[page.id]);
+            const button = index < 0 ? null : buttons[index + (direction < 0 ? 1 : -1)];
+            if (!button) return null;
+            const ids = {home: "home", overview: "uebersichtView", statistics: "statistikView", reisen: "reisen"};
+            const tab = button.dataset.mainTab;
+            const travelTrips = travelMode && tab === "reisen" ? dependencies.travelModeTrips?.() : null;
+            const targetId = travelTrips ? (travelTrips.length === 1 ? "land" : "travelOverviewView") : ids[tab];
+            return {button, targetId, direction};
+        }
+
+        function prepareTabPreviewTarget(target) {
+            if (target.id === "reisen") dependencies.renderLaender();
+            else if (target.id === "statistikView") dependencies.renderStatistik?.();
+            else if (target.id === "uebersichtView") dependencies.renderUebersicht();
+            else if (target.id === "travelOverviewView") dependencies.renderTravelCountries();
+        }
+
+        function prepareTabSwipeTargets(page) {
+            if (!tabSwipePages[page.id] || document.querySelector(tabSwipeBlocked)) return [];
+            return [-1, 1].flatMap(direction => {
+                const destination = tabSwipeDestination(page, direction);
+                if (!destination || destination.targetId === "land") return [];
+                const target = document.getElementById(destination.targetId);
+                if (!target) return [];
+                prepareTabPreviewTarget(target);
+                return [target];
+            });
+        }
+
+        function startTabPreview(page, destination) {
+            const {targetId, direction} = destination;
+            // A single active trip opens its detail view through the normal router.
+            if (targetId === "land" || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return false;
+            const target = document.getElementById(targetId);
+            if (!target) return false;
+            return dependencies.beginTabSlide?.(page, target, direction, () => prepareTabPreviewTarget(target)) === true;
+        }
+
+        document.addEventListener("touchstart", event => {
+            if (swipe?.animated) dependencies.finishTabSlide?.();
+            swipe = null;
+            if (event.touches.length !== 1 || event.defaultPrevented ||
+                event.target.closest?.(tabSwipeIgnore) || document.querySelector(tabSwipeBlocked)) return;
+            const page = Object.keys(tabSwipePages).map(id => document.getElementById(id))
+                .find(view => view && !view.classList.contains("hidden"));
+            if (!page || page.querySelector(".category-add-panel:not(.hidden), .alltag-overflow[open]")) return;
+            // Short tabs leave part of the screen to the document background.
+            // Gestures that start there belong to the visible main tab too.
+            if (event.target !== document.body && event.target !== document.documentElement && !page.contains(event.target)) return;
+            const {clientX: x, clientY: y, identifier} = event.touches[0];
+            // Leave the screen edges to the browser and the existing back gesture.
+            if (x <= 28 || x >= window.innerWidth - 28) return;
+            swipe = {page, x, y, identifier, horizontal: false};
+        }, {passive: true});
+
+        document.addEventListener("touchmove", event => {
+            if (!swipe) return;
+            const touch = event.touches[0];
+            if (event.touches.length !== 1 || touch.identifier !== swipe.identifier ||
+                event.defaultPrevented || !event.cancelable) {
+                if (swipe.animated) dependencies.finishTabSlide?.();
+                swipe = null;
+                return;
+            }
+            const horizontalDistance = touch.clientX - swipe.x;
+            const dx = Math.abs(horizontalDistance);
+            const dy = Math.abs(touch.clientY - swipe.y);
+            if (!swipe.horizontal) {
+                if (Math.max(dx, dy) < 12) return;
+                if (dx < dy * 1.5) { swipe = null; return; }
+                const destination = tabSwipeDestination(swipe.page, Math.sign(horizontalDistance));
+                if (!destination) { swipe = null; return; }
+                swipe.destination = destination;
+                swipe.animated = startTabPreview(swipe.page, destination);
+                swipe.horizontal = true;
+            }
+            if (swipe.animated) dependencies.moveTabSlide?.(horizontalDistance);
+            event.preventDefault();
+        }, {passive: false});
+
+        document.addEventListener("touchend", event => {
+            const start = swipe;
+            swipe = null;
+            if (!start?.horizontal) return;
+            const touch = event.changedTouches[0];
+            const valid = event.changedTouches.length === 1 && touch.identifier === start.identifier &&
+                !event.defaultPrevented && !start.page.classList.contains("hidden") &&
+                !document.querySelector(tabSwipeBlocked);
+            const dx = valid ? touch.clientX - start.x : 0;
+            const {direction, button} = start.destination;
+            const distance = dx * direction;
+            const commit = valid && distance >= 64 && distance >= Math.abs(touch.clientY - start.y) * 1.5;
+            if (event.cancelable) event.preventDefault();
+            if (start.animated) {
+                if (valid) dependencies.moveTabSlide?.(dx, false);
+                dependencies.finishTabSlide?.(commit ? () => button.click() : undefined);
+            } else if (commit) button.click();
+        }, {passive: false});
+
+        document.addEventListener("touchcancel", () => {
+            if (swipe?.animated) dependencies.finishTabSlide?.();
+            swipe = null;
+        }, {passive: true});
+
+return { prepareTabSwipeTargets, monatZuZahl, safeId, show, goHome, openUebersicht, openSparenInvestieren, openGeplanteAusgaben, openStatistik, openSettings, openSettingsBudget, openSettingsQuickAdd, openSettingsWarnings, openSettingsDesign, openReisen, openVersicherungen, openHaushalt, openFreizeit, openAusgabenArchiv, closeAusgabenArchiv, openEinnahmen, openKosten, hideAllViews, toggleKostenDetails, toggleFaelligDetails };
 });

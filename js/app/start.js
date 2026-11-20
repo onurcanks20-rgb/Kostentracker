@@ -19,15 +19,10 @@ Kostentracker.module({
   "session": [
     "DEFAULT_ACTION_COLOR",
     "DEFAULT_ACTION_COLORS",
-    "GRAFIK_COLORS",
-    "GRAFIK_LABELS",
     "QUICK_ADD_OPTIONEN",
     "WARN_KATEGORIEN",
     "aktuelleSimple",
     "aktuellesLand",
-    "grafikCompareMode",
-    "grafikCompareSelection",
-    "grafikRangeType",
     "moveContext",
     "offeneVersicherung",
     "quickKategorie",
@@ -196,15 +191,6 @@ Kostentracker.module({
         dependencies.verarbeiteFaelligeGeplanteAusgaben();
         dependencies.renderHomeUebersicht();
 
-        context.session.grafikRangeType = "month";
-        context.session.grafikCompareMode = false;
-        context.session.grafikCompareSelection = new Set(["haushalt|all","freizeit|all","fixkosten|all","versicherungen|all","einnahmen|all","reisen|all","geplant|all","sparen|all"]);
-        context.session.GRAFIK_COLORS = ["#0a84ff", "#64d2ff", "#ff9f0a", "#bf5af2", "#30d158", "#ff453a", "#ffd60a", "#5e5ce6", "#ff375f"];
-        context.session.GRAFIK_LABELS = {
-            all:"Alle Kategorien", haushalt:"Haushalt", freizeit:"Freizeit", fixkosten:"Fixkosten",
-            versicherungen:"Versicherungen", einnahmen:"Einnahmen", reisen:"Reisen",
-            geplant:"Geplante Ausgaben", sparen:"Sparen & Investieren"
-        };
 
 
 return {  };
