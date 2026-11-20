@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="app-version" content="main-wochenkarte-minus-v1">
+    <meta name="app-version" content="main-statistik-v1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kostentracker">
@@ -13,23 +13,23 @@
     <meta name="application-name" content="Kostentracker">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="preload" href="icon-192.png" as="image" fetchpriority="high">
-    <link rel="preload" href="./js/app/ladebildschirm.js?v=main-wochenkarte-minus-v1" as="script">
+    <link rel="preload" href="./js/app/ladebildschirm.js?v=main-statistik-v1" as="script">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>Kostentracker</title>
 
-    <script src="./js/core/datensatz-format.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/sicherungs-vergleich.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/lokale-datenbank.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/dienste.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/ui/kategorien-editor.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/fixkosten-neu.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/ui/eingabeschutz.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/app/design-start.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/datensatz-format.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/sicherungs-vergleich.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/lokale-datenbank.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dienste.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/kategorien-editor.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/fixkosten-neu.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/eingabeschutz.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/app/design-start.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 
-    <link rel="stylesheet" href="./css/app.css?v=main-wochenkarte-minus-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <link rel="stylesheet" href="./css/app.css?v=main-statistik-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
 
     <style id="bootSplashStyle">
       /* Paint the page canvas and safe-area background before app.css loads. */
@@ -62,7 +62,7 @@
   <div id="bootSplashLogo" class="boot-splash-logo"><img id="bootSplashIcon" src="icon-192.png" alt="" width="104" height="104" decoding="async" fetchpriority="high" hidden><span id="bootSplashFallback" class="boot-splash-fallback" hidden aria-hidden="true">💸</span></div>
   <div id="bootSplashError" class="boot-splash-error" hidden><p>App konnte nicht gestartet werden.</p><button type="button" onclick="location.reload()">Erneut laden</button></div>
 </div>
-<script src="./js/app/ladebildschirm.js?v=main-wochenkarte-minus-v1"></script>
+<script src="./js/app/ladebildschirm.js?v=main-statistik-v1"></script>
 
 
 <svg class="alltag-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><symbol id="alltag-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="alltag-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="alltag-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol><symbol id="alltag-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol><symbol id="alltag-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol><symbol id="alltag-archive" viewBox="0 0 24 24"><path d="M4 9h16v11H4zM3 4h18v5H3zM9 13h6"/></symbol><symbol id="alltag-delete" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></symbol><symbol id="alltag-cart" viewBox="0 0 24 24"><path d="M3 3h2l3 12h10l3-9H6M9 18h.01M18 18h.01"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></symbol><symbol id="alltag-fuel" viewBox="0 0 24 24"><path d="M4 21V4h9v17M3 21h12M4 10h9M16 5l3 3v10a2 2 0 0 1-4 0v-5h-2M17 6v4h3"/></symbol><symbol id="alltag-droplet" viewBox="0 0 24 24"><path d="M12 3s-7 8-7 12a7 7 0 0 0 14 0c0-4-7-12-7-12Z"/></symbol><symbol id="alltag-house" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/></symbol><symbol id="alltag-food" viewBox="0 0 24 24"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M17 3c-3 3-3 8 0 9h3M20 3v18"/></symbol><symbol id="alltag-activity" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="alltag-gift" viewBox="0 0 24 24"><path d="M3 8h18v5H3zM5 13v8h14v-8M12 8v13"/><path d="M12 8C4 8 5 1 9 3c2 1 3 5 3 5s1-4 3-5c4-2 5 5-3 5Z"/></symbol><symbol id="alltag-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></symbol><symbol id="alltag-clipboard" viewBox="0 0 24 24"><path d="M8 5H5v16h14V5h-3M8 3h8v5H8zM8 12h8M8 16h8"/></symbol><symbol id="alltag-chart" viewBox="0 0 24 24"><path d="M4 21V11h4v10M10 21V3h4v18M16 21V7h4v14"/></symbol><symbol id="alltag-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></symbol><symbol id="alltag-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h4"/></symbol><symbol id="alltag-wallet" viewBox="0 0 24 24"><path d="M20 8H4V5h14v3M4 8v12h16V8M16 12h5v5h-5z"/></symbol><symbol id="alltag-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h3M14 14h3"/></symbol><symbol id="alltag-income" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol><symbol id="alltag-plane" viewBox="0 0 24 24"><path d="m3 10 8 2V4c0-2 2-2 2 0v8l8-2v3l-8 3v4l3 1v1l-4-1-4 1v-1l3-1v-4l-8-3z"/></symbol><symbol id="alltag-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z"/></symbol><symbol id="alltag-move" viewBox="0 0 24 24"><path d="M4 18v-5a4 4 0 0 1 4-4h12m-5-5 5 5-5 5"/></symbol><symbol id="alltag-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol><symbol id="alltag-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol><symbol id="alltag-transport" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M9 19l-2 3M15 19l2 3M9 15h.01M15 15h.01M12 3v8"/></symbol><symbol id="alltag-bed" viewBox="0 0 24 24"><path d="M3 21V7m18 14V7M3 17h18M3 12h18v5M6 12V5h12v7M6 8h5v4M13 8h5v4"/></symbol></defs></svg>
@@ -120,18 +120,19 @@
             </section>
             <div id="homeWarnings" class="hidden"></div>
 
-            <button class="primary-add" onclick="openAddSheet()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg>Buchung hinzufügen</button>
+            <section class="home-quick-favorites" aria-labelledby="homeQuickFavoritesTitle">
+                <h3 id="homeQuickFavoritesTitle">Schnell hinzufügen</h3>
+                <div class="home-quick-favorite-grid">
+                    <div id="homeQuickFavoriteTiles" class="home-quick-favorite-tiles"></div>
+                    <button type="button" class="home-quick-favorite" onclick="openHomeQuickFavoritePicker()" aria-label="Schnellzugriff hinzufügen"><span class="quick-choice-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-plus"></use></svg></span></button>
+                </div>
+            </section>
             <section class="home-recent" aria-labelledby="homeRecentTitle">
                 <div class="home-recent-heading"><h3 id="homeRecentTitle">Letzte Buchungen</h3><button id="homeAllBookings" type="button" onclick="openGlobalArchiv()">Alle ansehen <svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chevron"></use></svg></button></div>
                 <div id="homeRecentBookings" class="home-recent-list"></div>
             </section>
         </div>
 
-        <div class="bottom-nav">
-            <button class="active" onclick="goHome()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-house"></use></svg></span>Start</button>
-            <button onclick="openUebersicht()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
-            <button onclick="openGrafik()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chart"></use></svg></span>Grafik</button>
-        </div>
     </div>
 
     <!-- ===================== ÜBERSICHT ===================== -->
@@ -173,112 +174,50 @@
                 <div id="overviewSparenInvestierenSub" class="overview-card-sub">Investieren geschützt · Rücklage als Sparpuffer</div></div>
             </div>
 
-            <div class="section-label">Separat</div>
-            <div class="overview-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="openReisen()"><span class="overview-category-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plane"></use></svg></span><div class="overview-card-main">
-                <div class="overview-card-top"><span class="overview-card-title">Reisen</span><strong id="overviewReisen">0.00 €</strong></div>
-                <div class="overview-card-sub">Wird nicht in dein Alltagsbudget eingerechnet</div></div>
-            </div>
-        </div>
-        <div class="bottom-nav">
-            <button onclick="goHome()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-house"></use></svg></span>Start</button>
-            <button class="active" onclick="openUebersicht()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
-            <button onclick="openGrafik()"><span class="nav-icon"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chart"></use></svg></span>Grafik</button>
         </div>
     </div>
 
-    <!-- ===================== GRAFIK ===================== -->
-    <div id="grafikView" class="hidden">
-        <div class="container app-shell">
+    <!-- ===================== STATISTIK ===================== -->
+    <div id="statistikView" class="settings-subpage hidden">
+        <div class="container">
             <div class="topbar">
-                <button class="back-btn" onclick="goHome()" aria-label="Zurück"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-back"></use></svg></button>
-                <h2 style="flex:1;">Grafik</h2>
+                <h2>Statistik</h2>
                 <button class="icon-btn" onclick="openSettings()" aria-label="Einstellungen"><svg class="alltag-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h4m4 0h8M4 12h10m4 0h2M4 18h4m4 0h8"/><circle cx="10" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg></button>
             </div>
-
-            <div id="travelModeGraphic" class="hidden" aria-label="Reiseausgaben"></div>
-            <div class="settings-card grafik-filter-card">
-                <div class="grafik-filter-title">Zeitraum</div>
-                <div id="grafikNormalRangeControls">
-                    <div class="grafik-range-tabs">
-                        <button id="grafikRangeMonth" class="quick-category-btn selected" onclick="grafikSetRange('month',this)">Monat</button>
-                        <button id="grafikRangeSalary" class="quick-category-btn" onclick="grafikSetRange('salary',this)">Gehalt</button>
-                        <button id="grafikRangeCustom" class="quick-category-btn" onclick="grafikSetRange('custom',this)">Frei</button>
-                    </div>
-                    <div id="grafikRangeMonthBox" class="grafik-filter-field"><input id="grafikMonth" type="month" onchange="renderGrafik()"></div>
-                    <div id="grafikRangeSalaryBox" class="grafik-filter-field hidden"><select id="grafikSalaryPeriod" onchange="renderGrafik()"></select></div>
-                    <div id="grafikRangeCustomBox" class="grafik-filter-field hidden">
-                        <div class="date-range grafik-date-range">
-                            <div class="date-field"><label>Von</label><input id="grafikVon" type="date" onchange="renderGrafik()"></div>
-                            <div class="date-field"><label>Bis</label><input id="grafikBis" type="date" onchange="renderGrafik()"></div>
-                        </div>
-                    </div>
-                </div>
-                <button id="grafikCompareToggle" class="grafik-compare-toggle" type="button" onclick="grafikToggleCompare()">⇄ Zeiträume vergleichen</button>
-                <div id="grafikComparePeriods" class="grafik-compare-periods hidden">
-                    <div class="grafik-compare-period">
-                        <div class="grafik-compare-period-title">Zeitraum A</div>
-                        <div class="date-range">
-                            <div class="date-field"><label>Von</label><input id="grafikCompareAVon" type="date" onchange="renderGrafik()"></div>
-                            <div class="date-field"><label>Bis</label><input id="grafikCompareABis" type="date" onchange="renderGrafik()"></div>
-                        </div>
-                    </div>
-                    <div class="grafik-compare-swap">
-                        <button type="button" onclick="grafikSwapComparePeriods()" aria-label="Zeitraum A und B tauschen" title="Zeiträume tauschen">⇄</button>
-                    </div>
-                    <div class="grafik-compare-period">
-                        <div class="grafik-compare-period-title">Zeitraum B</div>
-                        <div class="date-range">
-                            <div class="date-field"><label>Von</label><input id="grafikCompareBVon" type="date" onchange="renderGrafik()"></div>
-                            <div class="date-field"><label>Bis</label><input id="grafikCompareBBis" type="date" onchange="renderGrafik()"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-mode" role="group" aria-label="Ansicht">
+                <button id="statsOverviewButton" type="button" onclick="updateStatistik('overview')" aria-pressed="true">Übersicht</button>
+                <button id="statsTrendButton" type="button" onclick="updateStatistik('trend')" aria-pressed="false">Trend</button>
             </div>
-
-            <div id="grafikNormalCategoryCard" class="settings-card grafik-filter-card">
-                <div class="grafik-filter-title">Kategorie</div>
-                <select id="grafikCategory" onchange="grafikCategoryChanged()">
-                    <option value="all">Alle Kategorien</option>
-                    <option value="haushalt">Haushalt</option>
-                    <option value="freizeit">Freizeit</option>
-                    <option value="fixkosten">Fixkosten</option>
-                    <option value="versicherungen">Versicherungen</option>
-                    <option value="einnahmen">Einnahmen</option>
-                    <option value="reisen">Reisen</option>
-                    <option value="geplant">Geplante Ausgaben</option>
-                    <option value="sparen">Sparen &amp; Investieren</option>
-                </select>
-                <div id="grafikSubcategoryWrap" class="hidden grafik-filter-field">
-                    <select id="grafikSubcategory" onchange="renderGrafik()"></select>
+            <section id="statsOverview">
+                <div class="stat-period">
+                    <button id="statsPrevious" type="button" onclick="updateStatistik('previous')" aria-label="Vorheriger Gehaltszeitraum">‹</button>
+                    <div><strong id="statsPeriod" aria-live="polite"></strong><small id="statsPeriodStatus"></small></div>
+                    <button id="statsNext" type="button" onclick="updateStatistik('next')" aria-label="Nächster Gehaltszeitraum">›</button>
                 </div>
-            </div>
-
-            <div id="grafikCompareCategoryCard" class="settings-card grafik-filter-card hidden">
-                <details class="grafik-comparison-picker">
-                    <summary><span id="grafikCompareSelectionSummary">Kategorien auswählen</span><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-chevron"></use></svg></summary>
-                    <div class="grafik-compare-help">Kategorien und Unterkategorien lassen sich frei kombinieren. Die Auswahl wird direkt übernommen.</div>
-                    <div id="grafikCompareSelection" class="grafik-compare-select"></div>
-                </details>
-            </div>
-
-            <div id="grafikChartCard" class="settings-card grafik-chart-card">
-                <div class="grafik-chart-head">
-                    <div>
-                        <div id="grafikTitle" class="grafik-chart-title">Ausgaben</div>
-                        <div id="grafikSubtitle" class="grafik-chart-subtitle">–</div>
-                    </div>
-                    <strong id="grafikTotal" class="grafik-total">0,00 €</strong>
+                <div id="statsSummary" class="stat-card"></div>
+                <div id="statsPlanned" class="stat-card"></div>
+                <button id="statsCompareButton" type="button" onclick="updateStatistik('compare')" class="stat-outline">Zeitraum vergleichen</button>
+            </section>
+            <section id="statsTrend" hidden>
+                <label class="stat-field" for="statsMetric">Kennzahl</label>
+                <select id="statsMetric" onchange="updateStatistik('metric', this.value)"></select>
+                <p class="stat-note">Alle Gehaltszeiträume</p>
+                <div class="stat-card">
+                    <p id="statsPoint" class="stat-point" aria-live="polite"></p>
+                    <div id="statsChart" class="stat-chart" data-horizontal-scroll></div>
                 </div>
-                <div id="grafikChart" class="grafik-chart"></div>
-                <div id="grafikLegend" class="grafik-legend"></div>
-            </div>
-
-            <div id="grafikStats" class="grafik-stats"></div>
-        </div>
-        <div class="bottom-nav">
-            <button onclick="goHome()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-house"></use></svg></span>Start</button>
-            <button onclick="openUebersicht()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
-            <button class="active" onclick="openGrafik()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-chart"></use></svg></span>Grafik</button>
+            </section>
+            <section id="statsComparison" aria-labelledby="statsCompareTitle" hidden>
+                <div class="stat-compare-head"><button id="statsCompareBack" type="button" onclick="updateStatistik('back')" aria-label="Zurück zur Statistik-Übersicht">‹</button><h3 id="statsCompareTitle" tabindex="-1">Zeiträume vergleichen</h3></div>
+                <div class="stat-card stat-selectors">
+                    <label class="stat-field" for="statsFirst">Zeitraum 1</label>
+                    <select id="statsFirst" onchange="updateStatistik('first', this.value)"></select>
+                    <label class="stat-field" for="statsSecond">Zeitraum 2</label>
+                    <select id="statsSecond" onchange="updateStatistik('second', this.value)"></select>
+                </div>
+                <p id="statsCompareNote" class="stat-note" hidden>Der laufende Zeitraum zeigt Buchungen bis heute.</p>
+                <div id="statsComparisonResult"></div>
+            </section>
         </div>
     </div>
 
@@ -447,6 +386,11 @@
                 
                 <h3>Bereiche & Reihenfolge</h3>
                 <div id="quickAddSettingsList" class="quick-fav-list"></div>
+            </div>
+            <div class="settings-page-card">
+                <h3>Startseiten-Favoriten</h3>
+                <div id="homeQuickFavoriteSettings" class="quick-fav-list"></div>
+                <button type="button" class="settings-secondary" onclick="openHomeQuickFavoritePicker()">Schnellzugriff hinzufügen</button>
             </div>
             <div class="settings-page-card">
                 <h3>Schnellbeträge</h3>
@@ -718,7 +662,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Sparen & Investieren</h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Sparen & Investieren"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="sparenInvestierenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleSparenInvestieren()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Spar- und Anlagebeträge löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('sparenInvestierenAddPanel','sparenInvestierenBetrag')" aria-label="Sparbetrag hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Sparen & Investieren"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="sparenInvestierenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleSparenInvestieren()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Spar- und Anlagebeträge löschen</span></button></div></details>
             </div>
 
             <div id="sparenInvestierenAddPanel" class="category-add-panel hidden">
@@ -753,7 +697,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Geplante Ausgaben</h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Geplante Ausgaben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="geplantDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleGeplanteAusgaben()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle geplanten Ausgaben löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('geplantAddPanel','geplantText')" aria-label="Geplante Ausgabe hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Geplante Ausgaben"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="geplantDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleGeplanteAusgaben()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle geplanten Ausgaben löschen</span></button></div></details>
             </div>
 
             <div id="geplantAddPanel" class="category-add-panel hidden">
@@ -807,7 +751,6 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Reisen</h2>
-                <button class="category-add-btn" onclick="toggleCategoryAdd('reisenAddPanel','landInput')" aria-label="Reise hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
             </div>
 
             <div id="reisenAddPanel" class="category-add-panel hidden">
@@ -847,7 +790,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="backToReisen()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2 id="landTitel"></h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Reise"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="reiseDeleteAllBtn" class="alltag-delete-action" onclick="clearLand()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Ausgaben dieser Reise löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('reiseAddPanel','betrag'); setTimeout(() => applyLetzteReiseKategorie(true), 30)" aria-label="Reiseausgabe hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Reise"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="reiseDeleteAllBtn" class="alltag-delete-action" onclick="clearLand()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Ausgaben dieser Reise löschen</span></button></div></details>
             </div>
 
             <div id="reiseBudgetCard"></div>
@@ -895,7 +838,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Versicherungen</h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Versicherungen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="versicherungenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleVersicherungen()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Versicherungen löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('versAddPanel','versName')" aria-label="Versicherung hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Versicherungen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="versicherungenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleVersicherungen()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Versicherungen löschen</span></button></div></details>
             </div>
 
             <div id="versAddPanel" class="category-add-panel hidden">
@@ -957,7 +900,7 @@
 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
 <h2>Haushalt</h2>
 <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Haushalt"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="haushaltDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleHaushalt()"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Haushalt-Einträge löschen</span></button></div></details>
-<button class="category-add-btn" onclick="toggleCategoryAdd('hausAddPanel','hausBetrag')" aria-label="Haushaltsausgabe hinzufügen"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+
 </div>
 
             <div id="hausAddPanel" class="category-add-panel hidden">
@@ -1004,7 +947,7 @@
 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
 <h2>Freizeit</h2>
 <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Freizeit"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="freizeitDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleFreizeit()"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Freizeit-Einträge löschen</span></button></div></details>
-<button class="category-add-btn" onclick="toggleCategoryAdd('freizeitAddPanel','freizeitBetrag')" aria-label="Freizeitausgabe hinzufügen"><svg class="alltag-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+
 </div>
 
             <div id="freizeitAddPanel" class="category-add-panel hidden">
@@ -1062,7 +1005,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Einnahmen</h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Einnahmen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="einnahmenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleEinnahmen()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Einnahmen löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('einnahmenAddPanel','einnahmenText')" aria-label="Einnahme hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Einnahmen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="einnahmenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleEinnahmen()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Einnahmen löschen</span></button></div></details>
             </div>
 
             <div id="einnahmenAddPanel" class="category-add-panel hidden">
@@ -1099,7 +1042,7 @@
             <div class="category-topbar alltag-topbar">
                 <button class="back-btn" onclick="openUebersicht()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-back"></use></svg></button>
                 <h2>Fixkosten</h2>
-                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Fixkosten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="fixkostenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleLaufendeKosten()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Fixkosten löschen</span></button></div></details><button class="category-add-btn" onclick="toggleCategoryAdd('kostenAddPanel','costText')" aria-label="Fixkosten hinzufügen"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-plus"></use></svg></button>
+                <details class="alltag-overflow"><summary aria-label="Weitere Optionen für Fixkosten"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-more"></use></svg></summary><div class="alltag-menu"><button id="fixkostenDeleteAllBtn" class="alltag-delete-action" onclick="deleteAlleLaufendeKosten()"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-delete"></use></svg><span>Alle Fixkosten löschen</span></button></div></details>
             </div>
             <div id="kostenAddPanel" class="category-add-panel hidden">
                 <h3>Fixkosten hinzufügen</h3>
@@ -1136,42 +1079,42 @@
     </div>
 
 
-    <script src="./js/core/dateninitialisierung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-    <script src="./js/core/speicherung-backup.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/rueckgaengig.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/erinnerungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/core/formatierung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/wiederholungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/gehalt.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/navigation.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eintragsaktionen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/einstellungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/archiv.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/wochenbudget.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/schnelleingabe.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/geplante-ausgaben.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/sparen-investieren.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-waehrung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reise-budget-kurs.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/reisen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/fixkosten.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/listen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/versicherungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/berechnungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/verschieben.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/einnahmen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/haushalt.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/freizeit.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/formulare.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/kategorien/alltag-gemeinsam.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/ausgabenarchiv.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/faelligkeiten.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/zeitraeume.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/budget/uebersicht.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/grafik/diagramme.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/aktualisierung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/eingabehilfen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/app/start.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/dateninitialisierung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/core/speicherung-backup.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/rueckgaengig.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/erinnerungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/core/formatierung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wiederholungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/gehalt.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/navigation.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eintragsaktionen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/einstellungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/archiv.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/wochenbudget.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/schnelleingabe.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/geplante-ausgaben.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/sparen-investieren.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-waehrung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reise-budget-kurs.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/reisen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/fixkosten.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/listen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/versicherungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/berechnungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/verschieben.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/einnahmen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/haushalt.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/freizeit.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/formulare.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/kategorien/alltag-gemeinsam.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ausgabenarchiv.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/faelligkeiten.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/zeitraeume.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/statistik.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/budget/uebersicht.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/aktualisierung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/eingabehilfen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/app/start.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 
 
     <div id="undoToast" class="undo-toast hidden" role="status" aria-live="polite">
@@ -1206,10 +1149,11 @@
 </dialog>
 
     <!-- ===== UPDATE: SWIPE NACH LINKS FUER EINTRAG-AKTIONEN ===== -->
-    <link rel="stylesheet" href="./css/bedienung.css?v=main-wochenkarte-minus-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
-    <script src="./js/ui/wischgesten.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+    <link rel="stylesheet" href="./css/bedienung.css?v=main-statistik-v1" media="print" data-app-style onload="this.dataset.loaded='true'" onerror="this.dataset.failed='true'">
+    <script src="./js/ui/wischgesten.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 
-    <script src="./js/ui/zurueckwischen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/tab-wischen-animation.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+    <script src="./js/ui/zurueckwischen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 
 <dialog id="freshCostDialog" aria-labelledby="freshCostName">
 <header class="fc-head"><button type="button" class="fc-back" onclick="cancelEditFreshKosten()" aria-label="Zurück"><svg class="alltag-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alltag-back"></use></svg></button><div><h2 id="freshCostName" tabindex="-1"></h2><p>Monatliche Fixkosten</p></div></header>
@@ -1242,25 +1186,34 @@
         <div class="fc-actions"><button type="button" class="fc-cancel" onclick="cancelCategoryAdd()">Abbrechen</button></div>
     </div>
 </dialog>
+<dialog id="homeQuickFavoritePicker" class="app-dialog" aria-labelledby="homeQuickFavoritePickerTitle">
+    <h2 id="homeQuickFavoritePickerTitle" tabindex="-1">Schnellzugriff hinzufügen</h2>
+    <div id="homeQuickFavoriteChoices"></div>
+    <footer class="home-quick-favorite-footer">
+        <button type="button" class="neutral-button" onclick="closeAccessibleDialog('homeQuickFavoritePicker')">Abbrechen</button>
+    </footer>
+</dialog>
 <dialog id="paymentReviewDialog" class="payment-review-dialog" aria-labelledby="paymentReviewHeading" aria-describedby="paymentReviewRemaining" aria-modal="true" closedby="none">
   <h2 id="paymentReviewHeading" tabindex="-1">Zahlungen prüfen</h2>
   <p id="paymentReviewRemaining" class="settings-note"></p>
   <div id="paymentReviewError" role="alert" class="payment-review-error"></div>
   <div id="serverPaymentReview"></div>
 </dialog>
-<script src="./js/server/haendler.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/reise-zahlungen.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/zahlungsbestaetigung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/server/synchronisierung.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/haendler.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/reise-zahlungen.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/zahlungsbestaetigung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/server/synchronisierung.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 <div id="paymentImportedNotice" role="status" aria-live="polite" aria-atomic="true"></div>
     <!-- Gemeinsame Navigation in Kategorien (aus der Übersicht) -->
-    <nav id="categoryBottomNav" class="bottom-nav hidden" aria-label="Hauptnavigation in Kategorien">
-        <button type="button" onclick="goHome()"><span class="nav-icon"><span class="alltag-nav-emoji">🏠</span><svg class="alltag-icon alltag-nav-vector" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-house"></use></svg></span>Start</button>
-        <button type="button" class="active" aria-current="page" onclick="openUebersicht()"><span class="nav-icon"><span class="alltag-nav-emoji">📋</span><svg class="alltag-icon alltag-nav-vector" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
-        <button type="button" onclick="openGrafik()"><span class="nav-icon"><span class="alltag-nav-emoji">📊</span><svg class="alltag-icon alltag-nav-vector" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#alltag-chart"></use></svg></span>Grafik</button>
+    <nav id="categoryBottomNav" class="bottom-nav" aria-label="Hauptnavigation">
+        <button type="button" data-main-tab="home" class="active" aria-current="page" onclick="goHome()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-house"></use></svg></span>Start</button>
+        <button type="button" data-main-tab="overview" onclick="openUebersicht()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-clipboard"></use></svg></span>Übersicht</button>
+        <button type="button" class="main-nav-add" onclick="openAddSheet()" aria-label="Buchung hinzufügen"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-plus"></use></svg></button>
+        <button type="button" data-main-tab="statistics" onclick="openStatistik()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-chart"></use></svg></span>Statistik</button>
+        <button type="button" data-main-tab="reisen" onclick="openReisen()"><span class="nav-icon"><svg class="alltag-icon" aria-hidden="true"><use href="#alltag-plane"></use></svg></span>Reisen</button>
     </nav>
-<script src="./js/ui/reiseansicht.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
-<script src="./js/ui/ansicht-speichern.js?v=main-wochenkarte-minus-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/reiseansicht.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
+<script src="./js/ui/ansicht-speichern.js?v=main-statistik-v1" type="application/x-kostentracker"></script>
 </body>
 
 </html>
